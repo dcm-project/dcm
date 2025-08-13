@@ -1,6 +1,6 @@
-# RFC: DCM API Object Design Guidelines
+# RFC: DCM Service Spec Design Guidelines
 
-**Feature Name:** DCM API Object Design Guidelines
+**Feature Name:** DCM Service Spec Design Guidelines
 
 **Type:** feature
 
@@ -9,27 +9,27 @@
 **Status:** Draft
 
 ## Abstract
-This document defines the conventions and principles for designing DCM API objects, both built-in and custom resources.
+This document defines the conventions and principles for designing DCM Service Specs, both built-in and custom resources.
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://datatracker.ietf.org/doc/rfc2119/).
 
 ## Motivation
-DCM APIs evolve over time and must remain backward compatible while accommodating new features. A consistent design approach ensures:
+DCM Service Spec evolve over time and must remain backward compatible while accommodating new features. A consistent design approach ensures:
 
 * Predictability for users
 * Stability of contracts across versions
 * Extensibility for new use cases without breaking existing ones
 
 ## Terminology
-* **Built-in Resource Definition**: A top-level DCM API object that is defined within the DCM project.
-* **Custom Resource Definition**: An API object that is a user-defined extension of the DCM API.
+* **Built-in Resource Definition**: A top-level DCM Service Spec that is defined within the DCM project.
+* **Custom Resource Definition**: A Service Spec that is a user-defined extension of the DCM Service Specs.
 * **Spec**: The desired state of the object.
 * **Status**: The observed state of the object.
 * **Metadata**: Common fields such as `name`, `namespace`, `labels`, `annotations`.
 
-## API Object Structure
+## Service Spec Structure
 ### Top-Level Structure
-All DCM API objects MUST include:
+All DCM Service Specs MUST include:
 
 * `apiVersion`: API group and version.
 * `kind`: Resource kind name (PascalCase).
@@ -66,7 +66,7 @@ All DCM API objects MUST include:
 * Implementations MUST NOT embed arbitrary JSON in fields; structured schema SHALL be preferred.
 
 ## Field Design Principles
-* Fields MUST be consistent in naming and type across APIs.
+* Fields MUST be consistent in naming and type across Specs.
 * Boolean fields MUST be prefixed with verbs like `enable`, `allow`, `require`.
 * Duration values MUST use standard time units (e.g., `30s`, `5m`).
 * Lists SHALL be treated as sets, thus disregarding the order of the items.
