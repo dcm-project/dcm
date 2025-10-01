@@ -217,13 +217,23 @@ components:
     Error:
       type: object
       properties:
-        code:
+        type:
           type: string
-        message:
+          description: The error code identifying the type of error
+        title:
           type: string
+          description: A human-readable description of the generic problem
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+        instance:
+          type: string
+          format: uuid
+          description: A unique identifier for the specific occurrence of the problem
       required:
-        - code
-        - message
+        - type
+        - title
+        - instance
   requestBodies:
     Service:
       description: Service object that needs to be added to the store
