@@ -220,6 +220,7 @@ components:
         - name
         - photoUrls
       type: object
+      x-aep-resource: true
       properties:
         id:
           type: string
