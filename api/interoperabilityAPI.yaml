@@ -11,16 +11,38 @@ paths:
         - service
       summary: List all services.
       description: Returns a list of services.
-      operationId: getServices
+      operationId: ListService
+      parameters:
+        - in: query
+          name: max_page_size
+          schema:
+            type: integer
+        - in: query
+          name: page_token
+          schema:
+            type: string
+        - in: query
+          name: skip
+          schema:
+            type: integer
+        - in: query
+          name: filter
+          schema:
+            type: string
       responses:
         '200':
           description: successful operation
           content:
             application/yaml:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Service'
+                properties:
+                  next_page_token:
+                    type: string
+                  results:
+                    items:
+                      $ref: '#/components/schemas/Service'
+                    type: array
+                type: object
         '400':
           description: Invalid ID supplied
         '404':
@@ -41,7 +63,7 @@ paths:
         - service
       summary: Add a new service.
       description: Add a new service to the catalog.
-      operationId: addService
+      operationId: CreateService
       requestBody:
         description: Create a new service in the catalog
         content:
@@ -76,7 +98,7 @@ paths:
         - service
       summary: Find service by ID.
       description: Returns a single service.
-      operationId: getServiceById
+      operationId: GetService
       parameters:
         - name: serviceId
           in: path
@@ -115,7 +137,7 @@ paths:
         - service
       summary: Updates a service in the store with form data.
       description: Updates a service resource based on the form data.
-      operationId: updateServiceWithForm
+      operationId: UpdateService
       parameters:
         - name: serviceId
           in: path
@@ -161,7 +183,7 @@ paths:
         - service
       summary: Deletes a service.
       description: Delete a service.
-      operationId: deleteService
+      operationId: DeleteService
       parameters:
         - name: api_key
           in: header
