@@ -15,4 +15,4 @@ jobs:
       - name: Install Spectral
         run: npm i @stoplight/spectral-cli -g
       - name: Check that OpenAPI conforms to AEP guidelines
-        run: spectral lint api/.spectral.yaml api/*.yaml
+        run: spectral lint -r api/.spectral.yaml api/*.yaml
