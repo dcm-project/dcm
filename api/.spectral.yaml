@@ -1,0 +1,2 @@
+extends:
+  - https://raw.githubusercontent.com/aep-dev/aep-openapi-linter/main/spectral.yaml
