@@ -2,17 +2,23 @@ openapi: 3.0.4
 info:
   title: DCM Interoperability API
   description: |-
-    This API is used to define and manage the services provided by the Services Providers.
+    This API is used to define and manage the resources provided by the Resources Providers.
   version: 0.0.1
 paths:
-  /service:
+  /resource:
     get:
       tags:
-        - service
-      summary: List all services.
-      description: Returns a list of services.
-      operationId: ListService
+        - resource
+      summary: List all resources.
+      description: Returns a list of resources.
+      operationId: ListResource
       parameters:
+        - name: api_key
+          in: header
+          description: API key to identify the requester
+          required: true
+          schema:
+            type: string
         - in: query
           name: max_page_size
           schema:
@@ -40,13 +46,9 @@ paths:
                     type: string
                   results:
                     items:
-                      $ref: '#/components/schemas/Service'
+                      $ref: '#/components/schemas/Resource'
                     type: array
                 type: object
-        '400':
-          description: Invalid ID supplied
-        '404':
-          description: Service not found
         default:
           description: Unexpected error
           content:
@@ -55,21 +57,27 @@ paths:
                 $ref: "#/components/schemas/Error"
       security:
         - api_key: []
-        - servicestore_auth:
-            - write:services
-            - read:services
+        - resourcestore_auth:
+            - read:resources
     post:
       tags:
-        - service
-      summary: Add a new service.
-      description: Add a new service to the catalog.
-      operationId: CreateService
+        - resource
+      summary: Add a new resource.
+      description: Add a new resource to the catalog.
+      operationId: CreateResource
+      parameters:
+        - name: api_key
+          in: header
+          description: API key to identify the requester
+          required: true
+          schema:
+            type: string
       requestBody:
-        description: Create a new service in the catalog
+        description: Create a new resource in the catalog
         content:
           application/yaml:
             schema:
-              $ref: '#/components/schemas/Service'
+              $ref: '#/components/schemas/Resource'
         required: true
       responses:
         '200':
@@ -77,7 +85,7 @@ paths:
           content:
             application/yaml:
               schema:
-                $ref: '#/components/schemas/Service'
+                $ref: '#/components/schemas/Resource'
         '400':
           description: Invalid input
         '422':
@@ -89,20 +97,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       security:
-        - servicestore_auth:
-            - write:services
-            - read:services
-  /service/{serviceId}:
+        - resourcestore_auth:
+            - write:resources
+  /resource/{resourceId}:
     get:
       tags:
-        - service
-      summary: Find service by ID.
-      description: Returns a single service.
-      operationId: GetService
+        - resource
+      summary: Find resource by ID.
+      description: Returns a single resource.
+      operationId: GetResource
       parameters:
-        - name: serviceId
+        - name: api_key
+          in: header
+          description: API key to identify the requester
+          required: true
+          schema:
+            type: string
+        - name: resourceId
           in: path
-          description: ID of service to return
+          description: ID of resource to return
           required: true
           schema:
             type: string
@@ -113,14 +126,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Service'
+                $ref: '#/components/schemas/Resource'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Service'
+                $ref: '#/components/schemas/Resource'
         '400':
           description: Invalid ID supplied
         '404':
-          description: Service not found
+          description: Resource not found
         default:
           description: Unexpected error
           content:
@@ -129,43 +142,38 @@ paths:
                 $ref: "#/components/schemas/Error"
       security:
         - api_key: []
-        - servicestore_auth:
-            - write:services
-            - read:services
-    post:
+        - resourcestore_auth:
+            - read:resources
+    put:
       tags:
-        - service
-      summary: Updates a service in the store with form data.
-      description: Updates a service resource based on the form data.
-      operationId: UpdateService
+        - resource
+      summary: Updates a resource in the store with form data.
+      description: Updates a resource resource based on the form data.
+      operationId: UpdateResource
       parameters:
-        - name: serviceId
+        - name: api_key
+          in: header
+          description: API key to identify the requester
+          required: true
+          schema:
+            type: string
+        - name: resourceId
           in: path
-          description: ID of service that needs to be updated
+          description: ID of resource that needs to be updated
           required: true
           schema:
             type: string
             format: uuid
-        - name: name
-          in: query
-          description: Name of service that needs to be updated
-          schema:
-            type: string
-        - name: status
-          in: query
-          description: Status of service that needs to be updated
-          schema:
-            type: string
       responses:
         '200':
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Service'
+                $ref: '#/components/schemas/Resource'
             application/xml:
               schema:
-                $ref: '#/components/schemas/Service'
+                $ref: '#/components/schemas/Resource'
         '400':
           description: Invalid input
         default:
@@ -175,34 +183,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       security:
-        - servicestore_auth:
-            - write:services
-            - read:services
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
     delete:
       tags:
-        - service
-      summary: Deletes a service.
-      description: Delete a service.
-      operationId: DeleteService
+        - resource
+      summary: Deletes a resource.
+      description: Delete a resource.
+      operationId: DeleteResource
       parameters:
         - name: api_key
           in: header
-          description: ''
-          required: false
+          description: API key to identify the requester
+          required: true
           schema:
             type: string
-        - name: serviceId
+        - name: resourceId
           in: path
-          description: Service id to delete
+          description: ID of the resource to be deleted
           required: true
           schema:
             type: integer
             format: int64
       responses:
         '200':
-          description: Service deleted
+          description: Resource deleted
         '400':
-          description: Invalid service value
+          description: Invalid resource value
         default:
           description: Unexpected error
           content:
@@ -210,15 +218,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
       security:
-        - servicestore_auth:
-            - write:services
-            - read:services
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
 components:
   schemas:
-    Service:
+    Resource:
       required:
-        - name
-        - photoUrls
+        - id
       type: object
       x-aep-resource: true
       properties:
@@ -227,16 +234,16 @@ components:
           format: uuid
         apiVersion:
           type: string
-          description: version of the service definition
+          description: version of the resource definition
         kind:
           type: string
           description: resource kind name (PascalCase))
         spec:
           type: object
-          description: openAPI object of the service specs object
+          description: openAPI object of the resource specs object
         status:
           type: object
-          description: openAPI object of the service status object
+          description: openAPI object of the resource status object
     Error:
       type: object
       properties:
@@ -258,24 +265,24 @@ components:
         - title
         - instance
   requestBodies:
-    Service:
-      description: Service object that needs to be added to the store
+    Resource:
+      description: Resource object that needs to be added to the store
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Service'
+            $ref: '#/components/schemas/Resource'
         application/xml:
           schema:
-            $ref: '#/components/schemas/Service'
+            $ref: '#/components/schemas/Resource'
   securitySchemes:
-    servicestore_auth:
+    resourcestore_auth:
       type: oauth2
       flows:
         implicit:
-          authorizationUrl: https://servicestore3.swagger.io/oauth/authorize
+          authorizationUrl: https://resourcestore3.swagger.io/oauth/authorize
           scopes:
-            "write:services": modify services in your account
-            "read:services": read your services
+            "write:resources": modify resources in your account
+            "read:resources": read your resources
     api_key:
       type: apiKey
       name: api_key
