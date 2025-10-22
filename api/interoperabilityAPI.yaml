@@ -13,12 +13,6 @@ paths:
       description: Returns a list of resources.
       operationId: ListResource
       parameters:
-        - name: api_key
-          in: header
-          description: API key to identify the requester
-          required: true
-          schema:
-            type: string
         - in: query
           name: max_page_size
           schema:
@@ -65,13 +59,6 @@ paths:
       summary: Add a new resource.
       description: Add a new resource to the catalog.
       operationId: CreateResource
-      parameters:
-        - name: api_key
-          in: header
-          description: API key to identify the requester
-          required: true
-          schema:
-            type: string
       requestBody:
         description: Create a new resource in the catalog
         content:
@@ -107,12 +94,6 @@ paths:
       description: Returns a single resource.
       operationId: GetResource
       parameters:
-        - name: api_key
-          in: header
-          description: API key to identify the requester
-          required: true
-          schema:
-            type: string
         - name: resourceId
           in: path
           description: ID of resource to return
@@ -151,12 +132,6 @@ paths:
       description: Updates a resource resource based on the form data.
       operationId: UpdateResource
       parameters:
-        - name: api_key
-          in: header
-          description: API key to identify the requester
-          required: true
-          schema:
-            type: string
         - name: resourceId
           in: path
           description: ID of resource that needs to be updated
@@ -193,12 +168,6 @@ paths:
       description: Delete a resource.
       operationId: DeleteResource
       parameters:
-        - name: api_key
-          in: header
-          description: API key to identify the requester
-          required: true
-          schema:
-            type: string
         - name: resourceId
           in: path
           description: ID of the resource to be deleted
