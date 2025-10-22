@@ -130,7 +130,7 @@ paths:
         - resource
       summary: Updates a resource in the store with form data.
       description: Updates a resource resource based on the form data.
-      operationId: UpdateResource
+      operationId: ApplyResourceUpdate
       requestBody:
         content:
           'application/json':
