@@ -131,6 +131,14 @@ paths:
       summary: Updates a resource in the store with form data.
       description: Updates a resource resource based on the form data.
       operationId: UpdateResource
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              'x-aep-resource':
+                singular: Resource
+                plural: Resources
       parameters:
         - name: resourceId
           in: path
