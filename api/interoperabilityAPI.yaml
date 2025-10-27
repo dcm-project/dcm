@@ -86,21 +86,21 @@ paths:
       security:
         - resourcestore_auth:
             - write:resources
-  /resource/{resourceId}:
+  /resource/{resourceKind}:
     get:
       tags:
         - resource
-      summary: Find resource by ID.
+      summary: Find resource by Kind.
       description: Returns a single resource.
       operationId: GetResource
       parameters:
-        - name: resourceId
+        - name: resourceKind
           in: path
-          description: ID of resource to return
+          description: Kind of resource to return
           required: true
           schema:
             type: string
-            format: uuid
+            format: uri
       responses:
         '200':
           description: successful operation
@@ -112,7 +112,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Resource'
         '400':
-          description: Invalid ID supplied
+          description: Invalid Kind supplied
         '404':
           description: Resource not found
         default:
@@ -140,13 +140,13 @@ paths:
                 singular: Resource
                 plural: Resources
       parameters:
-        - name: resourceId
+        - name: resourceKind
           in: path
-          description: ID of resource that needs to be updated
+          description: Kind of resource that needs to be updated
           required: true
           schema:
             type: string
-            format: uuid
+            format: uri
       responses:
         '200':
           description: successful operation
@@ -176,13 +176,242 @@ paths:
       description: Delete a resource.
       operationId: DeleteResource
       parameters:
-        - name: resourceId
+        - name: resourceKind
           in: path
-          description: ID of the resource to be deleted
+          description: Kind of the resource to be deleted
           required: true
           schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: Resource deleted
+        '400':
+          description: Invalid resource value
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+  /resource/{resourceKind}/provider:
+    get:
+      tags:
+        - resource
+      summary: List all providers for a specific resource type.
+      description: Returns a list of providers.
+      operationId: ListProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - in: query
+          name: max_page_size
+          schema:
             type: integer
-            format: int64
+        - in: query
+          name: page_token
+          schema:
+            type: string
+        - in: query
+          name: skip
+          schema:
+            type: integer
+        - in: query
+          name: filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/yaml:
+              schema:
+                properties:
+                  next_page_token:
+                    type: string
+                  results:
+                    items:
+                      $ref: '#/components/schemas/Provider'
+                    type: array
+                type: object
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:providers
+    post:
+      tags:
+        - resource
+      summary: Add a new provider to a resource kind.
+      description: Add a new provider to a resource kind.
+      operationId: CreateProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+      requestBody:
+        description: Create a new resource in the catalog
+        content:
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:providers
+  /resource/{resourceKind}/provider/{providerId}:
+    get:
+      tags:
+        - resource
+      summary: Find partner by ID from by Kind.
+      description: Returns a single resource.
+      operationId: GetResourceProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to consider
+          required: true
+          schema:
+            type: string
+            format: uurl
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Provider'
+        '400':
+          description: Invalid Kind supplied
+        '404':
+          description: Resource not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:resources
+    put:
+      tags:
+        - resource
+      summary: Updates a provider for a resource in the store with form data.
+      description: Updates a provider for a resource in the store with form data.
+      operationId: ApplyResourceProviderUpdate
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              'x-aep-resource':
+                singular: Resource
+                plural: Resources
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to update
+          required: true
+          schema:
+            type: string
+            format: uurl
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+    delete:
+      tags:
+        - resource
+      summary: Deletes a resource provider.
+      description: Delete a resource provider.
+      operationId: DeleteResourceProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of the resource to be deleted
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to be deleted
+          required: true
+          schema:
+            type: string
+            format: uurl
       responses:
         '200':
           description: Resource deleted
@@ -202,18 +431,18 @@ components:
   schemas:
     Resource:
       required:
-        - id
+        - apiVersion
+        - kind
+        - spec
       type: object
       x-aep-resource: true
       properties:
-        id:
-          type: string
-          format: uuid
         apiVersion:
           type: string
           description: version of the resource definition
         kind:
           type: string
+          format: uri
           description: resource kind name (PascalCase))
         spec:
           type: object
@@ -221,6 +450,20 @@ components:
         status:
           type: object
           description: openAPI object of the resource status object
+    Provider:
+      required:
+        - name
+        - id
+      type: object
+      x-aep-resource: true
+      properties:
+        name:
+          type: string
+          description: name of the provider
+        id:
+          type: string
+          format: uuid
+          description: provider's ID
     Error:
       type: object
       properties:
