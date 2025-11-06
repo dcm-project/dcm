@@ -1,17 +1,18 @@
 # Taxonomy of DCM
 
-This taxonomy of DCM achieves three key goals. First, it defines the top-level domains that distinguish  the functions and roles of the DCM architecture. Next, it defines a specific vocabulary with the intent of enabling precision and clarity by eliminating ambiguity. Finally, an "anti-vocabulary" defines a list of ambiguous phrases and "weasel words" to avoid and recommends more specific terms to use instead.
+This taxonomy of DCM achieves three key goals. First, it defines the top-level domains that distinguish the functions and roles of the DCM architecture. Next, it defines a specific vocabulary with the intent of enabling precision and clarity by eliminating ambiguity. Finally, an "anti-vocabulary" defines a list of ambiguous phrases and "weasel words" to avoid and recommends more specific terms to use instead.
 
 ## Top-level architectural domains
 
-The taxonomy defines the functional areas enabled by the DCM architectural as five top-level domains. Each domain maps a set of DCM services and resources defined by the architecture to the different roles and teams across an organization that experience them.
+The taxonomy defines the functional areas enabled by the DCM architectural as six top-level domains. Each domain maps a set of DCM capabilities defined by the architecture to the different roles and teams across an organization that experience them.
 
 The top-level domains are defined as follows:
 
-1. **Developer Experience** - This domain delivers the Unified interface that Developers and Application Owners use to request and manage Services from DCM. It includes the Service Catalog listing the available Services. Multi-tenancy is experienced at this level.
+0. **Value** - The "zero domain" recognizes the business value achieved through the abstract capabilities enabled by the end-to-end architecture, for example, improved security and compliance, accelerated software deployments and cost saving thanks to reduced operational toil.
+1. **Application** - This domain delivers the Unified interface that Developers and Application Owners use to request and manage Services from DCM. It includes the Service Catalog listing the available Services. Multi-tenancy is experienced at this level.
 2. **Control Plane** - This is the central nervous system of DCM. It maintains the Unified API and Data Model including the inventory of Fulfilled Services. It also enforces authentication and role-based access control.
-3. **Orchestration & Automation** - This domain contains the code and workflows for provisioning and managing the Resources required to Fulfill Sefvice request. It provides the engines that execute requests from the Control Plane and translates those into API calls supported by specific Infrastructure Platforms hosted under the Composable Infrastructure domain.
-4. **Composable Infrastructure** - This domain represents the physical and virtual assets in the data center. This is where the basic compute, storage and networking Resources are provisioned.
+3. **Resource** - This domain contains the code and workflows for provisioning and managing the Resources required to Fulfill Service request. It provides the engines that execute requests from the Control Plane and translates those into API calls supported by specific Infrastructure Platforms hosted under the Data Center domain.
+4. **Data Center** - This domain represents the physical and virtual composable infrastructure in the data center. This is where the basic compute, storage and networking resources are provisioned.
 5. **Governance & FinOps** - This domain is the set of overarching requirements that ensure DCM operations are secure, compliant, and cost-effective. It encompasses policy management, real-time metrics, and cost allocation.
 
 Everything in the DCM architecture exists under one of these domains.
@@ -20,13 +21,13 @@ How these domains are connected can be easily understood using a layer cake anal
 
 ![Layer cake analogy drawing described below](./images/layer_cake.png)
 
-Each layer of cake represents a domain that interacts only with the domains directly above and below it. For example, the architecture prohibits a direct connection from the Developer Experience domain to the Orchestration & Automation domain, Instead, Developer Experience must always use the Control Plane to request and manage resources available from the lower domains.
+Each layer of cake represents a domain that interacts only with the domains directly above and below it. For example, the architecture prohibits a direct connection from the Application domain to the Resource domain, Instead, capabilities under the Application domain must always use the Control Plane to request and manage resources available from the lower domains.
 
 The exception to this rule is the Governance & FinOps domain. It is the frosting of our cake and it touches all the layers. This aligns with the overarching functions of the Governance & FinOps domain requiring observability at every level of the architecture.
 
 ## Vocabulary
 
-DCM is a complex technology architecture stretching from the depths of bare metal on data center floor up to the high-level abstractions required to achieve secure multi-tenancy in the service of cloud consuming application owners and developers.
+DCM is a complex technology architecture stretching from the depths of bare metal on the data center floor up to the high-level abstractions required to achieve secure multi-tenancy in the service of cloud consuming application owners and developers.
 
 The vocabulary we use to define this architecture demands precision and clarity. By allowing a term to have a distinct, contextual definition within each architectural domain, we can eliminating ambiguity even when using the same words.
 
@@ -48,15 +49,15 @@ Dynamic data also falls under the scope of the Data Model. For example, the stat
 
 ### Infrastructure Platform
 
-Infrastructure Platforms refer to the Data Center infrastructure and platforms that provide Resources within the Composable Infrastructure domain. An Infrastructure Platform may be physical hardware or a software platform, for example, bare metal servers, network gear, storage arrays, virtualization platforms, Kubernetes clusters, etc. Each Infrastructure Platform defines the physical and/or virtual Resources it supports, such as compute, storage, network, VM instances, Kubernetes cluster objects, etc.
+Infrastructure Platforms refer to the Data Center infrastructure and platforms that provide Resources within the Data Center domain. An Infrastructure Platform may be physical hardware or a software platform, for example, bare metal servers, network gear, storage arrays, virtualization platforms, Kubernetes clusters, etc. Each Infrastructure Platform defines the physical and/or virtual Resources it supports, such as compute, storage, network, VM instances, Kubernetes cluster objects, etc.
 
 An Infrastructure Platform provides an API used by a Service Provider to provision, decommission, make state changes to and enable discovery of the Resources it supports. Infrastructure Platforms must also expose event logging and metrics collection to the Governance & FinOps domain required to support monitoring, observability and billing.
 
 ### Multi-tenant
 
-DCM multi-tenancy is experienced at the Developer Experience domain and enforced by the Control Plane.
+DCM multi-tenancy is experienced at the Application domain and enforced by the Control Plane.
 
-The Orchestration & Automation and Composable Infrastructure domains operate in "privileged mode” to implement the isolation and confinement required for multi-tenancy.
+The Resource and Data Center domains operate in "privileged mode" to implement the isolation and confinement required for multi-tenancy.
 
 The Governance & FinOps domain has access to the tenant-wide scope required to implement policy management, monitoring and billing.
 
@@ -70,9 +71,9 @@ A Region is a large, geographically distinct area that hosts Resources. It can b
 
 ### Service
 
-In the absence of further context, a Service is the specific capability defined by a Service Catalog item within the Developer Experience domain. Services provide the underlying Resources that Applications rely on. They are often designed to be reusable for multiple Applications. A Service could simply define a single underlying Resource, but more capable Services will define a configuration of many connected Resources. Compound Services may be defined by composing a number of simple Services under a single Service Catalog item.
+In the absence of further context, a Service is the specific capability defined by a Service Catalog item within the Application domain. Services provide the underlying Resources that Applications rely on. They are often designed to be reusable for multiple Applications. A Service could simply define a single underlying Resource, but more capable Services will define a configuration of many connected Resources. Compound Services may be defined by composing a number of simple Services under a single Service Catalog item.
 
-Take care not confuse Services as defined above with what Service Providers deliver within the Composable Infrastructure domain. Contrary to what the name implies, Service Providers define and provision Resources, not Services. If you must, you could say Service Providers manage Infrastructure Services. Likewise, other services should also be disambiguated, for example, DNS service, database service, room service, etc.
+Take care not confuse Services as defined above with what Service Providers deliver within the Data Center domain. Contrary to what the name implies, Service Providers define and provision Resources, not Services. If you must, you could say Service Providers manage Infrastructure Services. Likewise, other services should also be disambiguated, for example, DNS service, database service, room service, etc.
 
 ### Service Provider
 
@@ -82,13 +83,13 @@ Service Providers will typically be implemented to support a single specific Inf
 
 ### User
 
-In the absence of further context, a User is the human consumer of cloud computing resources and services experiencing DCM from the Developer Experience domain. Of course, other humans "use" DCM within the other domains, so consider using Developer or Application Owner instead.
+In the absence of further context, a User is the human consumer of cloud computing resources and services experiencing DCM from the Application domain. Of course, other humans "use" DCM within the other domains, so consider using Developer or Application Owner instead.
 
 To avoid confusion, avoid using User when referring to humans acting within the the other DCM domains. Consider more specific persona alternative terms such as Platform Engineer, Infrastructure Operations, Policy Owner, Risk and Compliance Manager, etc.
 
 ### Workload
 
-A Workload is a running instance of a Service that has been Fulfilled at the request of a User in the Developer Experience domain. A Workload is composed of the provisioned Resources required by the Service. The State and usage of the Workload's Resources are monitored by tools in the Governance & FinOps domain to enable observability and billing for Services.
+A Workload is a running instance of a Service that has been Fulfilled at the request of a User in the Application domain. A Workload is composed of the provisioned Resources required by the Service. The State and usage of the Workload's Resources are monitored by tools in the Governance & FinOps domain to enable observability and billing for Services.
 
 ### Zone
 
