@@ -10,8 +10,8 @@ The top-level domains are defined as follows:
 
 0. **Value** - The "zero domain" recognizes the business value achieved through the abstract capabilities enabled by the end-to-end architecture, for example, improved security and compliance, accelerated software deployments and cost saving thanks to reduced operational toil.
 1. **Application** - This domain delivers the Unified interface that Developers and Application Owners use to request and manage Services from DCM. It includes the Service Catalog listing the available Services. Multi-tenancy is experienced at this level.
-2. **Control Plane** - This is the central nervous system of DCM. It maintains the Unified API and Data Model including the inventory of Fulfilled Services. It also enforces authentication and role-based access control.
-3. **Resource** - This domain contains the code and workflows for provisioning and managing the Resources required to Fulfill Service request. It provides the engines that execute requests from the Control Plane and translates those into API calls supported by specific Infrastructure Platforms hosted under the Data Center domain.
+2. **Control Plane** - This is the central nervous system of DCM. It maintains the Unified API and Data Model including the inventory of Fulfilled Services. It also implements the authentication and role-based access control required to enforce multi-tenancy.
+3. **Resource** - This domain contains the code and workflows for provisioning and managing the resources required to Fulfill Service request. It provides the engines that execute requests from the Control Plane and translates those into API calls supported by specific Infrastructure Platforms hosted under the Data Center domain.
 4. **Data Center** - This domain represents the physical and virtual composable infrastructure in the data center. This is where the basic compute, storage and networking resources are provisioned.
 5. **Governance & FinOps** - This domain is the set of overarching requirements that ensure DCM operations are secure, compliant, and cost-effective. It encompasses policy management, real-time metrics, and cost allocation.
 
@@ -37,21 +37,21 @@ When adding new terms to the vocabulary, take care to map the terms to the roles
 
 ### Application
 
-An Application is a defined collection of Services used to deploy a self-contained software solution designed to meet a specific business purpose. An Application is full-stack product typically including a front-end user interface, business logic, data storage, and potentially network interfaces to other Applications.
+An Application is a defined collection of Services configured to deploy a self-contained software solution designed to meet a specific business purpose. An Application is full-stack product typically including a front-end user interface, business logic, data storage, and potentially network interfaces to other Applications.
 
 ### Data Model
 
-The Data Model defines the scope of Unified data within the Control Plane. The Data Model includes static data as well as event data such as the history of Fulfilled Service requests and time series data such as Workload usage metrics. Data Model does not mean database, but rather is a broader term meaning the scope of any data supporting the DCM architecture. While static data may be stored using a traditional database service, data from Service requests is better sent to an event logging service and usage metrics would be more suitably captured and stored in a time series data platform.
+The Data Model defines the scope of Unified Data within the Control Plane. The Data Model includes static data as well as event data such as the history of Fulfilled Service requests and time series data such as Workload usage metrics. Data Model does not mean database, but rather is a broader term meaning the scope of any data supporting the DCM architecture. While Static Data may be stored using a traditional database service, Event Data from Service requests could be better sent to a logging service and Usage Metrics Data might be more suitably captured and stored using a time series data platform.
 
-The Data Model also includes code, for example, the YAML data that defines the Resources and other parameters of Service Catalog item. Any data that is maintained as code would be managed and stored using Git repositories.
+Code may also be considered in the scope of the Data Model such as the Infrastructure-as-Code used to define Compound Services and should be managed using GitOps practices.
 
-Dynamic data also falls under the scope of the Data Model. For example, the state of a provisioned Resource is data, but it is not stored, per se. Dynamic data may be queried using the Unified API.
+Dynamic Data also falls under the scope of the Data Model, for example, the current state of a provisioned resource. Dynamic Data can be directly queried using the Unified API and it may also be cached.
 
 ### Infrastructure Platform
 
-Infrastructure Platforms refer to the Data Center infrastructure and platforms that provide Resources within the Data Center domain. An Infrastructure Platform may be physical hardware or a software platform, for example, bare metal servers, network gear, storage arrays, virtualization platforms, Kubernetes clusters, etc. Each Infrastructure Platform defines the physical and/or virtual Resources it supports, such as compute, storage, network, VM instances, Kubernetes cluster objects, etc.
+Infrastructure Platforms refer to the Data Center infrastructure and platforms that provide resources within the Data Center domain. An Infrastructure Platform may be physical hardware or a software platform, for example, bare metal servers, network gear, storage arrays, virtualization platforms, Kubernetes clusters, etc. Each Infrastructure Platform defines the physical and/or virtual resources it supports, such as compute, storage, network, VM instances, Kubernetes cluster objects, etc.
 
-An Infrastructure Platform provides an API used by a Service Provider to provision, decommission, make state changes to and enable discovery of the Resources it supports. Infrastructure Platforms must also expose event logging and metrics collection to the Governance & FinOps domain required to support monitoring, observability and billing.
+An Infrastructure Platform provides an API used by a Service Provider to provision, decommission, make state changes to and enable discovery of the resources it supports. Infrastructure Platforms must also expose event logging and metrics collection to the Governance & FinOps domain required to support monitoring, observability and billing.
 
 ### Multi-tenant
 
@@ -67,33 +67,35 @@ Workload Placement policies are managed within the Governance & FinOps domain an
 
 ### Region
 
-A Region is a large, geographically distinct area that hosts Resources. It can be a single Data Center or a group of Data Centers in close proximity. Regions should be designed as physically and logically independent from other Regions. This design is crucial for disaster recovery and business continuity, so a failure in one region doesn't affect another.
+A Region is a large, geographically distinct area that hosts resources. It can be a single Data Center or a group of Data Centers in close proximity. Regions should be designed as physically and logically independent from other Regions. This design is crucial for disaster recovery and business continuity, so a failure in one region doesn't affect another.
 
 ### Service
 
-In the absence of further context, a Service is the specific capability defined by a Service Catalog item within the Application domain. Services provide the underlying Resources that Applications rely on. They are often designed to be reusable for multiple Applications. A Service could simply define a single underlying Resource, but more capable Services will define a configuration of many connected Resources. Compound Services may be defined by composing a number of simple Services under a single Service Catalog item.
+A Service is the specific capability supported by a Service Catalog item within the Application domain. Services provide the underlying resources that Applications rely on.
 
-Take care not confuse Services as defined above with what Service Providers deliver within the Data Center domain. Contrary to what the name implies, Service Providers define and provision Resources, not Services. If you must, you could say Service Providers manage Infrastructure Services. Likewise, other services should also be disambiguated, for example, DNS service, database service, room service, etc.
+Service Catalog items supporting Atomic Services are defined by Service Providers and tightly coupled to a provided resource. Compound Services can be defined to provides a configuration of any combination of Atomic Services making it possible for a single Service Catalog item to provide arbitrarily complex Application environments.
 
 ### Service Provider
 
-Service Providers support provisioning and management of Resources required to Fulfill Service requests from the Control Plane in a way that is agnostic to the implementations of different Infrastructure Platforms. Service Providers implement the Naturalization required to translate Unified API requests from the Control Plane into an Infrastructure Platform’s native API and the Denaturalization required to translate native API responses into responses that comply with the Unified API.
+Service Providers support provisioning and management of resources required to Fulfill Service requests from the Control Plane in a way that is agnostic to the implementations of different Infrastructure Platforms. Service Providers implement the Naturalization required to translate Unified API requests from the Control Plane into an Infrastructure Platform's native API and the Denaturalization required to translate native API responses into responses that comply with the Unified API.
 
 Service Providers will typically be implemented to support a single specific Infrastructure Platform. However, a Service Provider could also be implemented to support a class of Infrastructure Platforms, for example, one Service Provider supporting a number of different virtualization platforms.
 
+To support Fulfillment of Service requests requiring any resources they provide, Service Providers define the Service Catalog items for those resources to be exposed by the Control Plane.
+
 ### User
 
-In the absence of further context, a User is the human consumer of cloud computing resources and services experiencing DCM from the Application domain. Of course, other humans "use" DCM within the other domains, so consider using Developer or Application Owner instead.
+In the absence of further context, the User is the human consumer of cloud computing Services experiencing DCM within the Application domain using the APIs (or Web UI) of the Control Plane. Of course, other humans "use" DCM within the other domains, so consider more specific terms like Developer or Application Owner instead.
 
-To avoid confusion, avoid using User when referring to humans acting within the the other DCM domains. Consider more specific persona alternative terms such as Platform Engineer, Infrastructure Operations, Policy Owner, Risk and Compliance Manager, etc.
+To avoid confusion, refrain from saying User when referring to humans acting within the the other DCM domains. Consider more specific persona alternative terms such as Platform Engineer, Infrastructure Operations, Policy Owner, Risk and Compliance Manager, etc.
 
 ### Workload
 
-A Workload is a running instance of a Service that has been Fulfilled at the request of a User in the Application domain. A Workload is composed of the provisioned Resources required by the Service. The State and usage of the Workload's Resources are monitored by tools in the Governance & FinOps domain to enable observability and billing for Services.
+A Workload is a running instance of a Service that has been Fulfilled at the request of a User in the Application domain. A Workload is composed of the provisioned resources required by the Service. The State and usage of the Workload's resources are monitored by tools in the Governance & FinOps domain to enable observability and billing for Services.
 
 ### Zone
 
-Also known as an Availability Zone, a Zone is an isolated group of Resources within a Region. Each Region consists of one or more Zones. A Zone is a separate physical facility with its own power, cooling, and networking, ensuring that a problem in one Zone, like a power outage or a localized fire, doesn't impact other Zones in the same Region. By deploying Resources across multiple Zones within a single Region, high availability and fault tolerance can be achieved for Services and Applications. Zones are defined by Infrastructure Platforms and can be namespaces, clusters or anything that results in its Resources being isolated as spelled out above.
+Also known as an Availability Zone, a Zone is an isolated group of resources within a Region. Each Region consists of one or more Zones. A Zone is a separate physical facility with its own power, cooling, and networking, ensuring that a problem in one Zone, like a power outage or a localized fire, doesn't impact other Zones in the same Region. By deploying resources across multiple Zones within a single Region, high availability and fault tolerance can be achieved for Services and Applications. Zones are defined by Infrastructure Platforms and can be namespaces, clusters or anything that results in its resources being isolated as spelled out above.
 
 ## Anti-vocabulary
 
@@ -101,7 +103,7 @@ The goal of the anti-vocabulary is to encourage clarity and discipline in techni
 
 ### Data Center
 
-The term Data Center isn't relevant from a DCM architecture perspective. It is simply a building that provides the roof over an arbitrary collection of physical infrastructure. Consider using the more architecturally meaningful terms Region and Zone.
+The term Data Center is somewhat irrelevant from a DCM architecture perspective. It is simply a building that provides the roof over an arbitrary collection of physical infrastructure. Consider using the more architecturally meaningful terms Region and Zone.
 
 ### Realize
 
