@@ -1,0 +1,509 @@
+openapi: 3.0.4
+info:
+  title: DCM Interoperability API
+  description: |-
+    This API is used to define and manage the resources provided by the Resources Providers.
+  version: 0.0.1
+paths:
+  /resource:
+    get:
+      tags:
+        - resource
+      summary: List all resources.
+      description: Returns a list of resources.
+      operationId: ListResource
+      parameters:
+        - in: query
+          name: max_page_size
+          schema:
+            type: integer
+        - in: query
+          name: page_token
+          schema:
+            type: string
+        - in: query
+          name: skip
+          schema:
+            type: integer
+        - in: query
+          name: filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/yaml:
+              schema:
+                properties:
+                  next_page_token:
+                    type: string
+                  results:
+                    items:
+                      $ref: '#/components/schemas/Resource'
+                    type: array
+                type: object
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:resources
+    post:
+      tags:
+        - resource
+      summary: Add a new resource.
+      description: Add a new resource to the catalog.
+      operationId: CreateResource
+      requestBody:
+        description: Create a new resource in the catalog
+        content:
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Resource'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+  /resource/{resourceKind}:
+    get:
+      tags:
+        - resource
+      summary: Find resource by Kind.
+      description: Returns a single resource.
+      operationId: GetResource
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to return
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid Kind supplied
+        '404':
+          description: Resource not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:resources
+    put:
+      tags:
+        - resource
+      summary: Updates a resource in the store with form data.
+      description: Updates a resource resource based on the form data.
+      operationId: ApplyResourceUpdate
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              'x-aep-resource':
+                singular: Resource
+                plural: Resources
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource that needs to be updated
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+    delete:
+      tags:
+        - resource
+      summary: Deletes a resource.
+      description: Delete a resource.
+      operationId: DeleteResource
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of the resource to be deleted
+          required: true
+          schema:
+            type: string
+            format: uri
+      responses:
+        '200':
+          description: Resource deleted
+        '400':
+          description: Invalid resource value
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+  /resource/{resourceKind}/provider:
+    get:
+      tags:
+        - resource
+      summary: List all providers for a specific resource type.
+      description: Returns a list of providers.
+      operationId: ListProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - in: query
+          name: max_page_size
+          schema:
+            type: integer
+        - in: query
+          name: page_token
+          schema:
+            type: string
+        - in: query
+          name: skip
+          schema:
+            type: integer
+        - in: query
+          name: filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/yaml:
+              schema:
+                properties:
+                  next_page_token:
+                    type: string
+                  results:
+                    items:
+                      $ref: '#/components/schemas/Provider'
+                    type: array
+                type: object
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:providers
+    post:
+      tags:
+        - resource
+      summary: Add a new provider to a resource kind.
+      description: Add a new provider to a resource kind.
+      operationId: CreateProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+      requestBody:
+        description: Create a new resource in the catalog
+        content:
+          application/yaml:
+            schema:
+              $ref: '#/components/schemas/Provider'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/yaml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        '422':
+          description: Validation exception
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:providers
+  /resource/{resourceKind}/provider/{providerId}:
+    get:
+      tags:
+        - resource
+      summary: Find partner by ID from by Kind.
+      description: Returns a single resource.
+      operationId: GetResourceProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to consider
+          required: true
+          schema:
+            type: string
+            format: uurl
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Provider'
+        '400':
+          description: Invalid Kind supplied
+        '404':
+          description: Resource not found
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - api_key: []
+        - resourcestore_auth:
+            - read:resources
+    put:
+      tags:
+        - resource
+      summary: Updates a provider for a resource in the store with form data.
+      description: Updates a provider for a resource in the store with form data.
+      operationId: ApplyResourceProviderUpdate
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              'x-aep-resource':
+                singular: Resource
+                plural: Resources
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of resource to consider
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to update
+          required: true
+          schema:
+            type: string
+            format: uurl
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+    delete:
+      tags:
+        - resource
+      summary: Deletes a resource provider.
+      description: Delete a resource provider.
+      operationId: DeleteResourceProvider
+      parameters:
+        - name: resourceKind
+          in: path
+          description: Kind of the resource to be deleted
+          required: true
+          schema:
+            type: string
+            format: uri
+        - name: providerId
+          in: path
+          description: ID of the provider to be deleted
+          required: true
+          schema:
+            type: string
+            format: uurl
+      responses:
+        '200':
+          description: Resource deleted
+        '400':
+          description: Invalid resource value
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+      security:
+        - resourcestore_auth:
+            - write:resources
+            - read:resources
+components:
+  schemas:
+    Resource:
+      required:
+        - apiVersion
+        - kind
+        - spec
+      type: object
+      x-aep-resource: true
+      properties:
+        apiVersion:
+          type: string
+          description: version of the resource definition
+        kind:
+          type: string
+          format: uri
+          description: resource kind name (PascalCase))
+        spec:
+          type: object
+          description: openAPI object of the resource specs object
+        status:
+          type: object
+          description: openAPI object of the resource status object
+    Provider:
+      required:
+        - name
+        - id
+      type: object
+      x-aep-resource: true
+      properties:
+        name:
+          type: string
+          description: name of the provider
+        id:
+          type: string
+          format: uuid
+          description: provider's ID
+    Error:
+      type: object
+      properties:
+        type:
+          type: string
+          description: The error code identifying the type of error
+        title:
+          type: string
+          description: A human-readable description of the generic problem
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+        instance:
+          type: string
+          format: uuid
+          description: A unique identifier for the specific occurrence of the problem
+      required:
+        - type
+        - title
+        - instance
+  requestBodies:
+    Resource:
+      description: Resource object that needs to be added to the store
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/Resource'
+  securitySchemes:
+    resourcestore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://resourcestore3.swagger.io/oauth/authorize
+          scopes:
+            "write:resources": modify resources in your account
+            "read:resources": read your resources
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
