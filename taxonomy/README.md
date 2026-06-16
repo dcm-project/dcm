@@ -43,7 +43,7 @@ An Application is a defined collection of Services configured to deploy a self-c
 
 The Data Model defines the scope of Unified Data within the Control Plane. The Data Model includes static data as well as event data such as the history of Fulfilled Service requests and time series data such as Workload usage metrics. Data Model does not mean database, but rather is a broader term meaning the scope of any data supporting the DCM architecture. While Static Data may be stored using a traditional database service, Event Data from Service requests could be better sent to a logging service and Usage Metrics Data might be more suitably captured and stored using a time series data platform.
 
-Code may also be considered in the scope of the Data Model such as the Infrastructure-as-Code used to define Compound Services and should be managed using GitOps practices.
+Code may also be considered in the scope of the Data Model such as the Infrastructure-as-Code used to define Composite Services and should be managed using GitOps practices.
 
 Dynamic Data also falls under the scope of the Data Model, for example, the current state of a provisioned resource. Dynamic Data can be directly queried using the Unified API and it may also be cached.
 
@@ -73,7 +73,7 @@ A Region is a large, geographically distinct area that hosts resources. It can b
 
 A Service is the specific capability supported by a Service Catalog item within the Application domain. Services provide the underlying resources that Applications rely on.
 
-Service Catalog items supporting Atomic Services are defined by Service Providers and tightly coupled to a provided resource. Compound Services can be defined to provides a configuration of any combination of Atomic Services making it possible for a single Service Catalog item to provide arbitrarily complex Application environments.
+Service Catalog items supporting Atomic Services are defined by Service Providers and tightly coupled to a provided resource. Composite Services can be defined to provides a configuration of any combination of Atomic Services making it possible for a single Service Catalog item to provide arbitrarily complex Application environments.
 
 ### Service Provider
 
