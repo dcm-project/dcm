@@ -1,0 +1,2761 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/events/v1",
+  "title": "DCM Event Schemas",
+  "description": "JSON Schema definitions for all DCM event types (101 event payloads across 22 domains). The base envelope wraps every event. Event-specific payload fields are in the payload object. See data-model/33-event-catalog.md.",
+  "$defs": {
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "info"
+      ]
+    },
+    "event_subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity_type": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/resource_type_fqn"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity_handle": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tenant_uuid": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "actor_uuid": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "event_links": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "self": {
+          "type": "string",
+          "format": "uri"
+        },
+        "audit_record": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "score_driver": {
+      "type": "object",
+      "required": [
+        "signal",
+        "contribution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "signal": {
+          "type": "string"
+        },
+        "contribution": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "base_event_envelope": {
+      "type": "object",
+      "description": "Common envelope present on every DCM event. Consumers must implement idempotency using event_uuid (at-least-once delivery).",
+      "required": [
+        "event_uuid",
+        "event_type",
+        "event_schema_version",
+        "timestamp",
+        "dcm_version",
+        "dcm_instance_uuid",
+        "subject",
+        "urgency",
+        "payload"
+      ],
+      "properties": {
+        "event_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid",
+          "description": "Idempotency key \u2014 stable across retries"
+        },
+        "event_type": {
+          "type": "string",
+          "description": "Fully qualified event type (e.g. request.submitted)"
+        },
+        "event_schema_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Increments on breaking payload schema changes"
+        },
+        "timestamp": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime",
+          "description": "From the DCM Commit Log \u2014 authoritative time source"
+        },
+        "dcm_version": {
+          "$ref": "dcm-common.json#/$defs/semver"
+        },
+        "dcm_instance_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "subject": {
+          "$ref": "#/$defs/event_subject"
+        },
+        "urgency": {
+          "$ref": "#/$defs/urgency"
+        },
+        "payload": {
+          "type": "object"
+        },
+        "links": {
+          "$ref": "#/$defs/event_links"
+        }
+      }
+    },
+    "empty_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "request_submitted_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "catalog_item_uuid",
+        "resource_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "catalog_item_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "catalog_item_handle": {
+          "type": "string"
+        },
+        "resource_type": {
+          "$ref": "dcm-common.json#/$defs/resource_type_fqn"
+        },
+        "submitted_fields": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "request_intent_captured_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "entity_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "request_layers_assembled_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "layers_applied": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "request_policies_evaluated_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "risk_score",
+        "routing_tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "risk_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "routing_tier": {
+          "type": "string"
+        },
+        "score_drivers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/score_driver"
+          }
+        }
+      }
+    },
+    "request_requires_approval_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "approval_uuid",
+        "required_tier",
+        "required_tier_gravity",
+        "risk_score"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "required_tier": {
+          "type": "string"
+        },
+        "required_tier_gravity": {
+          "type": "string",
+          "enum": [
+            "none",
+            "routine",
+            "elevated",
+            "critical"
+          ]
+        },
+        "risk_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "window_expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "dcmgroup_uuid": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "request_approved_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "approval_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "approved_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "request_placement_complete_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "placement_score": {
+          "type": "number"
+        }
+      }
+    },
+    "request_dispatched_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "request_realized_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "provider_uuid",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "realized",
+            "failed",
+            "degraded"
+          ]
+        },
+        "failure_reason": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "realized_fields": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "request_failed_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "failure_stage",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failure_stage": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "provider_uuid": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "recoverable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "request_cancelled_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "cancelled_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "cancellation_stage": {
+          "type": "string"
+        }
+      }
+    },
+    "request_gatekeeper_rejected_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "policy_handle",
+        "enforcement_class",
+        "rejection_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "policy_handle": {
+          "type": "string"
+        },
+        "policy_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "enforcement_class": {
+          "type": "string",
+          "enum": [
+            "compliance",
+            "operational"
+          ]
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "risk_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "request_progress_updated_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "stage",
+        "progress_pct"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "progress_pct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "request_compound_assembled_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "constituent_request_uuids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "constituent_request_uuids": {
+          "type": "array",
+          "items": {
+            "$ref": "dcm-common.json#/$defs/uuid"
+          }
+        },
+        "composite_service_ref": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "request_dependencies_resolved_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "dependency_uuids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "dependency_uuids": {
+          "type": "array",
+          "items": {
+            "$ref": "dcm-common.json#/$defs/uuid"
+          }
+        }
+      }
+    },
+    "entity_realized_payload": {
+      "type": "object",
+      "required": [
+        "request_uuid",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "realized_fields": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "composite_entity": {
+          "type": "boolean"
+        }
+      }
+    },
+    "entity_state_changed_payload": {
+      "type": "object",
+      "required": [
+        "previous_state",
+        "new_state",
+        "triggered_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "previous_state": {
+          "type": "string"
+        },
+        "new_state": {
+          "type": "string"
+        },
+        "triggered_by": {
+          "type": "string",
+          "enum": [
+            "ttl",
+            "decommission",
+            "consumer",
+            "policy",
+            "provider",
+            "system"
+          ]
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "entity_modified_payload": {
+      "type": "object",
+      "required": [
+        "modified_fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "modified_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modification_type": {
+          "type": "string",
+          "enum": [
+            "consumer_update",
+            "provider_update",
+            "policy_transformation"
+          ]
+        }
+      }
+    },
+    "entity_ttl_warning_payload": {
+      "type": "object",
+      "required": [
+        "ttl_expires_at",
+        "expiry_action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ttl_expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "expiry_action": {
+          "type": "string",
+          "enum": [
+            "decommission",
+            "suspend",
+            "notify",
+            "escalate"
+          ]
+        },
+        "warning_window": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        }
+      }
+    },
+    "entity_ttl_expired_payload": {
+      "type": "object",
+      "required": [
+        "ttl_expired_at",
+        "expiry_action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "ttl_expired_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "expiry_action": {
+          "type": "string",
+          "enum": [
+            "decommission",
+            "suspend",
+            "notify",
+            "escalate"
+          ]
+        }
+      }
+    },
+    "entity_decommissioning_payload": {
+      "type": "object",
+      "required": [
+        "initiated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "initiated_by": {
+          "oneOf": [
+            {
+              "$ref": "dcm-common.json#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "initiated_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "reason": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stakes_resolved": {
+          "type": "boolean"
+        },
+        "credential_revocation_status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "pending"
+          ]
+        }
+      }
+    },
+    "entity_decommissioned_payload": {
+      "type": "object",
+      "required": [
+        "decommissioned_at",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "decommissioned_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "entity_decommission_deferred_payload": {
+      "type": "object",
+      "required": [
+        "reason",
+        "blocking_relationships"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "blocking_relationships": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "retry_after": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "entity_suspended_payload": {
+      "type": "object",
+      "required": [
+        "suspended_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "suspended_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "suspended_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "entity_resumed_payload": {
+      "type": "object",
+      "required": [
+        "resumed_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resumed_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "resumed_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "entity_expired_payload": {
+      "type": "object",
+      "required": [
+        "expired_at",
+        "expiry_action_taken"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "expired_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "expiry_action_taken": {
+          "type": "string",
+          "enum": [
+            "decommission",
+            "suspend",
+            "notify",
+            "escalate"
+          ]
+        }
+      }
+    },
+    "entity_ownership_transferred_payload": {
+      "type": "object",
+      "required": [
+        "from_tenant_uuid",
+        "to_tenant_uuid",
+        "transferred_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "from_tenant_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "to_tenant_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "transferred_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "authorized_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "entity_pending_review_payload": {
+      "type": "object",
+      "required": [
+        "trigger",
+        "detected_at",
+        "resolution_options"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "rehydration_sovereignty_conflict",
+            "cross_tenant_authorization_revoked",
+            "ownership_transfer_conflict"
+          ]
+        },
+        "detected_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "conflict_detail": {
+          "type": "string"
+        },
+        "resolution_options": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "drift_detected_payload": {
+      "type": "object",
+      "required": [
+        "drift_uuid",
+        "severity",
+        "unsanctioned"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "drift_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "minor",
+            "significant",
+            "critical"
+          ]
+        },
+        "unsanctioned": {
+          "type": "boolean"
+        },
+        "field_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "critical_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "drift_severity_escalated_payload": {
+      "type": "object",
+      "required": [
+        "drift_uuid",
+        "previous_severity",
+        "new_severity"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "drift_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_severity": {
+          "type": "string",
+          "enum": [
+            "minor",
+            "significant",
+            "critical"
+          ]
+        },
+        "new_severity": {
+          "type": "string",
+          "enum": [
+            "minor",
+            "significant",
+            "critical"
+          ]
+        },
+        "age": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        }
+      }
+    },
+    "drift_escalated_payload": {
+      "type": "object",
+      "required": [
+        "drift_uuid",
+        "escalated_to"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "drift_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "escalated_to": {
+          "type": "string"
+        },
+        "age": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        }
+      }
+    },
+    "drift_resolved_payload": {
+      "type": "object",
+      "required": [
+        "drift_uuid",
+        "resolution"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "drift_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "resolution": {
+          "type": "string",
+          "enum": [
+            "remediated",
+            "accepted",
+            "provider_corrected"
+          ]
+        },
+        "resolved_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "provider_registered_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "provider_type",
+        "display_name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_type": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "approval_method": {
+          "type": "string"
+        }
+      }
+    },
+    "provider_health_changed_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "previous_status",
+        "new_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "unhealthy"
+          ]
+        },
+        "new_status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "unhealthy"
+          ]
+        },
+        "consecutive_failures": {
+          "type": "integer"
+        }
+      }
+    },
+    "provider_deregistered_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "affected_entity_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "provider_update_submitted_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "entity_uuid",
+        "update_uuid",
+        "proposed_fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "update_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "proposed_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "provider_update_decision_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "entity_uuid",
+        "update_uuid",
+        "decision"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "update_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVED",
+            "AUTO_APPROVED",
+            "REJECTED",
+            "REQUIRES_APPROVAL"
+          ]
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "rehydration_started_payload": {
+      "type": "object",
+      "required": [
+        "source_provider_uuid",
+        "target_provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "target_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "authorized_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "rehydration_completed_payload": {
+      "type": "object",
+      "required": [
+        "new_provider_uuid",
+        "rehydrated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "new_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "rehydrated_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "rehydration_blocked_payload": {
+      "type": "object",
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "sovereignty_gap": {
+          "type": "boolean"
+        }
+      }
+    },
+    "policy_lifecycle_payload": {
+      "type": "object",
+      "required": [
+        "policy_uuid",
+        "policy_handle",
+        "policy_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "policy_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "policy_handle": {
+          "type": "string"
+        },
+        "policy_type": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        }
+      }
+    },
+    "policy_shadow_result_payload": {
+      "type": "object",
+      "required": [
+        "policy_uuid",
+        "request_uuid",
+        "shadow_decision"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "policy_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "shadow_decision": {
+          "type": "string",
+          "enum": [
+            "would_allow",
+            "would_deny"
+          ]
+        },
+        "enforcement_class": {
+          "type": "string"
+        }
+      }
+    },
+    "credential_lifecycle_payload": {
+      "type": "object",
+      "required": [
+        "credential_uuid",
+        "credential_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "credential_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "credential_type": {
+          "type": "string"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "approval_decision_recorded_payload": {
+      "type": "object",
+      "required": [
+        "approval_uuid",
+        "decision",
+        "required_tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "approve",
+            "reject",
+            "abstain"
+          ]
+        },
+        "required_tier": {
+          "type": "string"
+        },
+        "decisions_so_far": {
+          "type": "integer"
+        },
+        "quorum_reached": {
+          "type": "boolean"
+        }
+      }
+    },
+    "approval_quorum_reached_payload": {
+      "type": "object",
+      "required": [
+        "approval_uuid",
+        "outcome"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "rejected"
+          ]
+        }
+      }
+    },
+    "approval_window_expiring_payload": {
+      "type": "object",
+      "required": [
+        "approval_uuid",
+        "expires_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "decisions_so_far": {
+          "type": "integer"
+        },
+        "quorum_needed": {
+          "type": "integer"
+        }
+      }
+    },
+    "approval_expired_payload": {
+      "type": "object",
+      "required": [
+        "approval_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "approval_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expired_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "tier_registry_proposed_payload": {
+      "type": "object",
+      "required": [
+        "change_uuid",
+        "proposed_by",
+        "blocking_items"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "change_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "proposed_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "blocking_items": {
+          "type": "integer"
+        }
+      }
+    },
+    "tier_registry_impact_assessed_payload": {
+      "type": "object",
+      "required": [
+        "change_uuid",
+        "impact_report_uuid",
+        "blocking_items"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "change_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "impact_report_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "blocking_items": {
+          "type": "integer"
+        },
+        "security_degradations": {
+          "type": "integer"
+        },
+        "broken_references": {
+          "type": "integer"
+        }
+      }
+    },
+    "tier_registry_degradation_detected_payload": {
+      "type": "object",
+      "required": [
+        "change_uuid",
+        "degradation_item_uuid",
+        "tier_name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "change_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "degradation_item_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "tier_name": {
+          "type": "string"
+        },
+        "old_gravity": {
+          "type": "string"
+        },
+        "new_gravity": {
+          "type": "string"
+        }
+      }
+    },
+    "tier_registry_activated_payload": {
+      "type": "object",
+      "required": [
+        "change_uuid",
+        "activated_by",
+        "activated_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "change_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "activated_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "activated_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "tier_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "audit_chain_integrity_payload": {
+      "type": "object",
+      "required": [
+        "store_uuid",
+        "detected_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "store_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "detected_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "affected_records": {
+          "type": "integer"
+        },
+        "break_location": {
+          "type": "string"
+        }
+      }
+    },
+    "audit_forward_failed_payload": {
+      "type": "object",
+      "required": [
+        "target_store_uuid",
+        "failure_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "target_store_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failure_reason": {
+          "type": "string"
+        },
+        "retry_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "dependency_state_changed_payload": {
+      "type": "object",
+      "required": [
+        "dependency_entity_uuid",
+        "previous_state",
+        "new_state"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dependency_entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_state": {
+          "type": "string"
+        },
+        "new_state": {
+          "type": "string"
+        },
+        "impact": {
+          "type": "string",
+          "enum": [
+            "none",
+            "degraded",
+            "failed"
+          ]
+        }
+      }
+    },
+    "stakeholder_resource_decommissioning_payload": {
+      "type": "object",
+      "required": [
+        "resource_uuid",
+        "decommission_at",
+        "stakeholder_action_required"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "resource_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "decommission_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "stakeholder_action_required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "allocation_released_payload": {
+      "type": "object",
+      "required": [
+        "pool_uuid",
+        "allocation_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pool_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "allocation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "released_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "allocation_pool_capacity_low_payload": {
+      "type": "object",
+      "required": [
+        "pool_uuid",
+        "available_pct"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pool_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "available_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "available_units": {
+          "type": "integer"
+        }
+      }
+    },
+    "ingestion_transitional_created_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "discovered_resource_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "discovered_resource_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "ingestion_enriched_payload": {
+      "type": "object",
+      "required": [
+        "entity_uuid",
+        "enriched_fields"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "enriched_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ingestion_promotion_approved_payload": {
+      "type": "object",
+      "required": [
+        "entity_uuid",
+        "target_tenant_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "target_tenant_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "approved_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "governance_catalog_item_deprecated_payload": {
+      "type": "object",
+      "required": [
+        "catalog_item_uuid",
+        "sunset_date"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "catalog_item_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "sunset_date": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "successor_type": {
+          "type": "string"
+        },
+        "migration_guide_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "governance_profile_changed_payload": {
+      "type": "object",
+      "required": [
+        "previous_posture",
+        "new_posture"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "previous_posture": {
+          "type": "string"
+        },
+        "new_posture": {
+          "type": "string"
+        },
+        "changed_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "governance_policy_trust_elevated_payload": {
+      "type": "object",
+      "required": [
+        "policy_evaluator_ref",
+        "previous_trust",
+        "new_trust"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "policy_evaluator_ref": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_trust": {
+          "type": "string"
+        },
+        "new_trust": {
+          "type": "string"
+        }
+      }
+    },
+    "security_unsanctioned_provider_write_payload": {
+      "type": "object",
+      "required": [
+        "provider_uuid",
+        "entity_uuid",
+        "field_paths"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "field_paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sovereignty_violation_payload": {
+      "type": "object",
+      "required": [
+        "violation_type",
+        "entity_uuid",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "violation_type": {
+          "type": "string"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "detail": {
+          "type": "string"
+        }
+      }
+    },
+    "sovereignty_migration_required_payload": {
+      "type": "object",
+      "required": [
+        "entity_uuid",
+        "current_provider_uuid",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "current_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "deadline": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "federation_tunnel_degraded_payload": {
+      "type": "object",
+      "required": [
+        "peer_dcm_uuid",
+        "tunnel_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "peer_dcm_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "tunnel_status": {
+          "type": "string",
+          "enum": [
+            "degraded",
+            "down"
+          ]
+        },
+        "affected_routes": {
+          "type": "integer"
+        }
+      }
+    },
+    "auth_provider_failover_payload": {
+      "type": "object",
+      "required": [
+        "failed_provider_uuid",
+        "failover_provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "failed_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failover_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failover_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "rehydration_paused_payload": {
+      "type": "object",
+      "description": "Rehydration paused \u2014 awaiting approval or resource availability.",
+      "required": [
+        "entity_uuid",
+        "rehydration_uuid",
+        "pause_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "rehydration_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "pause_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "rehydration_interrupted_payload": {
+      "type": "object",
+      "description": "Rehydration interrupted \u2014 failure or conflict during rehydration.",
+      "required": [
+        "entity_uuid",
+        "rehydration_uuid",
+        "interrupt_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "rehydration_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "interrupt_reason": {
+          "type": "string"
+        },
+        "recovery_action": {
+          "type": "string"
+        }
+      }
+    },
+    "audit_chain_break_payload": {
+      "type": "object",
+      "description": "Audit hash chain break detected \u2014 potential tamper or data corruption. Urgency: critical, non-suppressable (EVT-007).",
+      "required": [
+        "entity_uuid",
+        "expected_hash",
+        "actual_hash",
+        "chain_sequence"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expected_hash": {
+          "type": "string"
+        },
+        "actual_hash": {
+          "type": "string"
+        },
+        "chain_sequence": {
+          "type": "integer"
+        }
+      }
+    },
+    "itsm_record_created_payload": {
+      "type": "object",
+      "description": "ITSM record created by ITSM Action Policy. See data-model/42-itsm-integration.md.",
+      "required": [
+        "itsm_provider_uuid",
+        "record_type",
+        "record_id",
+        "entity_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "itsm_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "record_type": {
+          "type": "string",
+          "enum": [
+            "change_request",
+            "incident",
+            "cmdb_ci",
+            "service_request"
+          ]
+        },
+        "record_id": {
+          "type": "string"
+        },
+        "record_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "itsm_record_updated_payload": {
+      "type": "object",
+      "description": "Existing ITSM record updated.",
+      "required": [
+        "itsm_provider_uuid",
+        "record_type",
+        "record_id"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "itsm_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "record_type": {
+          "type": "string"
+        },
+        "record_id": {
+          "type": "string"
+        },
+        "updated_fields": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "itsm_record_failed_payload": {
+      "type": "object",
+      "description": "ITSM record creation or update failed.",
+      "required": [
+        "itsm_provider_uuid",
+        "action",
+        "error_message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "itsm_provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "action": {
+          "type": "string"
+        },
+        "error_message": {
+          "type": "string"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "accreditation_verified_payload": {
+      "type": "object",
+      "description": "Accreditation verified against external source. See data-model/47-accreditation-monitor.md.",
+      "required": [
+        "accreditation_uuid",
+        "verification_tier",
+        "external_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "verification_tier": {
+          "type": "string",
+          "enum": [
+            "external_registry",
+            "document_currency",
+            "contract_webhook",
+            "expiry_only"
+          ]
+        },
+        "external_status": {
+          "type": "string"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "accreditation_status_changed_payload": {
+      "type": "object",
+      "description": "Accreditation status changed \u2014 may require review (ACM-002).",
+      "required": [
+        "accreditation_uuid",
+        "previous_status",
+        "new_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_status": {
+          "type": "string"
+        },
+        "new_status": {
+          "type": "string"
+        },
+        "change_source": {
+          "type": "string",
+          "enum": [
+            "external_registry",
+            "document_check",
+            "contract_event",
+            "manual",
+            "expiry"
+          ]
+        }
+      }
+    },
+    "accreditation_registry_mismatch_payload": {
+      "type": "object",
+      "description": "External registry reports status that differs from DCM record.",
+      "required": [
+        "accreditation_uuid",
+        "dcm_status",
+        "registry_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "dcm_status": {
+          "type": "string"
+        },
+        "registry_status": {
+          "type": "string"
+        },
+        "registry_url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "accreditation_verification_stale_payload": {
+      "type": "object",
+      "description": "Accreditation verification has exceeded stale_after threshold without successful check.",
+      "required": [
+        "accreditation_uuid",
+        "last_verified_at",
+        "stale_after"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "last_verified_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "stale_after": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        },
+        "failure_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "accreditation_document_expired_payload": {
+      "type": "object",
+      "description": "Accreditation supporting document has exceeded max_age threshold.",
+      "required": [
+        "accreditation_uuid",
+        "document_date",
+        "max_age"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "document_date": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "max_age": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        }
+      }
+    },
+    "accreditation_contract_event_payload": {
+      "type": "object",
+      "description": "Contract management system reported a change (BAA signed, amended, or terminated).",
+      "required": [
+        "accreditation_uuid",
+        "contract_action"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "contract_action": {
+          "type": "string",
+          "enum": [
+            "signed",
+            "amended",
+            "terminated"
+          ]
+        },
+        "contract_system": {
+          "type": "string"
+        },
+        "contract_id": {
+          "type": "string"
+        }
+      }
+    },
+    "accreditation_expiry_approaching_payload": {
+      "type": "object",
+      "description": "Accreditation approaching declared expiry date (P90D warning per default).",
+      "required": [
+        "accreditation_uuid",
+        "expires_at",
+        "days_remaining"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "days_remaining": {
+          "type": "integer"
+        }
+      }
+    },
+    "request_scheduled_payload": {
+      "type": "object",
+      "description": "Request accepted with deferred dispatch. See data-model/37-scheduled-requests.md.",
+      "required": [
+        "request_uuid",
+        "entity_uuid",
+        "schedule"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "schedule": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "request_schedule_cancelled_payload": {
+      "type": "object",
+      "description": "Scheduled request cancelled before dispatch.",
+      "required": [
+        "request_uuid",
+        "entity_uuid",
+        "cancelled_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "cancelled_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "request_schedule_deadline_missed_payload": {
+      "type": "object",
+      "description": "Scheduled request passed not_after deadline without dispatch. Terminal FAILED (SCH-005).",
+      "required": [
+        "request_uuid",
+        "entity_uuid",
+        "not_after"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "not_after": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "request_pending_dependency_payload": {
+      "type": "object",
+      "description": "Request waiting for dependency in a request group. See data-model/38-request-dependency-graph.md.",
+      "required": [
+        "request_uuid",
+        "group_uuid",
+        "depends_on_request_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "group_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "depends_on_request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "wait_for": {
+          "type": "string",
+          "enum": [
+            "acknowledged",
+            "approved",
+            "dispatched",
+            "realized"
+          ],
+          "default": "realized"
+        }
+      }
+    },
+    "request_dependency_met_payload": {
+      "type": "object",
+      "description": "Dependency condition satisfied \u2014 dependent request proceeding.",
+      "required": [
+        "request_uuid",
+        "group_uuid",
+        "dependency_request_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "group_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "dependency_request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "injected_fields": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "request_group_completed_payload": {
+      "type": "object",
+      "description": "All requests in a dependency group have reached terminal state successfully.",
+      "required": [
+        "group_uuid",
+        "total_requests",
+        "completed_count"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "group_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "total_requests": {
+          "type": "integer"
+        },
+        "completed_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "request_group_failed_payload": {
+      "type": "object",
+      "description": "Request group failed \u2014 dependency failure or group timeout.",
+      "required": [
+        "group_uuid",
+        "failure_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "group_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failure_reason": {
+          "type": "string",
+          "enum": [
+            "dependency_failed",
+            "group_timeout"
+          ]
+        },
+        "failed_request_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "cancelled_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "dcm_event": {
+      "type": "object",
+      "description": "A DCM event. The base envelope is always present. The payload object schema is determined by event_type.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/base_event_envelope"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "subscription_created_payload": {
+      "type": "object",
+      "description": "New subscription created (PENDING state). See data-model/50-subscription-lifecycle.md.",
+      "required": [
+        "subscription_uuid",
+        "tenant_uuid",
+        "catalog_item_uuid",
+        "tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "tenant_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "catalog_item_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "tier": {
+          "type": "string"
+        },
+        "consumption_model": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_activated_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "provider_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "provider_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "managed_entity_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "subscription_suspended_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "suspended_by",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "suspended_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_resumed_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "resumed_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        }
+      }
+    },
+    "subscription_renewed_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "new_terms_version",
+        "new_expires_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "new_terms_version": {
+          "type": "string"
+        },
+        "new_expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "previous_terms_version": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_renewal_failed_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "failure_reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "failure_reason": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_tier_changed_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "previous_tier",
+        "new_tier"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "previous_tier": {
+          "type": "string"
+        },
+        "new_tier": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_update_applied_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "update_uuid",
+        "entity_uuid",
+        "channel"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "update_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entity_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "channel": {
+          "type": "string"
+        },
+        "auto_applied": {
+          "type": "boolean"
+        }
+      }
+    },
+    "subscription_update_rejected_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "update_uuid",
+        "rejected_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "update_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "rejected_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "subscription_expiry_approaching_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "expires_at",
+        "days_remaining"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "days_remaining": {
+          "type": "integer"
+        },
+        "auto_renew": {
+          "type": "boolean"
+        }
+      }
+    },
+    "subscription_expired_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "grace_period_ends"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "grace_period_ends": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        },
+        "managed_entity_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "subscription_cancelled_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "cancelled_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "cancelled_by": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "grace_period_ends": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "subscription_decommissioned_payload": {
+      "type": "object",
+      "required": [
+        "subscription_uuid",
+        "entities_decommissioned"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subscription_uuid": {
+          "$ref": "dcm-common.json#/$defs/uuid"
+        },
+        "entities_decommissioned": {
+          "type": "integer"
+        }
+      }
+    },
+    "override_first_approval_payload": {
+      "type": "object",
+      "properties": {
+        "override_request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "approver_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "approver_role": {
+          "type": "string"
+        },
+        "awaiting_second": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "override_request_uuid",
+        "approver_uuid"
+      ]
+    },
+    "override_approved_payload": {
+      "type": "object",
+      "properties": {
+        "override_request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "approvers": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "compensating_controls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "override_request_uuid",
+        "request_uuid"
+      ]
+    },
+    "override_rejected_payload": {
+      "type": "object",
+      "properties": {
+        "override_request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "rejector_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "override_request_uuid",
+        "rejector_uuid"
+      ]
+    },
+    "override_expired_payload": {
+      "type": "object",
+      "properties": {
+        "override_request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timeout_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "override_request_uuid"
+      ]
+    },
+    "request_policy_blocked_payload": {
+      "type": "object",
+      "properties": {
+        "request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "blocking_details": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "resolution_options": {
+          "type": "object"
+        },
+        "timeout_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "request_uuid",
+        "blocking_details",
+        "resolution_options"
+      ]
+    },
+    "request_resolution_chosen_payload": {
+      "type": "object",
+      "properties": {
+        "request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "modify",
+            "request_override",
+            "cancel",
+            "escalate"
+          ]
+        },
+        "modifications": {
+          "type": "object"
+        },
+        "justification": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_uuid",
+        "action"
+      ]
+    },
+    "request_modified_resubmit_payload": {
+      "type": "object",
+      "properties": {
+        "request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "modified_fields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "previous_blocking_policy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_uuid",
+        "modified_fields"
+      ]
+    },
+    "override_requested_payload": {
+      "type": "object",
+      "properties": {
+        "override_request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "request_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "blocking_policy_handle": {
+          "type": "string"
+        },
+        "consumer_justification": {
+          "type": "string"
+        },
+        "required_approval_type": {
+          "type": "string",
+          "enum": [
+            "single",
+            "dual"
+          ]
+        },
+        "eligible_approver_roles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "override_request_uuid",
+        "request_uuid",
+        "blocking_policy_handle"
+      ]
+    }
+  },
+  "$ref": "#/$defs/dcm_event"
+}
