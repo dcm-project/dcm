@@ -1,0 +1,437 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/common/v1",
+  "title": "DCM Common Types",
+  "description": "Shared primitive and composite types reused across all DCM schemas.",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "RFC 4122 UUID v4"
+    },
+    "handle": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-_/]*[a-z0-9]$",
+      "minLength": 3,
+      "maxLength": 256,
+      "description": "Human-readable stable identifier. Format: <tier>/<category>/<name>. Lowercase, hyphens, underscores, and slashes only."
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$",
+      "description": "Semantic version string (MAJOR.MINOR.PATCH[-prerelease][+build])"
+    },
+    "iso8601_datetime": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 datetime with timezone (e.g., 2026-03-29T14:30:00Z)"
+    },
+    "iso8601_duration": {
+      "type": "string",
+      "pattern": "^P(?:\\d+Y)?(?:\\d+M)?(?:\\d+W)?(?:\\d+D)?(?:T(?:\\d+H)?(?:\\d+M)?(?:\\d+S)?)?$",
+      "description": "ISO 8601 duration (e.g., P90D, PT24H, P1Y6M)"
+    },
+    "resource_type_fqn": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]+\\.[A-Z][a-zA-Z0-9]+$",
+      "description": "Fully-qualified resource type name. Format: <Category>.<TypeName> (e.g., Compute.VirtualMachine, Network.VLAN)"
+    },
+    "data_classification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "confidential",
+        "restricted",
+        "phi",
+        "pci",
+        "sovereign",
+        "classified"
+      ],
+      "description": "Data classification level. Ordered: public < internal < confidential < restricted < phi | pci < sovereign < classified. Note: phi, sovereign, and classified are immutable once set (ACC-003)."
+    },
+    "deployment_posture": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "dev",
+        "standard",
+        "prod",
+        "fsi",
+        "sovereign"
+      ],
+      "description": "DCM deployment profile posture"
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": [
+        "developing",
+        "proposed",
+        "active",
+        "deprecated",
+        "retired"
+      ],
+      "description": "Artifact lifecycle status"
+    },
+    "country_code": {
+      "type": "string",
+      "pattern": "^[A-Z]{2}$",
+      "description": "ISO 3166-1 alpha-2 country code"
+    },
+    "actor_ref": {
+      "type": "object",
+      "required": [
+        "actor_uuid",
+        "actor_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "actor_uuid": {
+          "$ref": "#/$defs/uuid"
+        },
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "human",
+            "system_component",
+            "policy",
+            "provider",
+            "scheduled_job"
+          ]
+        },
+        "display_name": {
+          "type": "string",
+          "maxLength": 256
+        }
+      }
+    },
+    "artifact_metadata": {
+      "type": "object",
+      "description": "Standard metadata present on every DCM Data artifact.",
+      "required": [
+        "uuid",
+        "handle",
+        "version",
+        "status",
+        "created_at",
+        "updated_at",
+        "created_by"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "uuid": {
+          "$ref": "#/$defs/uuid"
+        },
+        "handle": {
+          "$ref": "#/$defs/handle"
+        },
+        "version": {
+          "$ref": "#/$defs/semver"
+        },
+        "status": {
+          "$ref": "#/$defs/lifecycle_status"
+        },
+        "created_at": {
+          "$ref": "#/$defs/iso8601_datetime"
+        },
+        "updated_at": {
+          "$ref": "#/$defs/iso8601_datetime"
+        },
+        "created_by": {
+          "$ref": "#/$defs/actor_ref"
+        },
+        "created_via": {
+          "type": "string",
+          "enum": [
+            "pr",
+            "api",
+            "migration",
+            "system"
+          ]
+        },
+        "owned_by": {
+          "type": "object",
+          "required": [
+            "display_name"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "display_name": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Arbitrary key-value tags for search and organisation"
+        }
+      }
+    },
+    "field_provenance": {
+      "type": "object",
+      "description": "Field-level provenance metadata. Every data field on a DCM artifact may carry this as a sibling _provenance key.",
+      "required": [
+        "source_type",
+        "recorded_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "layer",
+            "consumer_input",
+            "policy_transformation",
+            "provider_reported",
+            "information_provider",
+            "system_default",
+            "operator_override"
+          ]
+        },
+        "source_ref": {
+          "$ref": "#/$defs/uuid",
+          "description": "UUID of the source layer, policy, or provider that set this value"
+        },
+        "recorded_at": {
+          "$ref": "#/$defs/iso8601_datetime"
+        },
+        "recorded_by": {
+          "$ref": "#/$defs/actor_ref"
+        },
+        "basis": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Human-readable rationale for this value"
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Confidence band for information-provider-sourced values (0.0\u20131.0)"
+        },
+        "overridable": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "sovereignty_declaration": {
+      "type": "object",
+      "required": [
+        "operating_jurisdictions",
+        "data_residency_zones"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "operating_jurisdictions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/country_code"
+          },
+          "minItems": 1
+        },
+        "data_residency_zones": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Zone IDs where data physically resides"
+        },
+        "regulatory_frameworks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g., GDPR, HIPAA, FedRAMP"
+        },
+        "sub_processors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "jurisdictions"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "jurisdictions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/country_code"
+                }
+              },
+              "purpose": {
+                "type": "string"
+              }
+            }
+          },
+          "description": "Third parties with access to data handled by this provider"
+        },
+        "inter_zone_agreements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Legal frameworks governing cross-zone data transfers (e.g., EU-US DPF)"
+        }
+      }
+    },
+    "accreditation_ref": {
+      "type": "object",
+      "required": [
+        "accreditation_uuid",
+        "framework",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "accreditation_uuid": {
+          "$ref": "#/$defs/uuid"
+        },
+        "framework": {
+          "type": "string",
+          "description": "e.g., iso_27001, soc2_type2, fedramp_moderate, hipaa_baa, pci_dss"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "active",
+            "expired",
+            "revoked"
+          ]
+        },
+        "valid_until": {
+          "$ref": "#/$defs/iso8601_datetime"
+        },
+        "certificate_ref": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "pagination": {
+      "type": "object",
+      "description": "Standard pagination envelope for list responses",
+      "required": [
+        "items",
+        "pagination"
+      ],
+      "properties": {
+        "items": {
+          "type": "array"
+        },
+        "pagination": {
+          "type": "object",
+          "required": [
+            "total",
+            "limit",
+            "offset"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            },
+            "offset": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "next_cursor": {
+              "type": "string"
+            },
+            "prev_cursor": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "error_response": {
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message",
+            "request_id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Machine-readable error code (e.g., RESOURCE_NOT_FOUND, POLICY_DENIED)"
+            },
+            "message": {
+              "type": "string",
+              "description": "Human-readable error description"
+            },
+            "request_id": {
+              "$ref": "#/$defs/uuid",
+              "description": "Correlation ID for this request; present in all audit records"
+            },
+            "rule_uuid": {
+              "$ref": "#/$defs/uuid",
+              "description": "UUID of the governing policy rule (present when code is POLICY_DENIED or GOVERNANCE_DENIED)"
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "field",
+                  "issue"
+                ],
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "issue": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Field-level validation errors (present on 422)"
+            }
+          }
+        }
+      }
+    },
+    "resource_type_ref": {
+      "description": "Resource type reference \u2014 accepts either a Fully Qualified Name (e.g., 'Compute.VirtualMachine') or a Resource Type Registry UUID. DCM resolves either form to the canonical resource_type_uuid + resource_type_name pair during request assembly. FQN is recommended for consumer-facing usage as it is stable across deployments. UUID is accepted for programmatic use where the UUID is obtained from the catalog.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/resource_type_fqn",
+          "description": "FQN form: 'Category.TypeName' (e.g., 'Compute.VirtualMachine')"
+        },
+        {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID form: Resource Type Registry UUID from the service catalog"
+        }
+      ]
+    }
+  }
+}

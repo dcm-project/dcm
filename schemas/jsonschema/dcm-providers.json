@@ -1,0 +1,513 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/providers/v1",
+  "title": "DCM Provider Schemas",
+  "description": "JSON Schema for DCM Provider registration and capability declarations. 5 provider types: service, information, auth, peer_dcm, process (composite services are a Data concept orchestrated by the Control Plane, not a provider type — see DCM-AI-PROMPT.md). Two policy evaluation modes: Internal (DCM evaluates via OPA) and External (external provider evaluates).",
+  "$defs": {
+    "provider_type": {
+      "type": "string",
+      "enum": [
+        "service",
+        "information",
+        "auth",
+        "peer_dcm",
+        "process"
+      ],
+      "description": "DCM provider types. Service providers handle full resource lifecycle including credentials and notifications via resource_type declarations. Auth providers enable pluggable multi-IdP authentication with tenant routing. Process providers execute ephemeral workflows."
+    },
+    "provider_status": {
+      "type": "string",
+      "enum": [
+        "SUBMITTED",
+        "VALIDATING",
+        "PENDING_APPROVAL",
+        "ACTIVE",
+        "SUSPENDED",
+        "DEREGISTERING",
+        "DEREGISTERED",
+        "FORCED_DEREGISTERED"
+      ]
+    },
+    "trust_posture": {
+      "type": "string",
+      "enum": [
+        "verified",
+        "vouched",
+        "provisional"
+      ]
+    },
+    "provider_health_response": {
+      "type": "object",
+      "required": [
+        "status",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "healthy",
+            "degraded",
+            "unhealthy"
+          ]
+        },
+        "version": {
+          "type": "string"
+        },
+        "capabilities_available": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "details": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Provider-specific detail. DCM treats as opaque."
+        }
+      }
+    },
+    "certificate_declaration": {
+      "type": "object",
+      "required": [
+        "pem",
+        "ca_chain",
+        "rotation_interval"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "pem": {
+          "type": "string",
+          "description": "PEM-encoded provider certificate"
+        },
+        "ca_chain": {
+          "type": "string",
+          "description": "PEM-encoded CA chain"
+        },
+        "rotation_interval": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration",
+          "description": "How frequently the provider rotates this certificate"
+        },
+        "expires_at": {
+          "$ref": "dcm-common.json#/$defs/iso8601_datetime"
+        }
+      }
+    },
+    "base_provider_registration": {
+      "type": "object",
+      "title": "Base Provider Registration",
+      "description": "Fields required in every provider registration regardless of type.",
+      "required": [
+        "artifact_metadata",
+        "provider_type_id",
+        "display_name",
+        "sovereignty_declaration",
+        "health_endpoint",
+        "certificate",
+        "capability_extension"
+      ],
+      "properties": {
+        "artifact_metadata": {
+          "$ref": "dcm-common.json#/$defs/artifact_metadata"
+        },
+        "provider_type_id": {
+          "$ref": "#/$defs/provider_type"
+        },
+        "display_name": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/provider_status"
+        },
+        "sovereignty_declaration": {
+          "$ref": "dcm-common.json#/$defs/sovereignty_declaration"
+        },
+        "accreditations": {
+          "type": "array",
+          "items": {
+            "$ref": "dcm-common.json#/$defs/accreditation_ref"
+          }
+        },
+        "health_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "health_poll_interval": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration",
+          "default": "PT5M"
+        },
+        "failure_threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Consecutive failed health checks before status transitions to DEGRADED"
+        },
+        "certificate": {
+          "$ref": "#/$defs/certificate_declaration"
+        },
+        "trust_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "DCM-computed trust score (0.0\u20131.0). Not set by provider; updated by DCM based on health, accreditation, and governance matrix checks."
+        },
+        "capability_extension": {
+          "type": "object",
+          "description": "Provider-type-specific capability declaration. Schema determined by provider_type_id."
+        }
+      }
+    },
+    "service_provider_capabilities": {
+      "type": "object",
+      "title": "Service Provider Capability Extension",
+      "description": "Capabilities for a Service Provider \u2014 realizes physical or virtual infrastructure resources.",
+      "required": [
+        "offered_resource_types",
+        "services_endpoint"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "offered_resource_types": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "dcm-common.json#/$defs/resource_type_fqn"
+          },
+          "description": "Resource types this provider can realize (e.g., Compute.VirtualMachine)"
+        },
+        "services_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "discovery_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "reserve_query_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "max_concurrent_realizations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "realization_timeout_default": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        },
+        "supports_suspension": {
+          "type": "boolean",
+          "default": false
+        },
+        "supports_rehydration": {
+          "type": "boolean",
+          "default": false
+        },
+        "cost_metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Provider-declared cost data consumed by the Cost Analysis component"
+        }
+      }
+    },
+    "information_provider_capabilities": {
+      "type": "object",
+      "title": "Information Provider Capability Extension",
+      "required": [
+        "authority_scope",
+        "interaction_model"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "authority_scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "Field paths or resource type domains this provider has authority over (e.g., Network.VLAN.vlan_id)"
+        },
+        "interaction_model": {
+          "type": "string",
+          "enum": [
+            "push",
+            "pull",
+            "both"
+          ],
+          "description": "push: provider pushes updates to DCM. pull: DCM queries provider. both: supports either."
+        },
+        "push_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "DCM endpoint where provider pushes updates (if interaction_model is push or both)"
+        },
+        "pull_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Provider endpoint DCM queries (if interaction_model is pull or both)"
+        },
+        "write_back_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Provider endpoint for DCM-initiated write-back operations"
+        },
+        "schema_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Where DCM retrieves the provider's extended field schema"
+        },
+        "confidence_model": {
+          "type": "string",
+          "enum": [
+            "declared",
+            "computed"
+          ],
+          "default": "declared"
+        },
+        "max_staleness": {
+          "$ref": "dcm-common.json#/$defs/iso8601_duration"
+        }
+      }
+    },
+    "composite_service_capabilities": {
+      "type": "object",
+      "title": "Composite Service Capability Extension",
+      "description": "Declares the catalog-level composite services this provider registers — multi-resource catalog items composed of declared constituent resource types. See data-model/30-composite-service-model.md.",
+      "required": [
+        "offered_composite_types",
+        "constituent_providers"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "offered_composite_types": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "dcm-common.json#/$defs/resource_type_fqn"
+          }
+        },
+        "constituent_providers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "provider_uuid",
+              "role"
+            ],
+            "properties": {
+              "provider_uuid": {
+                "$ref": "dcm-common.json#/$defs/uuid"
+              },
+              "role": {
+                "type": "string"
+              },
+              "required": {
+                "type": "boolean",
+                "default": true
+              }
+            }
+          }
+        },
+        "composition_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "compensation_strategy": {
+          "type": "string",
+          "enum": [
+            "rollback_all",
+            "rollback_failed",
+            "notify_and_wait",
+            "best_effort"
+          ],
+          "description": "What to do if a constituent fails mid-composition"
+        },
+        "composition_visibility": {
+          "type": "string",
+          "enum": [
+            "opaque",
+            "transparent",
+            "selective"
+          ]
+        }
+      }
+    },
+    "peer_dcm_capabilities": {
+      "type": "object",
+      "title": "Peer DCM Capability Extension",
+      "description": "Another DCM instance participating in a federation. Enables cross-instance request routing, audit correlation, and drift detection.",
+      "required": [
+        "dcm_api_endpoint",
+        "trust_posture"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "dcm_api_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "federation_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "audit_endpoint": {
+          "type": "string",
+          "format": "uri"
+        },
+        "trust_posture": {
+          "$ref": "#/$defs/trust_posture"
+        },
+        "dcm_version": {
+          "$ref": "dcm-common.json#/$defs/semver"
+        },
+        "federation_scope": {
+          "type": "string",
+          "enum": [
+            "full",
+            "read_only",
+            "audit_only",
+            "resource_routing_only"
+          ],
+          "description": "What this peer DCM is authorized to do in the federation"
+        },
+        "sovereignty_declaration": {
+          "$ref": "dcm-common.json#/$defs/sovereignty_declaration"
+        }
+      }
+    },
+    "capability_extension": {
+      "description": "Provider-type-specific capability declaration. Schema determined by provider_type.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/service_provider_capabilities"
+        },
+        {
+          "$ref": "#/$defs/information_provider_capabilities"
+        },
+        {
+          "$ref": "#/$defs/composite_service_capabilities"
+        },
+        {
+          "$ref": "#/$defs/auth_provider_capabilities"
+        },
+        {
+          "$ref": "#/$defs/peer_dcm_capabilities"
+        },
+        {
+          "$ref": "#/$defs/process_provider_capabilities"
+        }
+      ]
+    },
+    "provider_registration": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base_provider_registration"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "process_provider_capabilities": {
+      "type": "object",
+      "description": "Capabilities for process providers \u2014 ephemeral workflow execution (software install, backup, migration, compliance scan).",
+      "required": [
+        "supported_process_types"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "supported_process_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "FQN process resource types this provider can execute"
+        },
+        "max_concurrent_executions": {
+          "type": "integer"
+        },
+        "timeout_default": {
+          "type": "string",
+          "description": "ISO 8601 duration"
+        },
+        "idempotent": {
+          "type": "boolean",
+          "description": "Whether re-execution is safe"
+        },
+        "automation_platform": {
+          "type": "string",
+          "description": "e.g., AAP, Tekton, ArgoWorkflows"
+        }
+      }
+    },
+    "auth_provider_capabilities": {
+      "type": "object",
+      "description": "Capabilities for auth providers \u2014 authentication, identity, and MFA services. Multiple auth providers support tenant-routed authentication.",
+      "required": [
+        "auth_modes",
+        "token_format"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "auth_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "oidc",
+              "saml",
+              "ldap",
+              "kerberos",
+              "mtls_cert"
+            ]
+          },
+          "description": "Supported authentication protocols"
+        },
+        "token_format": {
+          "type": "string",
+          "enum": [
+            "jwt",
+            "opaque",
+            "saml_assertion"
+          ]
+        },
+        "mfa_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "totp",
+              "webauthn",
+              "hardware_token",
+              "push",
+              "sms"
+            ]
+          },
+          "description": "Supported MFA methods"
+        },
+        "rbac_model": {
+          "type": "string",
+          "enum": [
+            "group_claims",
+            "role_claims",
+            "attribute_based"
+          ]
+        },
+        "token_lifetime_seconds": {
+          "type": "integer"
+        },
+        "supports_session_revocation": {
+          "type": "boolean"
+        },
+        "federation_capable": {
+          "type": "boolean",
+          "description": "Can federate with peer auth providers"
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/base_provider_registration"
+}

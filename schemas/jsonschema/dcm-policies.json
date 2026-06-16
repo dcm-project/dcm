@@ -1,0 +1,652 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/policies/v1",
+  "title": "DCM Policy Schemas",
+  "description": "JSON Schema definitions for all seven DCM policy types and their output schemas. See data-model/B-policy-contract.md and data-model/14-policy-profiles.md.",
+
+  "$defs": {
+
+    "policy_type": {
+      "type": "string",
+      "enum": [
+        "gatekeeper",
+        "validation",
+        "transformation",
+        "recovery",
+        "orchestration_flow",
+        "governance_matrix_rule",
+        "lifecycle",
+        "itsm_action"
+      ]
+    },
+
+    "concern_type": {
+      "type": "string",
+      "enum": [
+        "security",
+        "compliance",
+        "operational",
+        "recovery_posture",
+        "zero_trust_posture",
+        "data_authorization_boundary",
+        "orchestration_flow"
+      ]
+    },
+
+    "policy_domain": {
+      "type": "string",
+      "enum": ["system", "platform", "tenant", "resource_type", "entity"]
+    },
+
+    "payload_type": {
+      "type": "string",
+      "enum": [
+        "request.initiated",
+        "request.layers_assembled",
+        "request.policy_evaluated",
+        "request.placement_resolved",
+        "request.dispatched",
+        "resource.state_changed",
+        "resource.drift_detected",
+        "provider.registered",
+        "provider.health_changed",
+        "contribution.submitted",
+        "contribution.approved"
+      ],
+      "description": "Closed vocabulary of DCM pipeline events that policies can match against."
+    },
+
+    "match_condition": {
+      "type": "object",
+      "required": ["field", "operator"],
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "Dot-notation path into the payload (e.g., request.resource_type, resource.lifecycle_state)"
+        },
+        "operator": {
+          "type": "string",
+          "enum": ["equals", "not_equals", "in", "not_in", "minimum", "maximum", "contains", "matches"]
+        },
+        "value": {
+          "description": "Comparison value. Type must match the referenced field."
+        }
+      }
+    },
+
+    "model_a_match": {
+      "type": "object",
+      "title": "Model A Match — Payload type and field conditions",
+      "description": "Used by pipeline policies: GateKeeper, Validation, Transformation, Recovery, Orchestration Flow.",
+      "required": ["payload_type"],
+      "additionalProperties": false,
+      "properties": {
+        "payload_type":     { "$ref": "#/$defs/payload_type" },
+        "conditions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/match_condition" }
+        },
+        "condition_logic": {
+          "type": "string",
+          "enum": ["all", "any"],
+          "default": "all"
+        }
+      }
+    },
+
+    "subject_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["human_actor", "system_component", "provider", "peer_dcm"]
+        },
+        "identity": { "type": "object", "additionalProperties": true },
+        "tenant":   { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "data_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "classification": { "$ref": "dcm-common.json#/$defs/data_classification" },
+        "resource_type":  { "$ref": "dcm-common.json#/$defs/resource_type_fqn" },
+        "field_paths": {
+          "type": "object",
+          "required": ["mode"],
+          "additionalProperties": false,
+          "properties": {
+            "mode":  { "type": "string", "enum": ["allowlist", "blocklist"] },
+            "paths": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "capability": { "type": "string" }
+      }
+    },
+
+    "target_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": { "type": "string", "enum": ["provider", "peer_dcm", "data_store"] },
+        "sovereignty_zone": {
+          "type": "object",
+          "properties": {
+            "match": { "type": "string", "description": "Zone ID or pattern" }
+          }
+        },
+        "accreditation_held": {
+          "type": "object",
+          "properties": {
+            "includes": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "trust_posture": { "type": "string", "enum": ["verified", "vouched", "provisional"] }
+      }
+    },
+
+    "context_match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "object",
+          "properties": {
+            "deployment_posture": { "$ref": "dcm-common.json#/$defs/deployment_posture" }
+          }
+        },
+        "zero_trust_posture": {
+          "type": "object",
+          "properties": {
+            "minimum": {
+              "type": "string",
+              "enum": ["none", "boundary", "full", "hardware_attested"]
+            }
+          }
+        },
+        "federated": { "type": "boolean" }
+      }
+    },
+
+    "model_b_match": {
+      "type": "object",
+      "title": "Model B Match — Four-axis boundary conditions",
+      "description": "Used by boundary policies: Governance Matrix Rules.",
+      "additionalProperties": false,
+      "properties": {
+        "subject": { "$ref": "#/$defs/subject_match" },
+        "data":    { "$ref": "#/$defs/data_match" },
+        "target":  { "$ref": "#/$defs/target_match" },
+        "context": { "$ref": "#/$defs/context_match" }
+      }
+    },
+
+    "base_policy_artifact": {
+      "type": "object",
+      "description": "Fields common to all policy types.",
+      "required": [
+        "artifact_metadata",
+        "policy_type",
+        "concern_type",
+        "domain",
+        "enforcement"
+      ],
+      "properties": {
+        "artifact_metadata": { "$ref": "dcm-common.json#/$defs/artifact_metadata" },
+        "policy_type":       { "$ref": "#/$defs/policy_type" },
+        "concern_type":      { "$ref": "#/$defs/concern_type" },
+        "domain":            { "$ref": "#/$defs/policy_domain" },
+        "enforcement": {
+          "type": "string",
+          "enum": ["hard", "soft"],
+          "description": "hard: cannot be relaxed by any downstream rule. soft: downstream rules may tighten but not relax."
+        },
+        "shadow_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "When true, policy evaluates but does not enforce. Results written to Validation Store only."
+        },
+        "description": { "type": "string" },
+        "rationale":   { "type": "string", "description": "Why this policy exists; links to regulatory or operational requirement" }
+      }
+    },
+
+    "gatekeeper_output": {
+      "type": "object",
+      "title": "GateKeeper Output Schema",
+      "description": "Binary allow/deny decision. Compliance enforcement_class: always fail-safe (deny on error). Operational enforcement_class: contributes risk_score_contribution to aggregate score.",
+      "required": ["decision", "enforcement_class"],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["allow", "deny"]
+        },
+        "enforcement_class": {
+          "type": "string",
+          "enum": ["compliance", "operational"],
+          "description": "compliance: boolean deny, fail-safe, for regulatory mandates. operational: contributes weighted risk score."
+        },
+        "risk_score_contribution": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Required when enforcement_class is 'operational'. Weight contributed to aggregate risk score."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Human-readable reason for the decision. Required when decision is 'deny'."
+        },
+        "rule_ref": {
+          "type": "string",
+          "description": "Reference to the specific rule within this policy that produced the decision."
+        }
+      },
+      "if":   { "properties": { "enforcement_class": { "const": "operational" } } },
+      "then": { "required": ["risk_score_contribution"] }
+    },
+
+    "validation_output": {
+      "type": "object",
+      "title": "Validation Output Schema",
+      "description": "Field-level validation result. Pass/fail with field-specific detail.",
+      "required": ["result"],
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "type": "string",
+          "enum": ["pass", "fail"]
+        },
+        "field_results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "result"],
+            "additionalProperties": false,
+            "properties": {
+              "field":   { "type": "string" },
+              "result":  { "type": "string", "enum": ["pass", "fail"] },
+              "message": { "type": "string" },
+              "value_received": { },
+              "constraint_violated": { "type": "string" }
+            }
+          }
+        },
+        "message": { "type": "string" }
+      }
+    },
+
+    "transformation_mutation": {
+      "type": "object",
+      "required": ["field", "operation"],
+      "additionalProperties": false,
+      "properties": {
+        "field":     { "type": "string", "description": "Dot-notation field path to modify" },
+        "operation": {
+          "type": "string",
+          "enum": ["set", "append", "remove", "redact", "default_if_absent"]
+        },
+        "value":     { "description": "New value for set/append/default_if_absent operations" },
+        "provenance_basis": {
+          "type": "string",
+          "description": "Recorded as the provenance basis for the transformed field value"
+        }
+      }
+    },
+
+    "transformation_output": {
+      "type": "object",
+      "title": "Transformation Output Schema",
+      "description": "Data enrichment or mutation. Produces an ordered list of field mutations applied to the request payload.",
+      "required": ["mutations"],
+      "additionalProperties": false,
+      "properties": {
+        "mutations": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/transformation_mutation" }
+        },
+        "description": { "type": "string" }
+      }
+    },
+
+    "recovery_output": {
+      "type": "object",
+      "title": "Recovery Output Schema",
+      "description": "Recovery action to take when a trigger condition is detected.",
+      "required": ["trigger", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "realization_failed",
+            "provider_timeout",
+            "provider_unavailable",
+            "drift_detected_critical",
+            "drift_detected_significant",
+            "accreditation_gap",
+            "sovereignty_conflict",
+            "dependency_failed",
+            "process_timeout",
+            "health_check_failed"
+          ],
+          "description": "Closed vocabulary of conditions that activate this recovery policy."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "retry",
+            "requeue",
+            "rehydrate",
+            "notify_and_wait",
+            "escalate",
+            "revert_to_requested",
+            "discard",
+            "alert_only"
+          ],
+          "description": "Closed vocabulary of recovery actions."
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Action-specific parameters (e.g., max_retries, retry_interval, escalation_target)"
+        },
+        "max_retries":     { "type": "integer", "minimum": 0 },
+        "retry_interval":  { "$ref": "dcm-common.json#/$defs/iso8601_duration" },
+        "timeout":         { "$ref": "dcm-common.json#/$defs/iso8601_duration" }
+      }
+    },
+
+    "orchestration_step": {
+      "type": "object",
+      "required": ["step_id", "step_type"],
+      "additionalProperties": false,
+      "properties": {
+        "step_id": { "type": "string" },
+        "step_type": {
+          "type": "string",
+          "enum": [
+            "provider_dispatch",
+            "policy_evaluation",
+            "placement_resolution",
+            "layer_assembly",
+            "approval_gate",
+            "notification",
+            "dependency_wait",
+            "parallel_group"
+          ]
+        },
+        "description": { "type": "string" },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "step_ids that must complete before this step executes"
+        },
+        "params": { "type": "object", "additionalProperties": true },
+        "on_failure": { "$ref": "#/$defs/recovery_output" }
+      }
+    },
+
+    "orchestration_flow_output": {
+      "type": "object",
+      "title": "Orchestration Flow Output Schema",
+      "description": "Named, ordered workflow. Declares the explicit step sequence for a request type. Evaluated by the Request Orchestrator.",
+      "required": ["flow_name", "ordered", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "flow_name": { "type": "string" },
+        "ordered":   { "type": "boolean", "const": true },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/orchestration_step" }
+        },
+        "timeout": { "$ref": "dcm-common.json#/$defs/iso8601_duration" }
+      }
+    },
+
+    "governance_matrix_decision": {
+      "type": "string",
+      "enum": ["ALLOW", "DENY", "DENY_REQUEST", "STRIP_FIELD", "REDACT", "REQUIRE_APPROVAL"]
+    },
+
+    "governance_matrix_rule_output": {
+      "type": "object",
+      "title": "Governance Matrix Rule Output Schema",
+      "description": "Cross-boundary access control decision. Uses four-axis match (Model B). Produces an ALLOW/DENY/STRIP/REDACT decision. See data-model/27-governance-matrix.md.",
+      "required": ["decision"],
+      "additionalProperties": false,
+      "properties": {
+        "decision": { "$ref": "#/$defs/governance_matrix_decision" },
+        "field_permissions": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Per-field decisions when decision is STRIP_FIELD or REDACT.",
+          "properties": {
+            "mode": { "type": "string", "enum": ["allowlist", "blocklist"] },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["field_path", "action"],
+                "properties": {
+                  "field_path": { "type": "string" },
+                  "action": {
+                    "type": "string",
+                    "enum": ["STRIP_FIELD", "REDACT", "DENY_REQUEST", "ALLOW"]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "reason": { "type": "string" },
+        "rule_ref": { "type": "string" }
+      }
+    },
+
+    "lifecycle_event_trigger": {
+      "type": "string",
+      "enum": [
+        "entity.created",
+        "entity.state_changed",
+        "entity.relationship_added",
+        "entity.relationship_removed",
+        "entity.decommissioned",
+        "entity.ttl_expiring",
+        "entity.ownership_transferred"
+      ]
+    },
+
+    "lifecycle_policy_output": {
+      "type": "object",
+      "title": "Lifecycle Policy Output Schema",
+      "description": "Declarative rules governing entity lifecycle transitions and relationship events.",
+      "required": ["trigger", "action"],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": { "$ref": "#/$defs/lifecycle_event_trigger" },
+        "condition": { "type": "string", "description": "Optional condition expression on trigger payload" },
+        "action": {
+          "type": "string",
+          "enum": [
+            "notify",
+            "gate",
+            "cascade_decommission",
+            "release_relationship",
+            "escalate",
+            "enforce_retention"
+          ]
+        },
+        "params": { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "gatekeeper_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "gatekeeper" },
+            "match":  { "$ref": "#/$defs/model_a_match" },
+            "output": { "$ref": "#/$defs/gatekeeper_output" }
+          }
+        }
+      ]
+    },
+
+    "validation_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "validation" },
+            "match":  { "$ref": "#/$defs/model_a_match" },
+            "output": { "$ref": "#/$defs/validation_output" }
+          }
+        }
+      ]
+    },
+
+    "transformation_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "transformation" },
+            "match":  { "$ref": "#/$defs/model_a_match" },
+            "output": { "$ref": "#/$defs/transformation_output" }
+          }
+        }
+      ]
+    },
+
+    "recovery_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "recovery" },
+            "match":  { "$ref": "#/$defs/model_a_match" },
+            "output": { "$ref": "#/$defs/recovery_output" }
+          }
+        }
+      ]
+    },
+
+    "orchestration_flow_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "orchestration_flow" },
+            "match":  { "$ref": "#/$defs/model_a_match" },
+            "output": { "$ref": "#/$defs/orchestration_flow_output" }
+          }
+        }
+      ]
+    },
+
+    "governance_matrix_rule_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["match", "output"],
+          "properties": {
+            "policy_type": { "const": "governance_matrix_rule" },
+            "match":  { "$ref": "#/$defs/model_b_match" },
+            "output": { "$ref": "#/$defs/governance_matrix_rule_output" }
+          }
+        }
+      ]
+    },
+
+    "lifecycle_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["output"],
+          "properties": {
+            "policy_type": { "const": "lifecycle" },
+            "output": { "$ref": "#/$defs/lifecycle_policy_output" }
+          }
+        }
+      ]
+    },
+
+    "itsm_action_policy_output": {
+      "type": "object",
+      "description": "ITSM Action Policy output — side-effect policy that fires on DCM events and triggers ITSM actions. Non-blocking by default (ITSM-002). See data-model/42-itsm-integration.md.",
+      "required": ["itsm_provider_uuid", "action", "action_payload"],
+      "additionalProperties": false,
+      "properties": {
+        "itsm_provider_uuid":      { "$ref": "dcm-common.json#/$defs/uuid" },
+        "action":                  { "type": "string", "enum": ["create_change_request", "update_change_request", "close_change_request", "create_incident", "update_incident", "close_incident", "create_cmdb_ci", "update_cmdb_ci", "retire_cmdb_ci", "create_service_request"] },
+        "action_payload":          { "type": "object", "additionalProperties": true, "description": "Template payload — supports {{ field }} expressions resolved at evaluation time" },
+        "store_reference_on_entity": { "type": "boolean", "default": true, "description": "Store ITSM record reference in entity business data (ITSM-004)" },
+        "block_until_created":     { "type": "boolean", "default": false, "description": "If true, block pipeline until ITSM record is created. Requires block_timeout (ITSM-005)." },
+        "block_timeout":           { "$ref": "dcm-common.json#/$defs/iso8601_duration", "description": "Required when block_until_created is true. Pipeline never permanently stalled." },
+        "on_failure":              { "type": "string", "enum": ["warn_and_continue", "fail_request"], "default": "warn_and_continue" }
+      }
+    },
+
+    "itsm_action_policy": {
+      "allOf": [
+        { "$ref": "#/$defs/base_policy_artifact" },
+        {
+          "type": "object",
+          "required": ["output"],
+          "properties": {
+            "policy_type": { "const": "itsm_action" },
+            "output": { "$ref": "#/$defs/itsm_action_policy_output" }
+          }
+        }
+      ]
+    },
+
+    "dcm_policy": {
+      "oneOf": [
+        { "$ref": "#/$defs/gatekeeper_policy" },
+        { "$ref": "#/$defs/validation_policy" },
+        { "$ref": "#/$defs/transformation_policy" },
+        { "$ref": "#/$defs/recovery_policy" },
+        { "$ref": "#/$defs/orchestration_flow_policy" },
+        { "$ref": "#/$defs/governance_matrix_rule_policy" },
+        { "$ref": "#/$defs/lifecycle_policy" },
+        { "$ref": "#/$defs/itsm_action_policy" }
+      ],
+      "discriminator": {
+        "propertyName": "policy_type",
+        "mapping": {
+          "gatekeeper":            "#/$defs/gatekeeper_policy",
+          "validation":            "#/$defs/validation_policy",
+          "transformation":        "#/$defs/transformation_policy",
+          "recovery":              "#/$defs/recovery_policy",
+          "orchestration_flow":    "#/$defs/orchestration_flow_policy",
+          "governance_matrix_rule":"#/$defs/governance_matrix_rule_policy",
+          "lifecycle":             "#/$defs/lifecycle_policy",
+          "itsm_action":           "#/$defs/itsm_action_policy"
+        }
+      }
+    }
+
+  },
+
+  "$ref": "#/$defs/dcm_policy"
+}

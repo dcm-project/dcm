@@ -1,0 +1,414 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/entities/v1",
+  "title": "DCM Entity Schemas",
+  "description": "JSON Schema definitions for all three DCM entity types: Infrastructure Resource, Composite Resource, and Process Resource. See data-model/01-entity-types.md.",
+
+  "$defs": {
+
+    "entity_lifecycle_state": {
+      "type": "string",
+      "enum": [
+        "REQUESTED",
+        "PENDING",
+        "PROVISIONING",
+        "REALIZED",
+        "OPERATIONAL",
+        "DEGRADED",
+        "MAINTENANCE",
+        "SUSPENDED",
+        "DECOMMISSIONING",
+        "DECOMMISSIONED",
+        "FAILED",
+        "PENDING_REVIEW",
+        "TIMEOUT_PENDING",
+        "LATE_REALIZATION_PENDING",
+        "INDETERMINATE_REALIZATION",
+        "COMPENSATION_IN_PROGRESS",
+        "COMPENSATION_FAILED",
+        "PENDING_EXPIRY_ACTION",
+        "INGESTED",
+        "ENRICHING",
+        "PROMOTED"
+      ],
+      "description": "Lifecycle state for Infrastructure Resource and Composite Resource entities. DECOMMISSIONED is the only terminal state for infrastructure resources; FAILED is terminal for process resources. PENDING_REVIEW requires human resolution. TIMEOUT_PENDING through COMPENSATION_FAILED are recovery states (Section 49.8). INGESTED through PROMOTED are ingestion states (Section 20.2)."
+    },
+
+    "process_lifecycle_state": {
+      "type": "string",
+      "enum": ["REQUESTED", "INITIATED", "EXECUTING", "COMPLETED", "FAILED", "CANCELLED"],
+      "description": "Lifecycle state for Process Resource entities. COMPLETED, FAILED, and CANCELLED are terminal. No SUSPENDED or PENDING_REVIEW states."
+    },
+
+    "ownership_model": {
+      "type": "string",
+      "enum": ["whole_allocation", "allocation", "shareable"],
+      "description": "whole_allocation: consumer owns entity outright. allocation: entity carved from a pool owned by another Tenant. shareable: consumer holds a stake; resource owner retains ownership."
+    },
+
+    "on_expiry_action": {
+      "type": "string",
+      "enum": ["decommission", "suspend", "notify", "escalate"]
+    },
+
+    "drift_status": {
+      "type": "string",
+      "enum": ["clean", "drifted", "unknown"]
+    },
+
+    "drift_severity": {
+      "type": "string",
+      "enum": ["minor", "significant", "critical"]
+    },
+
+    "billing_state": {
+      "type": "string",
+      "enum": ["billable", "non_billable", "reduced_rate"]
+    },
+
+    "composition_visibility": {
+      "type": "string",
+      "enum": ["opaque", "transparent", "selective"],
+      "description": "opaque: consumers see composite only. transparent: consumers see composite and all constituents. selective: policy declares which constituents are visible."
+    },
+
+    "composite_health": {
+      "type": "string",
+      "enum": ["healthy", "degraded", "failed"]
+    },
+
+    "constituent_role": {
+      "type": "string",
+      "enum": ["primary", "supporting", "optional"]
+    },
+
+    "rehydration_constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "min_auth_level": {
+          "type": "string",
+          "description": "Minimum authority tier name required to authorize rehydration"
+        },
+        "allow_delegated_rehydration": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether a Tenant admin (not the original requester) may authorize rehydration"
+        }
+      }
+    },
+
+    "rehydration_history_entry": {
+      "type": "object",
+      "required": ["rehydrated_at", "previous_provider_uuid", "new_provider_uuid", "authorized_by"],
+      "additionalProperties": false,
+      "properties": {
+        "rehydration_uuid":       { "$ref": "dcm-common.json#/$defs/uuid" },
+        "rehydrated_at":          { "$ref": "dcm-common.json#/$defs/iso8601_datetime" },
+        "previous_provider_uuid": { "$ref": "dcm-common.json#/$defs/uuid" },
+        "new_provider_uuid":      { "$ref": "dcm-common.json#/$defs/uuid" },
+        "authorized_by":          { "$ref": "dcm-common.json#/$defs/actor_ref" },
+        "reason":                 { "type": "string" }
+      }
+    },
+
+    "pending_review_record": {
+      "type": "object",
+      "required": ["trigger", "detected_at", "resolution_options"],
+      "additionalProperties": false,
+      "properties": {
+        "trigger": {
+          "type": "string",
+          "enum": [
+            "rehydration_sovereignty_conflict",
+            "cross_tenant_authorization_revoked",
+            "ownership_transfer_conflict"
+          ]
+        },
+        "detected_at":       { "$ref": "dcm-common.json#/$defs/iso8601_datetime" },
+        "conflict_detail":   { "type": "string" },
+        "resolution_options": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["re_authorize", "release", "escalate", "manual_override"]
+          }
+        }
+      }
+    },
+
+    "relationship": {
+      "type": "object",
+      "required": ["relationship_uuid", "relationship_type", "target_entity_uuid", "created_at"],
+      "additionalProperties": false,
+      "properties": {
+        "relationship_uuid":   { "$ref": "dcm-common.json#/$defs/uuid" },
+        "relationship_type": {
+          "type": "string",
+          "enum": [
+            "requires",
+            "contains",
+            "references",
+            "peer",
+            "allocated_from",
+            "constituent_of",
+            "has_constituent"
+          ]
+        },
+        "target_entity_uuid":  { "$ref": "dcm-common.json#/$defs/uuid" },
+        "target_entity_type":  { "$ref": "dcm-common.json#/$defs/resource_type_fqn" },
+        "created_at":          { "$ref": "dcm-common.json#/$defs/iso8601_datetime" },
+        "metadata":            { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "infrastructure_resource_entity": {
+      "type": "object",
+      "title": "Infrastructure Resource Entity",
+      "description": "A realized physical or virtual infrastructure resource. Persists after provisioning. Owned by exactly one Tenant. Subject to drift detection and TTL management. See data-model/01-entity-types.md Section 2.1.",
+      "required": [
+        "artifact_metadata",
+        "entity_type",
+        "resource_type",
+        "resource_type_spec_version",
+        "lifecycle_state",
+        "owned_by_tenant_uuid",
+        "created_by_actor_uuid",
+        "ownership_model"
+      ],
+      "additionalProperties": true,
+      "properties": {
+
+        "artifact_metadata": { "$ref": "dcm-common.json#/$defs/artifact_metadata" },
+
+        "entity_type": {
+          "type": "string",
+          "const": "infrastructure_resource"
+        },
+
+        "resource_type":              { "$ref": "dcm-common.json#/$defs/resource_type_fqn" },
+        "resource_type_spec_version": { "$ref": "dcm-common.json#/$defs/semver" },
+        "lifecycle_state":            { "$ref": "#/$defs/entity_lifecycle_state" },
+
+        "owned_by_tenant_uuid":  { "$ref": "dcm-common.json#/$defs/uuid" },
+        "created_by_actor_uuid": { "$ref": "dcm-common.json#/$defs/uuid" },
+        "ownership_model":       { "$ref": "#/$defs/ownership_model" },
+
+        "allocated_from_pool_uuid": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }],
+          "description": "UUID of the pool entity this was carved from. Null unless ownership_model is 'allocation'."
+        },
+        "allocation_ref_uuid": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }]
+        },
+        "shared_resource_uuid": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }],
+          "description": "UUID of the shared resource this is a stake in. Null unless ownership_model is 'shareable'."
+        },
+
+        "provider_uuid": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }]
+        },
+        "provider_entity_id": {
+          "oneOf": [{ "type": "string", "maxLength": 512 }, { "type": "null" }],
+          "description": "The provider's own identifier for this resource (e.g., 'vm-12345'). Separate from the DCM UUID."
+        },
+        "provider_entity_id_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["provider_entity_id", "valid_from"],
+            "properties": {
+              "provider_entity_id": { "type": "string" },
+              "valid_from":         { "$ref": "dcm-common.json#/$defs/iso8601_datetime" },
+              "valid_to":           { "$ref": "dcm-common.json#/$defs/iso8601_datetime" }
+            }
+          }
+        },
+
+        "ttl": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_duration" }, { "type": "null" }]
+        },
+        "ttl_expires_at": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }]
+        },
+        "on_expiry":     { "$ref": "#/$defs/on_expiry_action" },
+        "billing_state": { "$ref": "#/$defs/billing_state" },
+
+        "rehydration_constraints": { "$ref": "#/$defs/rehydration_constraints" },
+        "rehydration_history": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/rehydration_history_entry" }
+        },
+
+        "last_discovered_at": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }]
+        },
+        "drift_status":       { "$ref": "#/$defs/drift_status" },
+        "last_drift_severity": {
+          "oneOf": [{ "$ref": "#/$defs/drift_severity" }, { "type": "null" }]
+        },
+
+        "pending_review_record": {
+          "oneOf": [{ "$ref": "#/$defs/pending_review_record" }, { "type": "null" }],
+          "description": "Present only when lifecycle_state is PENDING_REVIEW."
+        },
+
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relationship" }
+        }
+      },
+      "if": {
+        "properties": { "lifecycle_state": { "const": "PENDING_REVIEW" } }
+      },
+      "then": {
+        "required": ["pending_review_record"],
+        "properties": {
+          "pending_review_record": { "not": { "type": "null" } }
+        }
+      }
+    },
+
+    "composite_resource_entity": {
+      "type": "object",
+      "title": "Composite Resource Entity",
+      "description": "Produced by a Composite Service registration aggregating multiple constituent Infrastructure Resource Entities into a higher-order service. The composite is a first-class entity with its own UUID. See data-model/01-entity-types.md Section 2.2 and data-model/30-composite-service-model.md.",
+      "required": [
+        "artifact_metadata",
+        "entity_type",
+        "resource_type",
+        "resource_type_spec_version",
+        "lifecycle_state",
+        "owned_by_tenant_uuid",
+        "composition_visibility",
+        "constituents"
+      ],
+      "additionalProperties": true,
+      "properties": {
+
+        "artifact_metadata": { "$ref": "dcm-common.json#/$defs/artifact_metadata" },
+
+        "entity_type": {
+          "type": "string",
+          "const": "composite_resource"
+        },
+
+        "resource_type":              { "$ref": "dcm-common.json#/$defs/resource_type_fqn" },
+        "resource_type_spec_version": { "$ref": "dcm-common.json#/$defs/semver" },
+        "lifecycle_state":            { "$ref": "#/$defs/entity_lifecycle_state" },
+        "owned_by_tenant_uuid":       { "$ref": "dcm-common.json#/$defs/uuid" },
+
+        "composition_visibility": { "$ref": "#/$defs/composition_visibility" },
+        "composite_health":       { "$ref": "#/$defs/composite_health" },
+
+        "constituents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["constituent_entity_uuid", "role", "required_for_composite_operational"],
+            "additionalProperties": false,
+            "properties": {
+              "constituent_entity_uuid":            { "$ref": "dcm-common.json#/$defs/uuid" },
+              "role":                               { "$ref": "#/$defs/constituent_role" },
+              "required_for_composite_operational": { "type": "boolean" },
+              "constituent_lifecycle_state":        { "$ref": "#/$defs/entity_lifecycle_state" }
+            }
+          }
+        },
+
+        "provider_uuid": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }],
+          "description": "The Service Provider that registered the Composite Service this composite was instantiated from."
+        },
+
+        "ttl":           { "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_duration" }, { "type": "null" }] },
+        "ttl_expires_at": { "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }] },
+        "on_expiry":     { "$ref": "#/$defs/on_expiry_action" },
+        "billing_state": { "$ref": "#/$defs/billing_state" },
+
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/relationship" }
+        }
+      }
+    },
+
+    "process_resource_entity": {
+      "type": "object",
+      "title": "Process Resource Entity",
+      "description": "An ephemeral execution: automation job, playbook, pipeline, or workflow. Does not persist after reaching a terminal state. Must declare max_execution_time. See data-model/01-entity-types.md Section 2.3.",
+      "required": [
+        "artifact_metadata",
+        "entity_type",
+        "resource_type",
+        "resource_type_spec_version",
+        "lifecycle_state",
+        "owned_by_tenant_uuid",
+        "created_by_actor_uuid",
+        "max_execution_time"
+      ],
+      "additionalProperties": true,
+      "properties": {
+
+        "artifact_metadata": { "$ref": "dcm-common.json#/$defs/artifact_metadata" },
+
+        "entity_type": {
+          "type": "string",
+          "const": "process_resource"
+        },
+
+        "resource_type":              { "$ref": "dcm-common.json#/$defs/resource_type_fqn" },
+        "resource_type_spec_version": { "$ref": "dcm-common.json#/$defs/semver" },
+        "lifecycle_state":            { "$ref": "#/$defs/process_lifecycle_state" },
+        "owned_by_tenant_uuid":       { "$ref": "dcm-common.json#/$defs/uuid" },
+        "created_by_actor_uuid":      { "$ref": "dcm-common.json#/$defs/uuid" },
+
+        "max_execution_time":    { "$ref": "dcm-common.json#/$defs/iso8601_duration" },
+        "started_at":            { "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }] },
+        "completed_at":          { "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }] },
+        "execution_timeout_at":  { "oneOf": [{ "$ref": "dcm-common.json#/$defs/iso8601_datetime" }, { "type": "null" }] },
+
+        "affected_entity_uuids": {
+          "type": "array",
+          "items": { "$ref": "dcm-common.json#/$defs/uuid" },
+          "description": "UUIDs of all Infrastructure Resource Entities modified during this process. Mandatory if any modifications were made."
+        },
+
+        "provider_uuid":   { "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }] },
+        "provider_job_id": { "oneOf": [{ "type": "string", "maxLength": 512 }, { "type": "null" }] },
+
+        "exit_status": {
+          "oneOf": [
+            { "type": "string", "enum": ["success", "failure", "timeout", "cancelled"] },
+            { "type": "null" }
+          ]
+        },
+        "execution_log_ref": {
+          "oneOf": [{ "$ref": "dcm-common.json#/$defs/uuid" }, { "type": "null" }],
+          "description": "Reference to the log store entry for this process execution."
+        }
+      }
+    },
+
+    "dcm_entity": {
+      "oneOf": [
+        { "$ref": "#/$defs/infrastructure_resource_entity" },
+        { "$ref": "#/$defs/composite_resource_entity" },
+        { "$ref": "#/$defs/process_resource_entity" }
+      ],
+      "discriminator": {
+        "propertyName": "entity_type",
+        "mapping": {
+          "infrastructure_resource": "#/$defs/infrastructure_resource_entity",
+          "composite_resource":      "#/$defs/composite_resource_entity",
+          "process_resource":        "#/$defs/process_resource_entity"
+        }
+      }
+    }
+
+  },
+
+  "$ref": "#/$defs/dcm_entity"
+}
