@@ -23,7 +23,7 @@ Service Provider (realize resources — including Credential.*, Notification.*, 
 Any rule artifact that fires when Data matches conditions, produces a typed output, and is enforced at a declared level. Policies govern every transition, transformation, and constraint.
 
 **Eight policy types (all implement the same base contract):**
-GateKeeper (allow/deny) · Validation (pass/fail) · Transformation (field mutations) · Recovery (failure actions) · Orchestration Flow (pipeline ordering) · Governance Matrix Rule (boundary control) · Lifecycle Policy (relationship event actions) · ITSM Action (side-effect ITSM record creation)
+Gating Policy (allow/deny) · Validation (pass/fail) · Transformation (field mutations) · Recovery (failure actions) · Orchestration Flow (pipeline ordering) · Governance Matrix Rule (boundary control) · Lifecycle Policy (relationship event actions) · ITSM Action (side-effect ITSM record creation)
 
 **Policies ARE the orchestration.** Pipeline steps are policies firing on payload type events. Static flows = Orchestration Flow policies with `ordered: true`. Dynamic flows = conditional policies. Adding/removing pipeline steps = adding/removing policies.
 
@@ -42,7 +42,7 @@ Event (Data state change)
 Control plane "components" are runtime specializations — not a fourth abstraction:
 - Request Orchestrator = event bus (runtime)
 - Policy Engine = policy evaluator (runtime)
-- Placement Engine = GateKeeper policy specialized for provider selection
+- Placement Engine = Gating policy specialized for provider selection
 - Cost Analysis = Information Provider (internal; data derivation)
 - Lifecycle Constraint Enforcer = scheduled Recovery Policy trigger
 - Discovery Scheduler = scheduled Provider invocation
@@ -144,7 +144,7 @@ Once a version of any entity is published, it cannot be modified. Changes produc
 
 ## SECTION 4 — THE DCM DATA MODEL
 
-**The data model is the most foundational element of DCM.** Everything in DCM acts on data in some way — reading, validating, triggering, enriching, gatekeeping, parsing, transforming, or comparing. The data model is the lingua franca — the API between all components.
+**The data model is the most foundational element of DCM.** Everything in DCM acts on data in some way — reading, validating, triggering, enriching, gating, parsing, transforming, or comparing. The data model is the lingua franca — the API between all components.
 
 ### 4.1 Universal Identity Requirement
 Every data object in DCM **must have a UUID**. This applies without exception to: resource definitions, catalog items, data layers, policies, policy sets, components, service providers, consumers, requests, and all other entities. UUIDs are used for provenance anchoring, dependency mapping, audit fidelity, and cross-state correlation.
@@ -208,12 +208,12 @@ field_name:
         modified_value: <value after>
         source_type: <policy|layer|component|provider>
         source_uuid: <uuid>
-        operation_type: <enrichment|transformation|validation|gatekeeping|override|lock|grant>
+        operation_type: <enrichment|transformation|validation|gating|override|lock|grant>
         actor: <actor type that performed this>
         timestamp: <ISO 8601>
         reason: <human-readable>
 ```
-The `metadata` block is set exclusively by the Policy Engine. `operation_type: lock` is used when a GateKeeper sets `override: immutable`. `operation_type: grant` is used when a trusted_grant is issued.
+The `metadata` block is set exclusively by the Policy Engine. `operation_type: lock` is used when a Gating Policy sets `override: immutable`. `operation_type: grant` is used when a trusted_grant is issued.
 
 ### 4.4 Universal Versioning
 All entities, definitions, and data objects in DCM follow one versioning scheme: **Major.Minor.Revision**
@@ -390,7 +390,7 @@ Layer Groups are `DCMGroup` with `group_class: layer_grouping` — cohesive coll
 
 ### 6.5 Consumer Layer Exclusion (Q21)
 
-Consumers declare `layer_exclusions` with mandatory reason. Excluded layers removed in Step 2, produce no fields, cannot satisfy validation requirements. GateKeeper policies may declare layers non-excludable (LAY-001).
+Consumers declare `layer_exclusions` with mandatory reason. Excluded layers removed in Step 2, produce no fields, cannot satisfy validation requirements. Gating policies may declare layers non-excludable (LAY-001).
 
 ### 6.6 Service Layer Versioning (Q22)
 
@@ -406,10 +406,10 @@ Each service dependency has its own independent layer chain. Inherits parent's r
 
 ### 6.9 The Nine-Step Assembly Process
 
-Step 1 (Intent Capture) → Step 2 (Layer Resolution — with exclusions and activation_conditions) → Step 3 (Layer Merge — priority ordering, field-level provenance) → Step 4 (Request Layer Application) → Step 5 (Pre-Placement Policies: Transformation → Validation → GateKeeper) → Step 6 (Placement Engine Loop: reserve query + loop policy phase per candidate) → Step 7 (Post-Placement Policies) → Step 8 (Requested State Storage) → Step 9 (Provider Dispatch)
+Step 1 (Intent Capture) → Step 2 (Layer Resolution — with exclusions and activation_conditions) → Step 3 (Layer Merge — priority ordering, field-level provenance) → Step 4 (Request Layer Application) → Step 5 (Pre-Placement Policies: Transformation → Validation → Gating Policy) → Step 6 (Placement Engine Loop: reserve query + loop policy phase per candidate) → Step 7 (Post-Placement Policies) → Step 8 (Requested State Storage) → Step 9 (Provider Dispatch)
 
 ### 6.10 Layer System Policies
-- `LAY-001` — Consumer layer exclusions with mandatory reason; GateKeeper can lock layers as non-excludable
+- `LAY-001` — Consumer layer exclusions with mandatory reason; Gating Policy can lock layers as non-excludable
 - `LAY-002` — Service Layers independently versioned; semver compatibility on provider; cache invalidation on version change
 - `LAY-003` — activation_condition on layers evaluated in Step 2; results recorded in provenance
 - `LAY-004` — Each dependency has own layer chain; inherits parent resolved placement; no consumer declaration inheritance
@@ -500,7 +500,7 @@ Providers are **custodians** of the underlying infrastructure — they are not t
 | **Provider Catalog Item** | What a specific Service Provider offers consumers: specific resource allocation or process with cost, availability, SLAs; linked to Resource Type Specification version |
 | **cross_tenant_authorization** | DCMGroup with group_class: cross_tenant_authorization; grants one Tenant permission to reference/allocate/stake another Tenant's resources; revocation places active allocations in PENDING_REVIEW |
 | **foundation Tenants** | Three system Tenants created at bootstrap: __platform__, __transitional__, __system__; cannot be decommissioned; declared in bootstrap manifest |
-| **QUOTA_EXCEEDED** | GateKeeper rejection code when resource quota policy fires at Step 5 (pre-placement) |
+| **QUOTA_EXCEEDED** | Gating Policy rejection code when resource quota policy fires at Step 5 (pre-placement) |
 | **Federated Contribution Model** | DCM defaults to federated data creation — all authorized actor types (platform admin, consumer/tenant, service provider, peer DCM) can contribute Data artifacts within their domain scope via the GitOps PR model; see doc 28 |
 | **contributor** | Actor type that authored a Data artifact; recorded in artifact_metadata.contributed_by; determines review requirements; platform_admin / consumer / service_provider / peer_dcm |
 | **contributed_by** | Artifact metadata block recording contributor_type, actor UUID, contribution_method, pr_url, reviewed_by; immutable once set |
@@ -548,7 +548,7 @@ Providers are **custodians** of the underlying infrastructure — they are not t
 | **drift_criticality** | Field-level property in Resource Type Spec (low/medium/high/critical); combined with change magnitude to produce drift severity |
 | **Ingress API** | Infrastructure-layer entry point for all inbound DCM requests; sets ingress block; routes to Consumer/Provider/Admin API surfaces |
 | **Provider Catalog Item** | Provider-specific instantiation of a Resource Type Specification; what consumers actually request; distinct from the Resource Type Specification itself |
-| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as GateKeeper/Validation/Transformation |
+| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as Gating Policy/Validation/Transformation |
 | **recovery_posture** | Fifth Policy Group concern_type governing failure and ambiguity response; binds a recovery profile group to the deployment |
 | **DRIFT_RECONCILE** | Recovery action: schedule discovery; let drift detection resolve actual state |
 | **DISCARD_AND_REQUEUE** | Recovery action: best-effort cleanup; new request cycle created immediately |
@@ -573,7 +573,7 @@ Providers are **custodians** of the underlying infrastructure — they are not t
 | **corresponding_requested_state_uuid** | Mandatory non-nullable field on every Realized State snapshot; traces every Realized State change to an authorized request |
 | **Provider Update Notification** | Formal API for providers to report authorized state changes; DCM evaluates via Policy Engine; approved → new Requested State + Realized State; rejected → drift event |
 | **notification_uuid** | Idempotency key on Provider Update Notifications; safe to resend on provider crash |
-| **pre-authorized update** | Category of provider update pre-approved by GateKeeper policy; processed automatically without per-change human review |
+| **pre-authorized update** | Category of provider update pre-approved by Gating policy; processed automatically without per-change human review |
 | **Whole Allocation** | Entire resource allocated as indivisible unit. Provider retains ownership. Consumer has exclusive use. Not subdivided or shared. | Dedicated Bare Metal (provider-owned) |
 | **Full Transfer** | Provider transfers complete ownership to consumer's DCM Tenant. Consumer controls full lifecycle including decommission. | Transferred Bare Metal, Licensed asset |
 | **Hybrid Transfer** | Ownership can transfer multiple times. Current owner is always exactly one DCM Tenant. Every transfer is tracked and auditable. | Bare Metal reallocated between tenants |
@@ -711,7 +711,7 @@ Every resource entity must belong to exactly one `tenant_boundary` group (GRP-00
 - One tenant_boundary group per resource — always
 - Constituent relationships never cross tenant_boundary boundaries — at any nesting level
 
-**Profile-governed enforcement:** `minimal` profile → advisory; `standard`/`prod`/`fsi`/`sovereign` → mandatory. A GateKeeper policy fires when advisory tenancy detected in prod/fsi/sovereign deployment (GRP-011).
+**Profile-governed enforcement:** `minimal` profile → advisory; `standard`/`prod`/`fsi`/`sovereign` → mandatory. A Gating policy fires when advisory tenancy detected in prod/fsi/sovereign deployment (GRP-011).
 
 ### 10.4 Nested Tenants
 A `tenant_boundary` group can have `parent_group_uuid` pointing to another `tenant_boundary` group. The parent-child relationship is a governance and cost relationship — NOT ownership transfer.
@@ -996,7 +996,7 @@ DCM is a **superset of Kubernetes** — extending Kubernetes' declarative, contr
 |------------|-----------|-----|
 | Scope | Single cluster | Multi-cluster, multi-infrastructure |
 | Tenancy | Namespace isolation | First-class Tenant ownership model |
-| Policy | RBAC + admission webhooks | Full Policy Engine — Validation/Transformation/GateKeeper |
+| Policy | RBAC + admission webhooks | Full Policy Engine — Validation/Transformation/Gating Policy |
 | Data lineage | Not provided | Field-level provenance on all data |
 | Cost attribution | Not provided | Full lifecycle cost analysis |
 | Drift detection | Controller reconciles | Four-state model — Intent/Requested/Realized/Discovered |
@@ -1054,7 +1054,7 @@ Webhooks are an **Egress capability** — outbound notifications from DCM to ext
 | **Consumer/CI-CD** | Resource request transitions to REALIZED; Entity enters DEGRADED state; dependency graph node fails |
 | **Provider** | New request payload dispatched; discovery request initiated; decommission requested |
 | **External Systems** | ITSM notification on request create/update/complete; FinOps platform on Entity realization/decommission |
-| **Operational** | Provider capacity below threshold; unsanctioned change detected; GateKeeper policy fired |
+| **Operational** | Provider capacity below threshold; unsanctioned change detected; Gating policy fired |
 | **Compliance** | Sovereignty constraint applied; ownership transfer initiated/completed; audit-relevant policy triggered |
 
 ### 14.4 Key Design Principles (Established)
@@ -1218,7 +1218,7 @@ The Policy Engine is the **single authoritative logic gate for all business rule
 |----------|-------------|----------------|---------|
 | **Transformation** | Enriches or modifies the payload. Adds missing fields, applies standards. All changes recorded in provenance. May set `override: constrained`. | Yes | Inject PCI-compliant cryptography standard |
 | **Validation** | Checks payload against rules. Pass/fail — no field modification. Failure rejects request. | No | VM class allowed in DMZ Zone A |
-| **GateKeeper** | Highest authority. Overrides any field including consumer input. Sets `override: immutable`. Halts execution. | Yes — overrides everything | Block request violating sovereignty |
+| **Gating Policy** | Highest authority. Overrides any field including consumer input. Sets `override: immutable`. Halts execution. | Yes — overrides everything | Block request violating sovereignty |
 
 ### 17.3 Policy Hierarchy
 Three-tier execution — Global first, User last. Within each tier sorted by priority (higher value = higher authority):
@@ -1276,7 +1276,7 @@ Policies declare what fields they need and what to do when fields are absent:
 ```yaml
 required_context:
   - field: placement.provider_metadata.sovereignty_certifications
-    if_absent: <gatekeep | warn | skip>
+    if_absent: <gate | warn | skip>
     if_absent_reason: <human-readable>
 ```
 If no policy declares `required_context` for an absent field → `implicit_approval` recorded in `policy_gap_record`. The system has no implicit opinion beyond what policies state.
@@ -1419,7 +1419,7 @@ Policy Profile     — complete use-case configuration (composed of groups)
   │
 Policy Groups      — single-concern policy collections (composed of policies)
   │
-Policies           — individual Transformation / Validation / GateKeeper rules
+Policies           — individual Transformation / Validation / Gating Policy rules
   │  optionally sourced from
 External Policy Evaluators   — external authoritative policy sources (fifth provider type)
 ```
@@ -1481,13 +1481,13 @@ A **External Policy Evaluator** is a fifth DCM provider type — an external aut
 - Data sovereignty check before ANY query is sent (BBQ-001, BBQ-003)
 - Data minimization — only declared fields sent (BBQ-002)
 - Full audit record per query-response cycle (BBQ-004) including `audit_token` for cross-system correlation
-- Default failure behavior is `gatekeep` — unknown is not safe (BBQ-005)
+- Default failure behavior is `gate` — unknown is not safe (BBQ-005)
 - Injected enrichment fields carry standard field-level provenance with `source_type: black_box_provider` + `audit_token` (BBQ-007)
-- Override control applies to injected fields — GateKeeper can refuse enrichment (BBQ-008)
+- Override control applies to injected fields — Gating Policy can refuse enrichment (BBQ-008)
 - Mode 4 enrichment providers require minimum `transformation` trust level (BBQ-009)
 
 **Trust levels (all modes):**
-- `trusted` → GateKeeper authority (dual approval elevation required)
+- `trusted` → Gating Policy authority (dual approval elevation required)
 - `verified` → Transformation/Validation only; Mode 4 enrichment minimum
 - `untrusted` → advisory only
 
@@ -1501,7 +1501,7 @@ First-class field on any resource entity. Follow standard data model precedence 
 - `ttl` — ISO 8601 duration relative to reference_point (created_at | realization_timestamp | last_modified)
 - `expires_at` — absolute ISO 8601 timestamp
 
-When both declared, earliest wins (LTC-004). GateKeeper can lock as `override: immutable`.
+When both declared, earliest wins (LTC-004). Gating Policy can lock as `override: immutable`.
 
 **`on_expiry` actions:** `destroy | suspend | notify | review`
 
@@ -2025,7 +2025,7 @@ GIT-001 through GIT-008 — see doc 18. AUTH-011 — Git identity resolution use
 ## SECTION 31 — ENTITY AND DEPENDENCY GAPS
 
 ### 31.1 Ownership Transfers (Q25)
-Ownership transfers are **unlimited by default**. Each transfer is immutably recorded with a monotonically incrementing `transfer_number` and mandatory reason field. Policy may declare a maximum per resource type via GateKeeper. ENT-001.
+Ownership transfers are **unlimited by default**. Each transfer is immutably recorded with a monotonically incrementing `transfer_number` and mandatory reason field. Policy may declare a maximum per resource type via Gating Policy. ENT-001.
 
 ### 31.2 Bare Metal Indivisibility (Q26)
 `Compute.BareMetal` declares `allocation_model: whole_unit` and `shareability.allowed: false` (structural lock). Placement holds are exclusive — no concurrent holds on the same server. Provider must report full physical identity (serial_number, hardware_profile) in realized payload and notify DCM of any sharing attempt. ENT-002.
@@ -2135,7 +2135,7 @@ Every provider registration declares `federation_eligibility`:
 - `mode: selective` — only with explicitly declared partners
 - `mode: open` — any trusted DCM peer (sovereignty checks always apply)
 
-**Layer-defined defaults** in `platform` domain layer. Individual registrations may be **more restrictive** — never more permissive without GateKeeper approval.
+**Layer-defined defaults** in `platform` domain layer. Individual registrations may be **more restrictive** — never more permissive without Gating Policy approval.
 
 **Federation scope declares:** permitted resource types + operations, data sharing permissions, max concurrent allocations. Remote DCMs CANNOT decommission local resources through a tunnel.
 
@@ -2214,7 +2214,7 @@ Organizations override by swapping the active provenance Policy Group.
 Event-triggered (primary) on layer ingestion/update — async, non-blocking. Scheduled weekly sweep as safety net. Both triggers produce same conflict record format and audit trail. (OPS-003)
 
 ### 34.3 Policy Minimum Review Periods (Q86)
-Change-type minimum periods: GateKeeper=14d, Validation=7d, Transformation=3d. Profile multipliers: minimal=0×, dev=0.5×, standard=1×, prod=1.5×, fsi/sovereign=2×. DCM enforces — not bypassable except emergency activation with dual-approval audit. (OPS-004)
+Change-type minimum periods: Gating Policy=14d, Validation=7d, Transformation=3d. Profile multipliers: minimal=0×, dev=0.5×, standard=1×, prod=1.5×, fsi/sovereign=2×. DCM enforces — not bypassable except emergency activation with dual-approval audit. (OPS-004)
 
 ### 34.4 Shadow Evaluation Store (Q87)
 Dedicated **Validation Store** (not Audit Store). Queryable and modifiable. Links to Audit Store EVALUATE events via audit_record_uuid. Default retention P90D after policy promotion/retirement. (OPS-005)
@@ -2429,7 +2429,7 @@ They cannot be combined without violating one contract or the other. Observabili
 
 ### 37.4 Curated Observability Event Stream (Q17)
 
-DCM publishes a curated event stream via Message Bus — NOT raw metrics. Policy governs what is published, subscriber roles, and redaction. Published by default: component.health_changed, resource.state_transition, capacity.threshold_crossed, drift.detected, security.gatekeeper_triggered, provider.confidence_changed. NOT published by default: metrics.raw (explicit policy opt-in required).
+DCM publishes a curated event stream via Message Bus — NOT raw metrics. Policy governs what is published, subscriber roles, and redaction. Published by default: component.health_changed, resource.state_transition, capacity.threshold_crossed, drift.detected, security.gating_triggered, provider.confidence_changed. NOT published by default: metrics.raw (explicit policy opt-in required).
 
 Observability events on Message Bus do NOT replace audit records. OBS-001.
 
@@ -2467,11 +2467,11 @@ POST-REALIZATION (Q56 — editability):
 
 ### 38.2 Override Preference Enforcement (Q50)
 
-`override: allow | constrained | immutable` on layer fields is enforced by the Request Payload Processor during assembly **Step 3 (Layer Merge)**. No separate GateKeeper policy needed.
+`override: allow | constrained | immutable` on layer fields is enforced by the Request Payload Processor during assembly **Step 3 (Layer Merge)**. No separate Gating policy needed.
 
 **Authority rule:** `immutable` prevents overrides from lower-authority domains only. A platform domain `immutable` field blocks tenant/service/provider/request — but system domain can still override. Higher authority always wins.
 
-**GateKeeper escalation:** A GateKeeper policy may additionally lock an `allow` or `constrained` field at runtime — for compliance mandates the layer author didn't anticipate.
+**Gating Policy escalation:** A Gating policy may additionally lock an `allow` or `constrained` field at runtime — for compliance mandates the layer author didn't anticipate.
 
 **Enforcement:** If a lower-priority layer or consumer sets an `immutable` field → assembly halts with clear error identifying the conflicting layer and locking layer.
 
@@ -2515,7 +2515,7 @@ Editable fields and edit_constraints visible in Service Catalog at same constrai
 ENT-010.
 
 ### 38.5 System Policies
-- `LAY-005` — override: allow/constrained/immutable enforced at Step 3; immutable = lower-authority only; GateKeeper may additionally lock
+- `LAY-005` — override: allow/constrained/immutable enforced at Step 3; immutable = lower-authority only; Gating Policy may additionally lock
 - `LAY-006` — constraint schema visible at full/summary/hidden level; profile-governed; API endpoint
 - `ENT-010` — editability first-class on Resource Type Spec; independent of override_preference; updates = targeted deltas; layers do not re-run
 
@@ -2608,7 +2608,7 @@ The Ship/Shore/Enclave terminology from defense IT contexts has been replaced th
 | **Provider Catalog Item** | What a specific Service Provider offers consumers: specific resource allocation or process with cost, availability, SLAs; linked to Resource Type Specification version |
 | **cross_tenant_authorization** | DCMGroup with group_class: cross_tenant_authorization; grants one Tenant permission to reference/allocate/stake another Tenant's resources; revocation places active allocations in PENDING_REVIEW |
 | **foundation Tenants** | Three system Tenants created at bootstrap: __platform__, __transitional__, __system__; cannot be decommissioned; declared in bootstrap manifest |
-| **QUOTA_EXCEEDED** | GateKeeper rejection code when resource quota policy fires at Step 5 (pre-placement) |
+| **QUOTA_EXCEEDED** | Gating Policy rejection code when resource quota policy fires at Step 5 (pre-placement) |
 | **Federated Contribution Model** | DCM defaults to federated data creation — all authorized actor types (platform admin, consumer/tenant, service provider, peer DCM) can contribute Data artifacts within their domain scope via the GitOps PR model; see doc 28 |
 | **contributor** | Actor type that authored a Data artifact; recorded in artifact_metadata.contributed_by; determines review requirements; platform_admin / consumer / service_provider / peer_dcm |
 | **contributed_by** | Artifact metadata block recording contributor_type, actor UUID, contribution_method, pr_url, reviewed_by; immutable once set |
@@ -2656,7 +2656,7 @@ The Ship/Shore/Enclave terminology from defense IT contexts has been replaced th
 | **drift_criticality** | Field-level property in Resource Type Spec (low/medium/high/critical); combined with change magnitude to produce drift severity |
 | **Ingress API** | Infrastructure-layer entry point for all inbound DCM requests; sets ingress block; routes to Consumer/Provider/Admin API surfaces |
 | **Provider Catalog Item** | Provider-specific instantiation of a Resource Type Specification; what consumers actually request; distinct from the Resource Type Specification itself |
-| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as GateKeeper/Validation/Transformation |
+| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as Gating Policy/Validation/Transformation |
 | **recovery_posture** | Fifth Policy Group concern_type governing failure and ambiguity response; binds a recovery profile group to the deployment |
 | **DRIFT_RECONCILE** | Recovery action: schedule discovery; let drift detection resolve actual state |
 | **DISCARD_AND_REQUEUE** | Recovery action: best-effort cleanup; new request cycle created immediately |
@@ -2681,7 +2681,7 @@ The Ship/Shore/Enclave terminology from defense IT contexts has been replaced th
 | **corresponding_requested_state_uuid** | Mandatory non-nullable field on every Realized State snapshot; traces every Realized State change to an authorized request |
 | **Provider Update Notification** | Formal API for providers to report authorized state changes; DCM evaluates via Policy Engine; approved → new Requested State + Realized State; rejected → drift event |
 | **notification_uuid** | Idempotency key on Provider Update Notifications; safe to resend on provider crash |
-| **pre-authorized update** | Category of provider update pre-approved by GateKeeper policy; processed automatically without per-change human review |
+| **pre-authorized update** | Category of provider update pre-approved by Gating policy; processed automatically without per-change human review |
 | **Whole Allocation** | Ownership pattern: consumer owns the entire resource entity outright in their Tenant; no pool involved |
 | **Allocation** | Ownership pattern: pool yields independently-owned sub-resources; consumer owns their allocation; AllocationRecord relationship links to pool |
 | **Shareable** | Ownership pattern: one resource, multiple stakeholders; consumers hold stakes (relationships) only; no consumer owns any portion |
@@ -3147,7 +3147,7 @@ Provider submits POST /api/v1/provider/entities/{uuid}/update-notification
   → REJECTED: Realized State unchanged; discrepancy becomes drift
 ```
 
-**Pre-authorization:** Providers declare update capabilities at registration. Organizations pre-authorize categories of updates via GateKeeper policy (e.g., auto-scale within 2× bounds). Pre-authorized updates are processed automatically.
+**Pre-authorization:** Providers declare update capabilities at registration. Organizations pre-authorize categories of updates via Gating policy (e.g., auto-scale within 2× bounds). Pre-authorized updates are processed automatically.
 
 **Consumer approval API:** `GET /api/v1/resources/{uuid}/provider-notifications` and `POST /approve` or `/reject`. On approval → new Requested State + Realized State. On rejection → drift event.
 
@@ -3179,7 +3179,7 @@ Rehydration picks a specific snapshot — direct lookup by `realized_state_uuid`
 - `STO-008`: Intent Store requires GitOps; Requested Store requires write-once semantics (GitOps reference impl; write-once document stores supported at scale)
 - `RSE-010`: Realized State only changes via authorized request; drift detection never writes to Realized Store
 - `RSE-011`: Provider Update Notifications evaluated by Policy Engine before any Realized State change
-- `RSE-012`: Categories of provider updates may be pre-authorized via GateKeeper policy
+- `RSE-012`: Categories of provider updates may be pre-authorized via Gating policy
 - `RSE-013`: Provider updates requiring consumer approval place entity in PENDING_REVIEW
 
 ---
@@ -3220,7 +3220,7 @@ Tiers compose: Tier 1 always fires; Tier 2 applies to all Tenant resources; Tier
 
 ### 48.5 Event Taxonomy (closed vocabulary — 7 categories)
 
-1. **Request lifecycle:** acknowledged, requires_approval, approved, dispatched, completed, failed, cancelled, gatekeeper_rejected
+1. **Request lifecycle:** acknowledged, requires_approval, approved, dispatched, completed, failed, cancelled, gating_rejected
 2. **Resource lifecycle:** realized, state_changed, ttl_warning, ttl_expired, suspended, resumed, decommissioning, decommissioned, decommission_deferred, ownership_transferred, pending_review
 3. **Drift and discovery:** drift.detected, drift.severity_escalated, drift.resolved, drift.escalated, unsanctioned_change.detected
 4. **Provider update:** submitted, requires_approval, approved, rejected, auto_approved
@@ -3281,7 +3281,7 @@ Discovery Scheduler component maintains priority queue (Critical → High → St
 
 ### 49.4 Recovery Policy Model — The Unified Framework
 
-Recovery Policies are a formal DCM policy type (alongside GateKeeper, Validation, Transformation). Same authoring, GitOps store, shadow mode, activation workflow, and audit trail.
+Recovery Policies are a formal DCM policy type (alongside Gating Policy, Validation, Transformation). Same authoring, GitOps store, shadow mode, activation workflow, and audit trail.
 
 **Trigger vocabulary (closed):** ASSEMBLY_TIMEOUT, DISPATCH_TIMEOUT, RESERVE_QUERY_ALL_EXHAUSTED, LATE_RESPONSE_RECEIVED, CANCELLATION_SENT, CANCELLATION_CONFIRMED, CANCELLATION_FAILED, PARTIAL_REALIZATION, COMPENSATION_IN_PROGRESS, COMPENSATION_FAILED
 
@@ -3362,14 +3362,14 @@ DCM orchestration operates at two levels that compose through the same Policy En
 An Orchestration Flow Policy with `concern_type: orchestration_flow` and `ordered: true` is a named workflow. It declares steps in explicit sequence using the closed payload type vocabulary as step identifiers. Named workflows are first-class Data artifacts — versioned, GitOps-managed, profile-bound, same lifecycle as all other artifacts. The request lifecycle pipeline is a built-in system Orchestration Flow Policy that cannot be deactivated but can be extended. Workflows are triggered: by events on the Request Orchestrator, by schedule (via Discovery Scheduler pattern), manually via Admin API, or by output of another policy.
 
 **Level 2 — Dynamic Policies (conditional, inline):**
-GateKeeper, Transformation, Recovery, Governance Matrix, and Lifecycle Policies fire when their match conditions are satisfied — within or alongside workflow steps. They are not declared in workflow artifacts; they evaluate whenever payload state matches their conditions.
+Gating Policy, Transformation, Recovery, Governance Matrix, and Lifecycle Policies fire when their match conditions are satisfied — within or alongside workflow steps. They are not declared in workflow artifacts; they evaluate whenever payload state matches their conditions.
 
 **How they compose:** A named workflow step fires when its declared payload type event occurs. Dynamic policies also fire on the same event if their conditions match. Both are evaluated by the same Policy Engine. Both are triggered by events on the Request Orchestrator event bus. The workflow provides the explicit sequence skeleton; dynamic policies provide conditional behavior within it.
 
 **The "Orchestrator" term** in earlier sections refers to the combination of: Request Orchestrator (event bus) + Orchestration Flow Policy evaluation (named workflows) + Policy Engine (dynamic policy evaluation). There is no separate "Orchestrator" component — the Request Orchestrator is the event bus, and workflows are Policies.
 
 **Adding an explicit pipeline step** = add a step to an Orchestration Flow Policy artifact.
-**Adding conditional behavior** = write a GateKeeper, Transformation, or Recovery policy.
+**Adding conditional behavior** = write a Gating Policy, Transformation, or Recovery policy.
 **Both are Data artifacts evaluated by the Policy Engine.**
 
 ### 50.3 Ingress API vs Consumer API (Group 5 fix)
@@ -3385,7 +3385,7 @@ The Ingress API is not a separate service — it is the API Gateway component. C
 
 **Request rate quotas** — enforced at Ingress API level per actor; returns 429 with Retry-After. Configured in platform-domain layer.
 
-**Resource quotas** — enforced by GateKeeper policies at Step 5 (pre-placement). No hardcoded mechanism — quotas are declared policies. Quota exceeded → QUOTA_EXCEEDED GateKeeper rejection. Quota increase requests submitted via `Process.QuotaIncreaseRequest` catalog item → Orchestrator routes to platform admin for approval → GateKeeper policy updated.
+**Resource quotas** — enforced by Gating policies at Step 5 (pre-placement). No hardcoded mechanism — quotas are declared policies. Quota exceeded → QUOTA_EXCEEDED Gating Policy rejection. Quota increase requests submitted via `Process.QuotaIncreaseRequest` catalog item → Orchestrator routes to platform admin for approval → Gating policy updated.
 
 CMP-006.
 
@@ -3612,7 +3612,7 @@ Submit → Governance Matrix evaluates contributor permissions → proposed stat
 
 ### Contribution Artifact Types by Contributor
 - Consumer: tenant policies (all 7 types), resource groups, notification subs, webhooks, cross-tenant auth records, request layers
-- Provider: Resource Type Specs (their types), catalog items, service layers, provider-domain GateKeeper/Validation policies
+- Provider: Resource Type Specs (their types), catalog items, service layers, provider-domain Gating Policy/Validation policies
 - Peer DCM: registry entries, policy templates (verified peers), service layers (verified/vouched)
 
 ### Contribution Store Directory Structure
@@ -3673,7 +3673,7 @@ FCM-001: contributor recorded in contributed_by; immutable. FCM-002: domain scop
 | **Request Layer** | Consumer's declared intent — becomes Intent State on submission |
 | **Layer Chain** | Ordered sequence of layers merged to produce an assembled payload |
 | **Assembly Process** | Seven-step process by which the Request Payload Processor builds a Requested State payload |
-| **GateKeeper Policy** | Highest-authority policy that can override any field including consumer input |
+| **Gating Policy** | Highest-authority policy that can override any field including consumer input |
 | **Transformation Policy** | Policy that enriches or modifies payload fields — all changes recorded in provenance |
 | **Validation Policy** | Policy that checks payload against rules — pass/fail, no field modification |
 | **Resource/Service Request** | What a consumer submits to DCM — declared intent to consume a resource or service |
@@ -3709,7 +3709,7 @@ FCM-001: contributor recorded in contributed_by; immutable. FCM-002: domain scop
 | **Provider Catalog Item** | What a specific Service Provider offers consumers: specific resource allocation or process with cost, availability, SLAs; linked to Resource Type Specification version |
 | **cross_tenant_authorization** | DCMGroup with group_class: cross_tenant_authorization; grants one Tenant permission to reference/allocate/stake another Tenant's resources; revocation places active allocations in PENDING_REVIEW |
 | **foundation Tenants** | Three system Tenants created at bootstrap: __platform__, __transitional__, __system__; cannot be decommissioned; declared in bootstrap manifest |
-| **QUOTA_EXCEEDED** | GateKeeper rejection code when resource quota policy fires at Step 5 (pre-placement) |
+| **QUOTA_EXCEEDED** | Gating Policy rejection code when resource quota policy fires at Step 5 (pre-placement) |
 | **Federated Contribution Model** | DCM defaults to federated data creation — all authorized actor types (platform admin, consumer/tenant, service provider, peer DCM) can contribute Data artifacts within their domain scope via the GitOps PR model; see doc 28 |
 | **contributor** | Actor type that authored a Data artifact; recorded in artifact_metadata.contributed_by; determines review requirements; platform_admin / consumer / service_provider / peer_dcm |
 | **contributed_by** | Artifact metadata block recording contributor_type, actor UUID, contribution_method, pr_url, reviewed_by; immutable once set |
@@ -3757,7 +3757,7 @@ FCM-001: contributor recorded in contributed_by; immutable. FCM-002: domain scop
 | **drift_criticality** | Field-level property in Resource Type Spec (low/medium/high/critical); combined with change magnitude to produce drift severity |
 | **Ingress API** | Infrastructure-layer entry point for all inbound DCM requests; sets ingress block; routes to Consumer/Provider/Admin API surfaces |
 | **Provider Catalog Item** | Provider-specific instantiation of a Resource Type Specification; what consumers actually request; distinct from the Resource Type Specification itself |
-| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as GateKeeper/Validation/Transformation |
+| **Recovery Policy** | Formal DCM policy type mapping trigger conditions (DISPATCH_TIMEOUT, PARTIAL_REALIZATION, etc.) to response actions; same authoring model as Gating Policy/Validation/Transformation |
 | **recovery_posture** | Fifth Policy Group concern_type governing failure and ambiguity response; binds a recovery profile group to the deployment |
 | **DRIFT_RECONCILE** | Recovery action: schedule discovery; let drift detection resolve actual state |
 | **DISCARD_AND_REQUEUE** | Recovery action: best-effort cleanup; new request cycle created immediately |
@@ -3782,7 +3782,7 @@ FCM-001: contributor recorded in contributed_by; immutable. FCM-002: domain scop
 | **corresponding_requested_state_uuid** | Mandatory non-nullable field on every Realized State snapshot; traces every Realized State change to an authorized request |
 | **Provider Update Notification** | Formal API for providers to report authorized state changes; DCM evaluates via Policy Engine; approved → new Requested State + Realized State; rejected → drift event |
 | **notification_uuid** | Idempotency key on Provider Update Notifications; safe to resend on provider crash |
-| **pre-authorized update** | Category of provider update pre-approved by GateKeeper policy; processed automatically without per-change human review |
+| **pre-authorized update** | Category of provider update pre-approved by Gating policy; processed automatically without per-change human review |
 | **Whole Allocation** | Ownership pattern: consumer owns the entire resource entity outright in their Tenant; no pool involved |
 | **Allocation** | Ownership pattern: pool yields independently-owned sub-resources; consumer owns their allocation; AllocationRecord relationship links to pool |
 | **Shareable** | Ownership pattern: one resource, multiple stakeholders; consumers hold stakes (relationships) only; no consumer owns any portion |
@@ -3829,7 +3829,7 @@ FCM-001: contributor recorded in contributed_by; immutable. FCM-002: domain scop
 | **REHYDRATION_BLOCKED** | Audit event recorded when a concurrent rehydration attempt is rejected due to active lease |
 | **hybrid retention mode** | Discovered State retention: minimum window + retain until drift resolved + hard maximum ceiling |
 | **rolling_window retention** | Discovered State retention: keep last N days regardless of drift status |
-| **override: allow/constrained/immutable** | Layer field metadata declaring override intent; enforced by Request Payload Processor at Step 3; immutable prevents lower-authority overrides only; GateKeeper may additionally lock |
+| **override: allow/constrained/immutable** | Layer field metadata declaring override intent; enforced by Request Payload Processor at Step 3; immutable prevents lower-authority overrides only; Gating Policy may additionally lock |
 | **constraint_visibility** | Policy-governed disclosure level for constrained fields: full (constraint+bounds+reason+suggestions), summary (bounds only), hidden (silently enforced) |
 | **editable** | Resource Type Spec field declaration: can this field be modified post-realization via a targeted delta update (true) or only via reprovisioning (false) |
 | **edit_constraints** | Bounds declared on editable fields: range, list, enum; validated at update time; same constraint types as assembly-time constraints |
@@ -4018,7 +4018,7 @@ These items are explicitly unresolved. Do not make assumptions about them — fl
 | 15 | Trust validation mechanism for provider certification | Providers |
 | 16 | Audit vs. Observability — are these truly separate components? | Control Plane |
 | 17 | Message Bus — should it be exposed as consumer ingress or egress only? | Control Plane |
-| 18 | GateKeeper vs. Validation policy distinction — needs better examples | Policy Engine |
+| 18 | Gating Policy vs. Validation policy distinction — needs better examples | Policy Engine |
 | 19 | How are conflicting Service Layers at the same precedence level resolved? | Data Layers | ✅ Resolved — priority schema + ingestion conflict detection |
 | 20 | Should Core Layers be ordered within their precedence level? | Data Layers | ✅ Resolved — priority schema provides deterministic ordering |
 | 21 | Can a consumer explicitly exclude a layer from their request? | Data Layers |
@@ -4096,11 +4096,11 @@ These items are explicitly unresolved. Do not make assumptions about them — fl
 
 ### Orchestration Examples (8 scenarios)
 
-**1.1 Basic request lifecycle** — submit → layers_assembled (GateKeeper + Transformation fire) → placement (6-step) → dispatch → realized. Shows named workflow + dynamic policies composing on same events.
+**1.1 Basic request lifecycle** — submit → layers_assembled (Gating Policy + Transformation fire) → placement (6-step) → dispatch → realized. Shows named workflow + dynamic policies composing on same events.
 
-**1.2 Human approval gate** — GateKeeper with `requires_approval: true` flag inserts AWAITING_APPROVAL step without modifying named workflow. Manager approves via API → pipeline resumes.
+**1.2 Human approval gate** — Gating Policy with `requires_approval: true` flag inserts AWAITING_APPROVAL step without modifying named workflow. Manager approves via API → pipeline resumes.
 
-**1.3 Policy-gated hard block** — GateKeeper denies unsupported OS. Consumer receives clear error with policy_uuid and suggestion. No requires_approval flag → terminal FAILED.
+**1.3 Policy-gated hard block** — Gating Policy denies unsupported OS. Consumer receives clear error with policy_uuid and suggestion. No requires_approval flag → terminal FAILED.
 
 **1.4 Composite Service** — VM + IP + DNS + LoadBalancer delivered as one catalog item. Dependency-ordered execution (parallel where no deps). DNS fails (partial delivery) → DEGRADED state. Recovery: NOTIFY_AND_WAIT. Consumer chooses: accept degraded or trigger DNS retry.
 
@@ -4214,7 +4214,7 @@ content/
 ### Governing Principle
 Questions of fact use boolean gates. Questions of degree use scoring. Secondary test: "Can a regulator accept 'the score was below threshold' as a complete explanation?" If not — boolean.
 
-### GateKeeper enforcement_class (required field)
+### Gating Policy enforcement_class (required field)
 - `compliance` — boolean deny gate. Default and fail-safe if omitted. Used for: regulatory requirements (PHI→BAA, sovereign data), security hard requirements, anything where score-around creates legal liability.
 - `operational` — contributes `risk_score_contribution` (weight 1–100) to request risk score. Used for: cost ceilings, size limits, quota pressure, off-hours context, business rule preferences.
 
@@ -4223,9 +4223,9 @@ Questions of fact use boolean gates. Questions of degree use scoring. Secondary 
 - `advisory` — completeness score contribution + warning list. Never blocks. Recommended fields absent, unusual values, low confidence.
 
 ### The Five Scoring Signals (aggregate → request_risk_score 0–100)
-1. **Operational GateKeeper score** (weight: 0.45 standard) — sum of risk_score_contribution from all fired operational GateKeepers, capped at 100
+1. **Operational Gating Policy score** (weight: 0.45 standard) — sum of risk_score_contribution from all fired operational Gating Policies, capped at 100
 2. **Completeness score** (weight: 0.15) — sum of advisory Validation contributions
-3. **Actor risk history score** (weight: 0.20) — decay-weighted (λ=0.1, half-life 7 days) history of actor's previous request outcomes; events: validation_failure(5), gatekeeper_deny(10), compliance_deny(20), policy_override(8), drift_caused(15), forced_decommission(12)
+3. **Actor risk history score** (weight: 0.20) — decay-weighted (λ=0.1, half-life 7 days) history of actor's previous request outcomes; events: validation_failure(5), gating_deny(10), compliance_deny(20), policy_override(8), drift_caused(15), forced_decommission(12)
 4. **Quota pressure score** (weight: 0.10) — zero below 75% utilization; max(0, (util - 0.75) / 0.25) × 100 above
 5. **Provider accreditation richness** (weight: 0.10, inverse) — weighted portfolio sum; higher richness = lower provider risk contribution
 
@@ -4243,10 +4243,10 @@ Threshold and override changes take effect immediately. Score Records are immuta
 
 ### Pipeline Sequence (doc 29, Section 8)
 1. Evaluate all policies
-2. Compliance GateKeeper fires → HALT (boolean deny, no score)
+2. Compliance Gating Policy fires → HALT (boolean deny, no score)
 3. Structural Validation fails → HALT (boolean fail, no score)
 4. Governance Matrix DENY → HALT (always boolean, never scored — SMX-004)
-5. Collect operational GateKeeper contributions → Signal 1
+5. Collect operational Gating Policy contributions → Signal 1
 6. Collect advisory Validation contributions → Signal 2
 7. Fetch actor risk history → Signal 3
 8. Calculate quota pressure → Signal 4
@@ -4273,7 +4273,7 @@ Admin: GET/PATCH /api/v1/admin/profiles/{name}/scoring · POST overrides · GET/
 Flow GUI: GET /flow/api/v1/graph/scoring-overlay · POST /flow/api/v1/simulate/score · Threshold slider in Profile Management view · Score breakdown panel in Simulation
 
 ### SMX-001–010 System Policies
-SMX-001: GateKeeper must declare enforcement_class (compliance default). SMX-002: Validation must declare output_class (structural default). SMX-003: regulatory_mandate:true = no profile demotion. SMX-004: Governance Matrix always boolean. SMX-005: signal weights must sum to 1.00. SMX-006: Score Records immutable. SMX-007: actor risk history not exposed to other consumers. SMX-008: auto_approve_below ≤ 50. SMX-009: scoring_weight 1–100; aggregate capped at 100 before weighting. SMX-010: Score Record required for every scored request.
+SMX-001: Gating Policy must declare enforcement_class (compliance default). SMX-002: Validation must declare output_class (structural default). SMX-003: regulatory_mandate:true = no profile demotion. SMX-004: Governance Matrix always boolean. SMX-005: signal weights must sum to 1.00. SMX-006: Score Records immutable. SMX-007: actor risk history not exposed to other consumers. SMX-008: auto_approve_below ≤ 50. SMX-009: scoring_weight 1–100; aggregate capped at 100 before weighting. SMX-010: Score Record required for every scored request.
 
 ### Capabilities
 SMX-001 through SMX-008 in Capabilities Matrix Domain 21. Total: 167 capabilities, 26 domains.
@@ -4326,7 +4326,7 @@ Each constituent declares `depends_on: [component_id, ...]`. DCM reads this grap
 Primary use case for dependency graph declaration. DCM sequences rehydration from `depends_on` graph in same order as provisioning. `external` constituents re-placed by Placement Engine. `self` constituents return to the same registering provider.
 
 ### Scoring
-Operational GateKeepers fire on the composite payload (not per-constituent). Signal 5 (accreditation richness) = lowest richness score among required-constituent providers.
+Operational Gating Policies fire on the composite payload (not per-constituent). Signal 5 (accreditation richness) = lowest richness score among required-constituent providers.
 
 ### Nested Composite Services
 Max depth 3 enforced by DCM at placement. A Composite Service used as a constituent of another Composite Service has no awareness it is a constituent — receives and responds with standard payloads.
@@ -4464,7 +4464,7 @@ Peer DCM instances may have different custom tier lists. Resolution strategy: `g
 event_uuid (idempotency key — EVT-002: consumers must treat duplicates as already-processed) · event_type · event_schema_version · timestamp (from Commit Log — authoritative) · dcm_version · dcm_instance_uuid · subject (entity_uuid, entity_type, entity_handle, tenant_uuid, actor_uuid) · urgency (critical/high/medium/low/info) · payload (event-specific) · links (self, audit_record)
 
 ### Event Domains (82 total across 26 domains)
-request.* (14): submitted → intent_captured → layers_assembled → policies_evaluated → requires_approval → approved → placement_complete → dispatched → compound_assembled → dependencies_resolved → realized/failed/gatekeeper_rejected/cancelled
+request.* (14): submitted → intent_captured → layers_assembled → policies_evaluated → requires_approval → approved → placement_complete → dispatched → compound_assembled → dependencies_resolved → realized/failed/gating_rejected/cancelled
 entity.* (13): realized, state_changed, modified, ttl_warning, ttl_expired, suspended, resumed, decommissioning, decommissioned, decommission_deferred, ownership_transferred, pending_review, expired
 drift.* (4): detected, severity_escalated, resolved, escalated
 provider.* (5): registered, deregistered, healthy, unhealthy, degraded
@@ -4620,10 +4620,10 @@ ICOM-001: mTLS required ALL internal calls, no exceptions. ICOM-002: interaction
 schedule.dispatch: immediate (default) | at (specific time with not_before/not_after) | window (maintenance window reference) | recurring (cron expression). Added as optional field on POST /api/v1/requests — no new submission endpoint.
 
 ### SCHEDULED Status
-Request enters SCHEDULED status in Intent State after passing declaration-time GateKeeper. Visible in GET /api/v1/requests?status=SCHEDULED. Cancellable via DELETE /api/v1/requests/{uuid} before dispatch. request.scheduled event (info urgency).
+Request enters SCHEDULED status in Intent State after passing declaration-time Gating Policy. Visible in GET /api/v1/requests?status=SCHEDULED. Cancellable via DELETE /api/v1/requests/{uuid} before dispatch. request.scheduled event (info urgency).
 
 ### Dual Policy Evaluation (SCH-001)
-GateKeeper runs at declaration time (fail fast) AND at dispatch time (validate against current state). Dispatch-time rejection → FAILED with schedule_policy_rejection (SCH-003). Data, quotas, policies may all change between declaration and dispatch.
+Gating Policy runs at declaration time (fail fast) AND at dispatch time (validate against current state). Dispatch-time rejection → FAILED with schedule_policy_rejection (SCH-003). Data, quotas, policies may all change between declaration and dispatch.
 
 ### Deadline Enforcement (SCH-005)
 not_after: if passed without dispatch → FAILED with schedule_deadline_missed. No retry. request.failed event (medium urgency).
@@ -4817,7 +4817,7 @@ Credentials: auth via credential management service (ITSM-001). Inbound webhooks
 Side-effect policy — fires on DCM events, triggers ITSM action, does NOT block pipeline by default.
 Output schema: itsm_provider_uuid, action, action_payload (template expressions: {{ field }}), store_reference_on_entity, block_until_created, block_timeout, on_failure.
 ITSM-005: block_until_created REQUIRES block_timeout — pipeline never permanently stalled.
-ITSM-POL-002: NOT a GateKeeper substitute except via explicit block_until_created mechanism.
+ITSM-POL-002: NOT a Gating Policy substitute except via explicit block_until_created mechanism.
 ITSM-POL-004: Multiple ITSM Policies on same event fire INDEPENDENTLY.
 
 ### 6 Policy Examples
@@ -5265,12 +5265,12 @@ Each with complete artifact_metadata, owned_by, domain, data blocks.
 
 **9.4-9.5 VM Request and Processing Pipeline:** Full 8-step trace from consumer submission through
 intent capture → layer reference resolution → layer assembly (showing each contributing layer and field
-provenance) → policy evaluation (GateKeeper, Validation, Transformation each shown) → placement →
+provenance) → policy evaluation (Gating Policy, Validation, Transformation each shown) → placement →
 requested state write (with provenance on every field) → dispatch → realized state.
 
 **9.6 WebApp as a Service Request:** Composite Service composition: DB first, then 3 web VMs with
 db_host injected from DB realization, then LoadBalancer with backend_pool injected from VM IPs.
-Tier 1 GateKeeper policies enforcing HA, minimum replicas, LTM requirement. Environment layer
+Tier 1 Gating policies enforcing HA, minimum replicas, LTM requirement. Environment layer
 injecting production defaults (backup, TTL=null, approval tier, log retention).
 
 **9.7 VM Rehydration (DR failover DC1→DC2):** Shows location override in placement_constraints,
@@ -5280,7 +5280,7 @@ preserved across DC move. Static Replace vs Rehydration contrast explained in pi
 
 **9.8 WebApp Rehydration (standards refresh — no incident):** Rolling replacement pattern for Tier 1.
 Shows: retired OS image → auto-upgrade Transformation policy substitutes RHEL 9.5; environment layer
-v1.2 injects new log_retention_days=365 and vulnerability scanning; new Tier 1 GateKeeper bumps
+v1.2 injects new log_retention_days=365 and vulnerability scanning; new Tier 1 Gating Policy bumps
 replica count 3→4; DB unchanged (no OS dependency). Full audit record showing every field change,
 its source layer/policy, and version.
 
@@ -5513,7 +5513,7 @@ Source: DCM Technical Roadmap Summit 2026 presentation (Red Hat FlightPath Team)
 - App Request = Consumer POST /api/v1/requests
 - Requested Store = Intent State (GitOps)
 - Customize Region layer = Transformation Policy (Core Layer injection)
-- Tier Region Policy (OPA Rego) = GateKeeper/Validation Policy (Mode 3 OPA)
+- Tier Region Policy (OPA Rego) = Gating Policy/Validation Policy (Mode 3 OPA)
 - App Declaration = Requested State (assembled payload)
 - Declared Store = Requested State Store
 - Egress = Service Provider dispatch via Operator Interface
@@ -5613,7 +5613,7 @@ dcm-api-gateway, dcm-request-orchestrator, dcm-policy-engine, dcm-placement-engi
 - dcm-provider-webapp: Service Provider that registers a Composite Service composing VM + Network + OCP Cluster (OIS Level 1; sequential with rollback)
 
 **OPA Rego policies (Summit demo):**
-- tier-region.rego: GateKeeper (compliance) — enforces zone ⊆ tier allowed zones. Matches slide 17 demo exactly.
+- tier-region.rego: Gating Policy (compliance) — enforces zone ⊆ tier allowed zones. Matches slide 17 demo exactly.
 - vm-sizing.rego: Validation (structural) — CPU/RAM/storage bounds by environment
 - placement-weights.rego: Transformation — 5-signal scoring (capacity 35%, affinity 10%, cost 20%, perf 20%, risk 15%)
 
@@ -5672,7 +5672,7 @@ When working on this project, apply these instructions in addition to the number
 173. **Contributor domain scope is hard DENY at submission** — consumers cannot contribute system/platform policies regardless of declared domain; providers cannot contribute specs for types they don't offer; enforced by Governance Matrix at contribution time (FCM-002)
 174. **All contributed policies enter shadow mode by default** — proposed status with shadow evaluation before activation; shadow_review_period is profile-governed (P7D standard → P30D fsi/sovereign); platform admin reviews divergence cases before promoting
 175. **Orphaned artifacts do not auto-deactivate** — when contributor's access is revoked, their active artifacts remain active until platform admin assigns new owner or explicitly retires; exception: sovereign profile auto-retires orphaned artifacts (FCM-006)
-176. **GateKeeper enforcement_class is required and fail-safe** — if omitted, treated as compliance (boolean deny). Operational-class GateKeepers never halt the request; they contribute a weighted risk_score_contribution to the aggregate. The aggregate risk score determines approval routing, not individual policy outcomes.
+176. **Gating Policy enforcement_class is required and fail-safe** — if omitted, treated as compliance (boolean deny). Operational-class Gating Policies never halt the request; they contribute a weighted risk_score_contribution to the aggregate. The aggregate risk score determines approval routing, not individual policy outcomes.
 177. **Validation output_class is required and fail-safe** — if omitted, treated as structural (boolean halt). Advisory-class Validations never halt requests; they accumulate completeness score and warning list surfaced to the consumer.
 178. **Governance Matrix is always boolean — never scored** — SMX-004 is absolute. Scoring cannot be used to route around data sovereignty or regulatory boundaries. The Governance Matrix evaluates before the scoring pipeline runs.
 179. **Profile thresholds determine routing, not individual policies** — the approval routing decision (auto/review/dual/authorized) emerges from the aggregate risk score crossing profile-configured thresholds, not from individual policy flags. Changing governance sensitivity = adjusting thresholds in the profile.
@@ -5697,7 +5697,7 @@ When working on this project, apply these instructions in addition to the number
 202. **36-internal-component-auth.md (ICOM-001–ICOM-009)** — network position grants ZERO trust for internal calls — same five-check boundary model as external; every internal call requires BOTH mTLS cert AND ZTS-002 interaction credential; bootstrap tokens are one-time-use PT1H max; unauthorized source component → 403 + high-urgency audit; component certs from Internal CA only, max P90D, never external CA
 203. **SES and ICOM domains added to capabilities matrix** — matrix is now 177 capabilities across 28 domains; SES-001–SES-005 (session lifecycle, deprovisioning, emergency revocation, introspection, concurrent enforcement); ICOM-001–ICOM-005 (mTLS, bootstrap, call authorization, interaction credentials, cert revocation)
 204. **Domain prefix totals now 28** — IAM CAT REQ PRV LCM DRF POL LAY INF ING AUD OBS STO FED GOV ACC ZTS GMX DRC FCM SMX MPX CPX DPO ATM EVT VER SES ICOM; README and taxonomy both updated to 177/28
-205. **Doc 37 (Scheduled Requests): dual policy evaluation** — GateKeeper runs at declaration AND at dispatch; dispatch-time rejection = FAILED not retried; schedule field is optional addition to existing POST /api/v1/requests body; SCHEDULED status is cancellable; not_after deadline miss = terminal FAILED (SCH-005)
+205. **Doc 37 (Scheduled Requests): dual policy evaluation** — Gating Policy runs at declaration AND at dispatch; dispatch-time rejection = FAILED not retried; schedule field is optional addition to existing POST /api/v1/requests body; SCHEDULED status is cancellable; not_after deadline miss = terminal FAILED (SCH-005)
 206. **Doc 38 (Request Dependency Graph): distinct from type-level and Composite Service deps** — consumer-declared ad-hoc ordering for independent requests; POST /api/v1/request-groups; PENDING_DEPENDENCY status counts against quota at submission not dispatch; max 50 requests per group; circular deps → 422 at submission; field injection passes realized outputs into dependent request fields automatically
 207. **Doc 39 (DCM Self-Health): three endpoints, different purposes** — /livez (liveness, PT5S max, no external calls, Kubernetes restarts pod on fail) vs /readyz (readiness, checks 5 core dependencies, Kubernetes removes from LB) vs /api/v1/admin/health (per-component detail, admin auth required, Prometheus metrics at /metrics); all follow RFC 8615 / IANA health+json
 208. **Capabilities matrix now 189 across 31 domains** — SES(5) ICOM(5) SCH(4) RDG(4) HLT(4) added; domain prefixes: IAM CAT REQ PRV LCM DRF POL LAY INF ING AUD OBS STO FED GOV ACC ZTS GMX DRC FCM SMX MPX CPX DPO ATM EVT VER SES ICOM SCH RDG HLT (31 total)
@@ -5756,7 +5756,7 @@ When working on this project, apply these instructions in addition to the number
 
 230. **Configurable audit granularity** (doc 16 §8.1) — Three levels: `stage` (~6 leaves/request — one per pipeline stage), `mutation` (~15-30 leaves — one per layer merge, policy evaluation, constraint resolution), `field` (mutation + per-field old/new value hashes). Profile defaults: minimal/dev → stage, standard/prod → mutation, fsi/sovereign → field (minimum, cannot downgrade). Inter-stage verification: synchronous (fsi/sovereign required), asynchronous, or disabled (homelab).
 
-231. **Lifecycle-scoped policy evaluation** (doc B §2.2–2.3) — 10 lifecycle operation types: initial_provisioning, update, scale, rehydration, decommission, ownership_transfer, subscription_renewal, drift_remediation, provider_migration, compliance_rescan. Each policy declares `lifecycle_scope` specifying which operations trigger it. `changed_field_filter` enables policies to fire only when specific fields change on update/scale operations (e.g., placement policies skip memory-only changes, sovereignty fires on zone/provider changes). Profile-governed minimums: fsi/sovereign require sovereignty and GateKeeper policies on ALL lifecycle operations — cannot be scoped down.
+231. **Lifecycle-scoped policy evaluation** (doc B §2.2–2.3) — 10 lifecycle operation types: initial_provisioning, update, scale, rehydration, decommission, ownership_transfer, subscription_renewal, drift_remediation, provider_migration, compliance_rescan. Each policy declares `lifecycle_scope` specifying which operations trigger it. `changed_field_filter` enables policies to fire only when specific fields change on update/scale operations (e.g., placement policies skip memory-only changes, sovereignty fires on zone/provider changes). Profile-governed minimums: fsi/sovereign require sovereignty and Gating policies on ALL lifecycle operations — cannot be scoped down.
 
 232. **Policy Override Model** (doc B §18) — Five override mechanisms organized by severity: Override Policy (planned exceptions, full lifecycle, cannot target hard policies), Exception Grant (pre-authorized time-bounded waiver with compensating controls, dual-approval for hard), Manual Override (immediate single-request authorization, dual-approval for hard), Dual-Approval Escalation (required modifier for hard policy overrides — two individuals from different roles), Compensating Control Substitution (satisfy policy intent through different mechanisms without actually overriding). Every override produces a Merkle tree audit leaf. Profile-governed: fsi/sovereign require dual-approval on ALL overrides.
 
@@ -5803,7 +5803,7 @@ ADR-016 is the key open design question raised by the engineering team (Ondra/ma
 
 1. Consumer submits intent (6 fields)
 2. Layer assembly (5 layers merge → 10+ fields with provenance)
-3. Policy evaluation (GateKeeper, Validation, Transformation — 4 policies)
+3. Policy evaluation (Gating Policy, Validation, Transformation — 4 policies)
 4. Dependency resolution (VM requires Network.IPAddress → sub-request created)
 5. IP policy evaluation (sovereignty, subnet isolation, pool selection — 4 policies)
 6. IP realization (InfoBlox IPAM allocates 10.1.45.23)
