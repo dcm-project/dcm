@@ -81,7 +81,7 @@ Request Orchestrator parses the dependency graph (DAG validation passes)
   │   backend:  PENDING_DEPENDENCY (waiting on db: realized)
   │   frontend: PENDING_DEPENDENCY (waiting on backend: realized)
   ▼ Policy Engine evaluates the db request
-  │   GateKeeper: staging environment authorized for tenant
+  │   Gating Policy: staging environment authorized for tenant
   │   Validation: storage_gb within tier limits
   │   Transformation: monitoring agent injected
   ▼ Placement Engine selects PostgreSQL provider for db
@@ -275,7 +275,7 @@ compose.
 ```
 Consumer submits request
   ▼ Layer assembly + Policy Engine evaluation
-  ▼ All GateKeeper policies pass (boolean gates: compliance, sovereignty)
+  ▼ All Gating policies pass (boolean gates: compliance, sovereignty)
   ▼ Scoring Model computes risk score
   │   Signal weights × signal values = 67
   ▼ Profile standard threshold lookup:

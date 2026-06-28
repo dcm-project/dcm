@@ -153,7 +153,7 @@ Policy artifact CRUD. Stores policy definitions and provides retrieval API.
 
 ### What to add
 
-- 🔴 **Eight policy types** — architecture defines 8 distinct policy categories: `gatekeeper`, `validation`, `transformation`, `placement`, `lifecycle`, `cost_attribution`, `recovery`, `itsm_action` (doc B §2). Each has different execution semantics (boolean deny vs scoring vs field mutation vs routing).
+- 🔴 **Eight policy types** — architecture defines 8 distinct policy categories: `gating`, `validation`, `transformation`, `placement`, `lifecycle`, `cost_attribution`, `recovery`, `itsm_action` (doc B §2). Each has different execution semantics (boolean deny vs scoring vs field mutation vs routing).
   - **How:** Add `policy_type` field to policy artifacts with CHECK constraint.
 
 - 🔴 **Policy evaluation endpoint** — beyond CRUD, the policy-manager needs an endpoint that other pipeline services call to evaluate policies against a request payload. `POST /api/v1/policies/evaluate` takes a payload + context and returns evaluation results.
@@ -162,7 +162,7 @@ Policy artifact CRUD. Stores policy definitions and provides retrieval API.
 - 🔴 **OPA/Rego integration** — policies are expressed as Rego rules (doc B §4). The policy-manager should embed an OPA engine or delegate to an OPA sidecar for evaluation.
   - **How:** Add OPA Go library as dependency. Load Rego policies from stored artifacts. Evaluate against input payloads.
 
-- 🔴 **Scoring model** — GateKeeper policies produce compliance scores; Validation policies produce completeness scores. The scoring model (doc 29) aggregates these into an approval routing decision.
+- 🔴 **Scoring model** — Gating policies produce compliance scores; Validation policies produce completeness scores. The scoring model (doc 29) aggregates these into an approval routing decision.
   - **How:** Policy evaluation response includes `score`, `enforcement_class`, and `output_class` fields.
 
 - 🔴 **Provenance on mutations** — Transformation policies modify request payloads. Every modification must record provenance (who, when, which policy, what changed).
