@@ -50,9 +50,10 @@ Individual endpoints are not independently versioned. If a single endpoint needs
 
 ### 1.3 Minor and Revision Changes
 
+DCM follows [Semantic Versioning](https://semver.org/) — that baseline (major = breaking, minor = additive, patch/revision = fixes) is assumed and not restated here. This section records only the **DCM-specific** application of it.
+
 Non-breaking changes within a major version are documented in the API changelog but do not change the URL. Clients do not need to take any action for non-breaking changes.
 
-The changelog follows semantic versioning conventions:
 - **Minor change**: new optional fields, new endpoints, expanded enum values with version-compatible defaults
 - **Revision**: documentation corrections, clarifications, non-functional specification updates
 
@@ -60,7 +61,7 @@ The changelog follows semantic versioning conventions:
 
 ## 2. Breaking Change Definition
 
-A change is **breaking** if it requires any existing client to modify its code or configuration to continue working correctly. The following changes are always breaking:
+A change is **breaking** if it requires any existing client to modify its code or configuration to continue working correctly. The general taxonomy below is standard REST practice — it is enumerated here not as novel guidance but as DCM's **explicit, authoritative checklist** so that "is this breaking?" has one answer across every surface. The DCM-specific entries to note are idempotency semantics, the response-envelope structure, authentication-method removal, and enum-value handling (clients MUST tolerate unknown enum values):
 
 **Request changes:**
 - Removing a field that was previously accepted
@@ -182,8 +183,10 @@ api_version_support_lifecycle:
     deprecated_version_support: P180D  # old version supported 180 days after deprecation
     
   dev:
-    deprecation_notice_period: P60D
-    deprecated_version_support: P90D
+    deprecation_notice_period: P0D    # none — dev has no deprecation guarantee
+    deprecated_version_support: P0D    # old versions may be removed immediately
+    # Dev is for iteration, not stable consumers; versions can break without a
+    # support window. Use minimal+ if you need any deprecation lead time.
 
   standard:
     deprecation_notice_period: P180D
@@ -327,6 +330,8 @@ When the OIS version is incremented:
 2. Providers have the deprecation notice period to upgrade their implementation
 3. DCM dispatches using the appropriate OIS version per the provider's declared capability
 4. After sunset, providers still on deprecated OIS versions receive `410 Gone` on dispatch
+
+**Why an event, not a REST response (step 1).** A version/capability change is a **one-to-many** announcement — every registered provider and every interested subscriber needs to learn about it, and they are not in the middle of a request when it happens. That is a fan-out, so it is published on the event bus (CloudEvents), not returned synchronously. By contrast, an actual **dispatch** (step 3) is **point-to-point** and needs an immediate result, so it stays a synchronous REST call. The rule across DCM: state/capability *changes* broadcast as events; *operations* that need a result are REST.
 
 ### 7.3 Provider-Initiated API Versioning
 
