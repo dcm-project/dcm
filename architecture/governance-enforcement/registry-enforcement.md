@@ -201,7 +201,7 @@ Organizations override via standard policy priority:
 policy:
   domain: platform
   priority: 600.0.0
-  type: gatekeeper
+  type: gating
   rule: >
     If registry.deprecation.tier == tier_2
     THEN override: sunset_period = P12M
@@ -310,9 +310,9 @@ The Resource Type Registry is policy-governed. DCM enforces:
 | Policy target | Example rule |
 |---|---|
 | `registry_sync` | If resource_type.jurisdiction_compatibility NOT CONTAINS tenant.sovereignty_zone → reject_activation |
-| `registry_activation` | If resource_type.publisher NOT IN approved_vendor_list → gatekeep: require_manual_approval |
+| `registry_activation` | If resource_type.publisher NOT IN approved_vendor_list → gate: require_manual_approval |
 | `registry_bundle_import` | If bundle.signature_valid == false → reject: unsigned bundles not permitted |
-| `registry_sync` (prod) | If active_profile == prod AND resource_type.version_delta.type == major → gatekeep: major version upgrades require manual approval |
+| `registry_sync` (prod) | If active_profile == prod AND resource_type.version_delta.type == major → gate: major version upgrades require manual approval |
 | `registry_sync` (audit) | Always inject: sync_audit.required = true, sync_audit.reviewer = platform_admin |
 
 ### 6.1 Profile-appropriate registry policy groups

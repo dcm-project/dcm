@@ -56,7 +56,7 @@ Policy Profile     — complete use-case configuration
 Policy Groups      — single-concern policy collections
   │  composed of
   ▼
-Policies           — individual Transformation / Validation / GateKeeper rules
+Policies           — individual Transformation / Validation / Gating Policy rules
   │  optionally sourced from
   ▼
 External Policy Evaluators   — external authoritative policy sources
@@ -82,8 +82,8 @@ Profiles implement the DCM design priority order (see [Foundational Abstractions
 Policies in DCM are not exclusively authored by platform admins. The DCM federated contribution model enables all actor types to author policies within their permitted domain scope:
 
 - **Platform admins** — all domains, all policy types
-- **Consumers / Tenant admins** — tenant domain policies (GateKeeper, Transformation, Recovery, Lifecycle, Orchestration Flow, Governance Matrix rules scoped to their Tenant)
-- **Service Providers** — provider-domain GateKeeper and Validation policies for their resource types
+- **Consumers / Tenant admins** — tenant domain policies (Gating Policy, Transformation, Recovery, Lifecycle, Orchestration Flow, Governance Matrix rules scoped to their Tenant)
+- **Service Providers** — provider-domain Gating Policy and Validation policies for their resource types
 - **Peer DCM instances** — policy templates contributed through verified federation relationships
 
 This is not a special case — it is the standard GitOps PR model applied to all contributor types. Consumer-authored policies go through the same lifecycle (developing → proposed → active) with appropriate review requirements per the active profile. See [Federated Contribution Model](https://github.com/croadfeldt/udlm/blob/main/governance/federated-contribution-model.md) for the complete specification.
@@ -408,7 +408,7 @@ policy_group:
   # Constituent policies
   policies:
     - policy_uuid: <uuid>
-      handle: "system/gatekeeper/pci-encryption-aes256"
+      handle: "system/gating/pci-encryption-aes256"
       description: "Enforce AES-256 on all PCI-scoped storage"
       placement_phase: pre
     - policy_uuid: <uuid>
@@ -420,7 +420,7 @@ policy_group:
       description: "Auto-inject PCI classification on scoped resources"
       placement_phase: pre
     - policy_uuid: <uuid>
-      handle: "system/gatekeeper/pci-audit-retention"
+      handle: "system/gating/pci-audit-retention"
       description: "Enforce 10-year audit retention for PCI evidence"
       placement_phase: pre
 
@@ -461,7 +461,7 @@ policy_group:
   # Additional policies added below are on top of the parent
   policies:
     - policy_uuid: <uuid>
-      handle: "org/gatekeeper/our-pci-additional-control"
+      handle: "org/gating/our-pci-additional-control"
 ```
 
 ### 2.4 DCM Built-In Policy Groups
@@ -777,7 +777,7 @@ All three delivery mechanisms result in the same thing: Rego policies evaluated 
 ```yaml
 policy:
   handle: "vm-size-limits"
-  policy_type: gatekeeper
+  policy_type: gating
   delivery:
     mode: push                              # or: pull, opa_bundle, external_schema
     source_url: "https://git.corp/policies" # for pull/bundle modes
@@ -787,7 +787,7 @@ policy:
 ```
 
 **Trust levels (Internal mode):**
-- `trusted` — GateKeeper authority (can deny requests)
+- `trusted` — Gating Policy authority (can deny requests)
 - `verified` — Transformation and Validation authority only
 - `untrusted` — advisory only (shadow mode enforcement)
 
@@ -811,7 +811,7 @@ policy:
     auth: mtls
   data_request_spec:                        # data minimization — only declared fields sent
     fields: [resource_type, sovereignty_zone, data_classification, tenant_uuid]
-  on_unavailable: gatekeep                  # fail-closed — unknown is not safe
+  on_unavailable: gate                  # fail-closed — unknown is not safe
   trust_level: verified                     # minimum verified for enrichment
 ```
 
@@ -825,11 +825,11 @@ External evaluation introduces governance concerns that Internal mode does not:
 | BBQ-002 | Data minimization — only fields declared in `data_request_spec` are sent |
 | BBQ-003 | If the external endpoint is outside the entity's sovereignty zone, the query is blocked unless explicitly authorized |
 | BBQ-004 | Full audit record per query-response cycle, including `audit_token` for cross-system correlation |
-| BBQ-005 | Default failure behavior is `gatekeep` — if the external system is unavailable, the request is denied (fail-closed) |
+| BBQ-005 | Default failure behavior is `gate` — if the external system is unavailable, the request is denied (fail-closed) |
 | BBQ-006 | Cached results must include the original query timestamp and validity period in provenance |
 | BBQ-007 | Fields injected by external enrichment carry standard field-level provenance: `source_type: external_external_policy_evaluator`, `source_uuid`, and `audit_token` |
-| BBQ-008 | The override control model applies to enrichment-injected fields — a GateKeeper policy may restrict or refuse external enrichment on specific fields |
-| BBQ-009 | External enrichment requires minimum `verified` trust level; GateKeeper authority requires `trusted` with dual-approval elevation |
+| BBQ-008 | The override control model applies to enrichment-injected fields — a Gating policy may restrict or refuse external enrichment on specific fields |
+| BBQ-009 | External enrichment requires minimum `verified` trust level; Gating Policy authority requires `trusted` with dual-approval elevation |
 
 ### 4.4 Policy Sources and Policy Groups
 
@@ -850,7 +850,7 @@ policy_group:
 ### 4.5 Policy Health and Lifecycle
 
 - **Internal policies:** Health is determined by OPA engine health. If OPA is unavailable, all Internal policies are degraded.
-- **External policies:** Health is determined by endpoint availability. Each external endpoint has a health check (HTTP GET to a declared health URL). Unhealthy external policies trigger their `on_unavailable` behavior (default: `gatekeep`).
+- **External policies:** Health is determined by endpoint availability. Each external endpoint has a health check (HTTP GET to a declared health URL). Unhealthy external policies trigger their `on_unavailable` behavior (default: `gate`).
 - **Deprecation:** Policies follow the `active → deprecated → retired` lifecycle. Deprecated policies fire with a warning in the audit trail. Retired policies are no longer evaluated.
 
 ---
@@ -913,10 +913,10 @@ Request Layer (consumer declared TTL)
   ↓
 Transformation Policy (enrich TTL from business context)
   ↓
-GateKeeper Policy (highest — may lock TTL as immutable)
+Gating Policy (highest — may lock TTL as immutable)
 ```
 
-A consumer can declare `ttl: P14D` in their request. A GateKeeper policy can override this to `P7D` and lock it immutable if organizational policy mandates shorter maximum lifetimes. A Core Layer can set default TTLs for resource classes. The provenance chain records every modification.
+A consumer can declare `ttl: P14D` in their request. A Gating policy can override this to `P7D` and lock it immutable if organizational policy mandates shorter maximum lifetimes. A Core Layer can set default TTLs for resource classes. The provenance chain records every modification.
 
 ### 5.5 Expiry Enforcement
 
@@ -933,7 +933,7 @@ Expiry enforcement is a DCM concern — not a provider concern. The provider doe
 | Policy | Rule |
 |--------|------|
 | `LTC-001` | Lifecycle time constraints follow standard data model precedence — layers, request, policies |
-| `LTC-002` | GateKeeper policies may lock lifecycle constraints as `override: immutable` or `immutable_ceiling: absolute` |
+| `LTC-002` | Gating policies may lock lifecycle constraints as `override: immutable` or `immutable_ceiling: absolute` |
 | `LTC-003` | Expiry enforcement is a DCM control plane function — not a provider concern |
 | `LTC-004` | When multiple time constraints exist on an entity, the earliest expiry wins |
 | `LTC-005` | Expired entities that fail to execute their `on_expiry` action enter `PENDING_EXPIRY_ACTION` state and trigger an escalation |

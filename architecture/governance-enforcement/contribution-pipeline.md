@@ -40,7 +40,7 @@ dcm-policy-store/
     operations/
   tenant/
     <tenant-handle>/           # Consumer/Tenant authored
-      gatekeeper/
+      gating/
       transformation/
       groups/
   provider/
@@ -68,7 +68,7 @@ metadata:
 ```yaml
 artifact_metadata:
   uuid: <uuid>
-  handle: "tenant/payments/gatekeeper/cost-ceiling"
+  handle: "tenant/payments/gating/cost-ceiling"
   version: "1.0.0"
   status: active
   contributed_by:
@@ -208,21 +208,21 @@ POST /api/v1/contribute/policy
 Authorization: Bearer <token>
 X-DCM-Tenant: <tenant-uuid>
 {
-  "policy_type": "gatekeeper",
-  "handle": "tenant/payments/gatekeeper/cost-ceiling",
+  "policy_type": "gating",
+  "handle": "tenant/payments/gating/cost-ceiling",
   "domain": "tenant",
   "concern_type": "operational",
   "enforcement": "soft",
   "match": {...},
   "output": {...},
   "shadow_mode": true,
-  "commit_message": "Add monthly cost ceiling GateKeeper for Payments Tenant"
+  "commit_message": "Add monthly cost ceiling Gating Policy for Payments Tenant"
 }
 
 Response 202:
 {
   "contribution_uuid": "<uuid>",
-  "policy_handle": "tenant/payments/gatekeeper/cost-ceiling",
+  "policy_handle": "tenant/payments/gating/cost-ceiling",
   "status": "proposed",
   "shadow_mode": true,
   "review_required": true,
