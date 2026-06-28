@@ -124,7 +124,7 @@ vm:
   zone: dc-west-1/zone-a
 ```
 
-GateKeeper policy fires: `payments-dmz` placement requires PCI DSS accreditation on the provider → `pvd-vm-001` has active PCI DSS accreditation → PASS.
+Gating policy fires: `payments-dmz` placement requires PCI DSS accreditation on the provider → `pvd-vm-001` has active PCI DSS accreditation → PASS.
 
 Transformation policy fires: `cpu_cores: 8` in payments zone → sets `cpu_pinning: true` per PCI DSS performance isolation requirement.
 
@@ -436,8 +436,8 @@ Three providers are candidates for a Tier 1 VM request. DCM calculates a risk sc
 **Signals for this request:**
 
 ```yaml
-# Signal 1: Operational GateKeeper Score
-# No GateKeeper policies fired → score: 0 (lowest risk)
+# Signal 1: Operational Gating Policy Score
+# No Gating policies fired → score: 0 (lowest risk)
 signal_1: 0
 
 # Signal 2: Policy Completeness Score
@@ -505,11 +505,11 @@ A developer requests 200 VMs simultaneously (bulk deployment for a load test). R
 
 # But: 200 instances triggers an additional policy:
 #   "bulk_request_over_100 → escalate to CRITICAL tier"
-# GateKeeper fires and elevates: score_override: CRITICAL
+# Gating Policy fires and elevates: score_override: CRITICAL
 
 authority_tier_routing:
   risk_score_raw: 58
-  score_override: CRITICAL       # GateKeeper escalation
+  score_override: CRITICAL       # Gating Policy escalation
   tier_applied: CRITICAL
   approval_chain:
     - step: 1
@@ -1647,7 +1647,7 @@ POST /api/v1/admin/policies/submit
 {
   "handle": "compliance/pci/card-data-network-isolation",
   "version": "1.0.0",
-  "type": "gatekeeper",
+  "type": "gating",
   "enforcement_class": "hard_stop",
   "status": "proposed",           # starts in shadow mode
   "opa_bundle_ref": "git://policies/compliance/pci/card-data-isolation@v1.0.0",
@@ -1740,7 +1740,7 @@ Response:
     "transformations": [
       { "field": "cpu_pinning", "value": true, "reason": "PCI isolation" }
     ],
-    "gatekeepers_fired": 0
+    "gatings_fired": 0
   }
 }
 ```
@@ -1802,8 +1802,8 @@ Flow GUI renders:
        │
        ▼
 [ Policy Evaluation — 14 policies ]
-  ├── GateKeeper: pci-network-isolation ✓ PASS
-  ├── GateKeeper: phi-provider-accreditation ✓ PASS (no PHI in request)
+  ├── Gating Policy: pci-network-isolation ✓ PASS
+  ├── Gating Policy: phi-provider-accreditation ✓ PASS (no PHI in request)
   ├── Validation: vm-size-limits ✓ PASS
   ├── Transformation: pci-cpu-pinning → cpu_pinning: true APPLIED
   └── Transformation: approved-os-image → rhel-9-latest-approved APPLIED
@@ -1819,7 +1819,7 @@ Flow GUI renders:
 
 # Clicking any node shows full input/output payload for that step
 # Shadow mode indicator (S) shown on any policy evaluated in shadow
-# Red path shown for any GateKeeper that fired and blocked
+# Red path shown for any Gating Policy that fired and blocked
 ```
 
 ---
