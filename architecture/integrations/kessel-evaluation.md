@@ -429,7 +429,7 @@ The following DCM capabilities remain entirely in DCM regardless of how the Kess
 | Drift detection logic and classification | DRC component — Kessel Inventory is a data source, not a drift engine |
 | Audit trail (hash chain) | Tamper-evident audit — DCM-specific requirement |
 | Resource lifecycle state machine | REQUESTED → OPERATIONAL → DECOMMISSIONED — DCM-specific |
-| Policy Engine | GateKeeper, Transformation, Recovery, Orchestration Flow policies — DCM-specific |
+| Policy Engine | Gating Policy, Transformation, Recovery, Orchestration Flow policies — DCM-specific |
 | Authority Tier model | Approval routing — DCM-specific governance model |
 
 ---

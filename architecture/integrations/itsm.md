@@ -377,11 +377,11 @@ itsm_provider_registration:
 
 ### 3.1 What an ITSM Policy Is
 
-An **ITSM Policy** is a new DCM Policy output type (8th, alongside GateKeeper, Validation, Transformation, Recovery, Orchestration Flow, Governance Matrix Rule, and Lifecycle Policy).
+An **ITSM Policy** is a new DCM Policy output type (8th, alongside Gating Policy, Validation, Transformation, Recovery, Orchestration Flow, Governance Matrix Rule, and Lifecycle Policy).
 
-It fires as a **side-effect policy** — it does not block pipeline execution (it is not a GateKeeper) and does not transform the payload. It fires on a DCM event and triggers an ITSM action via a registered ITSM integration. The pipeline continues whether or not the ITSM action succeeds; ITSM failures are logged and alerted but do not block DCM operations.
+It fires as a **side-effect policy** — it does not block pipeline execution (it is not a Gating Policy) and does not transform the payload. It fires on a DCM event and triggers an ITSM action via a registered ITSM integration. The pipeline continues whether or not the ITSM action succeeds; ITSM failures are logged and alerted but do not block DCM operations.
 
-**Key distinction:** An ITSM Policy is about *record-keeping and integration* with external governance systems. A GateKeeper Policy is about *allowing or blocking* operations. These are complementary, not competing.
+**Key distinction:** An ITSM Policy is about *record-keeping and integration* with external governance systems. A Gating Policy is about *allowing or blocking* operations. These are complementary, not competing.
 
 ### 3.2 Output Schema
 
@@ -612,7 +612,7 @@ output:
 | Policy | Rule |
 |--------|------|
 | `ITSM-POL-001` | ITSM Policies follow the full Policy base contract (B-policy-contract.md): lifecycle (developing → proposed → active), shadow mode validation, audit obligation on every evaluation, domain precedence. |
-| `ITSM-POL-002` | ITSM Policies are side-effect policies — they do not produce pipeline decisions (allow/deny/transform). They may not be used as GateKeeper substitutes except through the explicit `block_until_created: true` mechanism, which has its own timeout guarantee (ITSM-005). |
+| `ITSM-POL-002` | ITSM Policies are side-effect policies — they do not produce pipeline decisions (allow/deny/transform). They may not be used as Gating Policy substitutes except through the explicit `block_until_created: true` mechanism, which has its own timeout guarantee (ITSM-005). |
 | `ITSM-POL-003` | ITSM Policy evaluation is recorded in the audit trail. The audit record includes: policy handle, matched event, ITSM provider UUID, action requested, ITSM record ID returned, and outcome (success/failure/timeout). |
 | `ITSM-POL-004` | Multiple ITSM Policies may fire on the same event. All fire independently — one policy's failure does not prevent other ITSM Policies from executing. |
 
