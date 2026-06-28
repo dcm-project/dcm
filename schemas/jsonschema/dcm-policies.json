@@ -9,7 +9,7 @@
     "policy_type": {
       "type": "string",
       "enum": [
-        "gatekeeper",
+        "gating",
         "validation",
         "transformation",
         "recovery",
@@ -78,7 +78,7 @@
     "model_a_match": {
       "type": "object",
       "title": "Model A Match — Payload type and field conditions",
-      "description": "Used by pipeline policies: GateKeeper, Validation, Transformation, Recovery, Orchestration Flow.",
+      "description": "Used by pipeline policies: Gating Policy, Validation, Transformation, Recovery, Orchestration Flow.",
       "required": ["payload_type"],
       "additionalProperties": false,
       "properties": {
@@ -214,9 +214,9 @@
       }
     },
 
-    "gatekeeper_output": {
+    "gating_output": {
       "type": "object",
-      "title": "GateKeeper Output Schema",
+      "title": "Gating Policy Output Schema",
       "description": "Binary allow/deny decision. Compliance enforcement_class: always fail-safe (deny on error). Operational enforcement_class: contributes risk_score_contribution to aggregate score.",
       "required": ["decision", "enforcement_class"],
       "additionalProperties": false,
@@ -486,16 +486,16 @@
       }
     },
 
-    "gatekeeper_policy": {
+    "gating_policy": {
       "allOf": [
         { "$ref": "#/$defs/base_policy_artifact" },
         {
           "type": "object",
           "required": ["match", "output"],
           "properties": {
-            "policy_type": { "const": "gatekeeper" },
+            "policy_type": { "const": "gating" },
             "match":  { "$ref": "#/$defs/model_a_match" },
-            "output": { "$ref": "#/$defs/gatekeeper_output" }
+            "output": { "$ref": "#/$defs/gating_output" }
           }
         }
       ]
@@ -622,7 +622,7 @@
 
     "dcm_policy": {
       "oneOf": [
-        { "$ref": "#/$defs/gatekeeper_policy" },
+        { "$ref": "#/$defs/gating_policy" },
         { "$ref": "#/$defs/validation_policy" },
         { "$ref": "#/$defs/transformation_policy" },
         { "$ref": "#/$defs/recovery_policy" },
@@ -634,7 +634,7 @@
       "discriminator": {
         "propertyName": "policy_type",
         "mapping": {
-          "gatekeeper":            "#/$defs/gatekeeper_policy",
+          "gating":            "#/$defs/gating_policy",
           "validation":            "#/$defs/validation_policy",
           "transformation":        "#/$defs/transformation_policy",
           "recovery":              "#/$defs/recovery_policy",
