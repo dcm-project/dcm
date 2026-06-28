@@ -497,13 +497,13 @@ DCM's attack surface has five distinct boundaries. Each boundary has a specific 
 - Threat: Provider impersonation (malicious actor claims to be a legitimate provider)
 - Mitigations: mTLS required at provider boundary; provider callback credential required for callbacks; API Gateway validates dcm_entity_uuid in every callback against provider's registered entity scope
 - Threat: Malicious provider payload (provider sends crafted Realized State payload)
-- Mitigations: Realized State payloads validated against Resource Type Specification schema on receipt; GateKeeper policies evaluate provider-supplied data before it enters DCM state
+- Mitigations: Realized State payloads validated against Resource Type Specification schema on receipt; Gating policies evaluate provider-supplied data before it enters DCM state
 
 **Boundary 3 — Admin Interface (Admin API)**
 - Threat: Unauthorized platform admin action
 - Mitigations: Authority Tier model enforces multi-tier approval for high-impact actions; all admin actions produce non-suppressable audit records; emergency admin access (break-glass) triggers immediate security notification
 - Threat: Configuration injection via GitOps
-- Mitigations: All GitOps PRs require domain-appropriate review before merge; policy contributions enter shadow mode before activation; GateKeeper policies validate all contributions at submission
+- Mitigations: All GitOps PRs require domain-appropriate review before merge; policy contributions enter shadow mode before activation; Gating policies validate all contributions at submission
 
 **Boundary 4 — Internal Component Communication**
 - Threat: Component impersonation (compromised component issues requests as another)
@@ -639,7 +639,7 @@ Step 3: Consumer submits request with dry_run: true (optional pre-flight)
       "selected_provider": "eu-west-prod-1",
       "cost_at_selected_provider": 182.00
     },
-    "gatekeeper_gates": [],
+    "gating_gates": [],
     "warnings": ["Storage class 'premium' requested; 'standard' also eligible at $35.00/mo"]
   }
 

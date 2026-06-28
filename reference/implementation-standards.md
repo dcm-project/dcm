@@ -421,7 +421,7 @@ DCM is designed for CNCF ecosystem compatibility:
 | Project | CNCF Status | DCM Use |
 |---|---|---|
 | Kubernetes | Graduated | Deployment target; DCM Operator |
-| Open Policy Agent (OPA) | Graduated | Policy evaluation engine; Rego for GateKeeper, Validation |
+| Open Policy Agent (OPA) | Graduated | Policy evaluation engine; Rego for Gating Policy, Validation |
 | Prometheus | Graduated | Metrics exposition |
 | OpenTelemetry | Graduated | Distributed tracing; correlation ID propagation |
 | Istio | Graduated | Optional service mesh for internal mTLS |
