@@ -67,7 +67,7 @@ DCM extends Kubernetes upward by providing:
 |------------|-----------|-----|
 | Scope | Single cluster | Multi-cluster, multi-infrastructure |
 | Tenancy | Namespace isolation | First-class Tenant model with ownership |
-| Policy | RBAC + admission webhooks | Full Policy Engine with Validation/Transformation/GateKeeper |
+| Policy | RBAC + admission webhooks | Full Policy Engine with Validation/Transformation/Gating Policy |
 | Data lineage | Not provided | Field-level provenance on all data |
 | Cost attribution | Not provided | Full lifecycle cost analysis |
 | Drift detection | Basic — controller reconciles | Full four-state model with Intent/Requested/Realized/Discovered |

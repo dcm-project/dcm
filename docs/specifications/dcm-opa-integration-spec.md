@@ -35,7 +35,7 @@ OPA is not required to implement DCM — any OPA-based policy evaluation can imp
 DCM's Policy Engine evaluates policies at multiple points in the request lifecycle. The engine receives a payload, evaluates all active matching policies, and accumulates mutations. The OPA integration maps this contract to Rego evaluation.
 
 DCM policy types:
-- **GateKeeper** — approve or reject; output is a decision (allow/deny + reason)
+- **Gating Policy** — approve or reject; output is a decision (allow/deny + reason)
 - **Validation** — verify correctness; output is a validation result (pass/fail + details)
 - **Transformation** — enrich or modify; output is a set of field mutations
 - **Recovery** — respond to failure/ambiguity; output is a recovery action
@@ -131,10 +131,10 @@ input := {
 
 ## 3. Output Schema — OPA Decision Documents
 
-### 3.1 GateKeeper Output
+### 3.1 Gating Policy Output
 
 ```rego
-package dcm.gatekeeper.vm_size_limits
+package dcm.gating.vm_size_limits
 
 import future.keywords
 
@@ -270,7 +270,7 @@ dcm-policy-bundle/
 │   {
 │     "roots": ["dcm"],
 │     "metadata": {
-│       "dcm_policy_type": "gatekeeper",
+│       "dcm_policy_type": "gating",
 │       "resource_types": ["Compute.VirtualMachine"],
 │       "domain": "tenant",
 │       "handle": "org/policies/vm-size-limits",
@@ -278,7 +278,7 @@ dcm-policy-bundle/
 │     }
 │   }
 ├── dcm/
-│   └── gatekeeper/
+│   └── gating/
 │       └── vm_size_limits/
 │           └── policy.rego
 └── tests/
@@ -331,10 +331,10 @@ When a policy is in `proposed` status, DCM evaluates it in shadow mode:
 
 This section validates that OPA/Rego can express all seven DCM policy types and both levels of the orchestration model. Each type is shown with a working Rego example and an assessment.
 
-### 8.1 GateKeeper
+### 8.1 Gating Policy
 
 ```rego
-package dcm.gatekeeper.vm_size_limits
+package dcm.gating.vm_size_limits
 
 import future.keywords
 
@@ -436,7 +436,7 @@ steps := [
 
 ordered := true
 ```
-**Assessment:** Clean. Step sequence as an array with `ordered: true` flag. GateKeeper and Transformation policies declared in separate packages fire on the same payload types independently — the Policy Engine coordinates both.
+**Assessment:** Clean. Step sequence as an array with `ordered: true` flag. Gating Policy and Transformation policies declared in separate packages fire on the same payload types independently — the Policy Engine coordinates both.
 
 ### 8.6 Governance Matrix Rule
 
@@ -515,12 +515,12 @@ OPA evaluates each package independently and returns results. The Policy Engine 
 
 ## Scoring Model — OPA/Rego Patterns
 
-### Operational GateKeeper Output Schema
+### Operational Gating Policy Output Schema
 
 ```rego
-package dcm.gatekeeper.operational.cost_ceiling
+package dcm.gating.operational.cost_ceiling
 
-# Operational-class GateKeeper produces risk_score_contribution, not deny
+# Operational-class Gating Policy produces risk_score_contribution, not deny
 # enforcement_class: operational is declared in policy YAML metadata
 
 risk_score_contribution[result] {
@@ -535,7 +535,7 @@ risk_score_contribution[result] {
     }
 }
 
-# Operational GateKeepers can also produce hard deny for extreme values
+# Operational Gating Policies can also produce hard deny for extreme values
 deny contains reason {
     input.payload.cost_estimate.per_month > 10000
     reason := "Cost exceeds absolute maximum — manual review required before submission"
