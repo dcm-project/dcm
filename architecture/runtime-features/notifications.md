@@ -141,7 +141,7 @@ The notification event taxonomy is a **closed vocabulary** — a finite, version
 | `request.completed` | Provider confirmed realization; Realized State written | Owner |
 | `request.failed` | Request failed at any stage | Owner |
 | `request.cancelled` | Consumer cancelled; request terminated | Owner |
-| `request.gatekeeper_rejected` | GateKeeper policy rejected the request | Owner, Policy Owner |
+| `request.gating_rejected` | Gating policy rejected the request | Owner, Policy Owner |
 
 ### 4.2 Resource Lifecycle Events
 
@@ -337,7 +337,7 @@ tenant_notification_defaults:
 
   # Which event categories are enabled by default for all resources in this Tenant
   enabled_event_categories:
-    request_lifecycle: [request.completed, request.failed, request.gatekeeper_rejected]
+    request_lifecycle: [request.completed, request.failed, request.gating_rejected]
     resource_lifecycle: [entity.state_changed, entity.ttl_warning, entity.decommissioning]
     drift: [drift.detected, unsanctioned_change.detected]
     provider_update: [provider_update.requires_approval, provider_update.rejected]
