@@ -76,7 +76,7 @@ intermediate status. DCM implements:
 Submit with schedule.dispatch: at
   ▼ ACKNOWLEDGED (Intent State created; entity_uuid assigned)
   ▼ Policy evaluation at declaration time
-  │   GateKeeper policies run immediately (fail-fast)
+  │   Gating policies run immediately (fail-fast)
   │   If rejected: request fails before entering queue
   │   If approved: request enters scheduled queue
   ▼ SCHEDULED (new status within Intent State)
@@ -85,7 +85,7 @@ Submit with schedule.dispatch: at
   │   Cancellable: DELETE /api/v1/requests/{uuid}
   ▼ [at not_before] → Policy re-evaluation at dispatch
   │   Transformation policies re-run (data may have changed)
-  │   GateKeeper re-evaluation with current data
+  │   Gating Policy re-evaluation with current data
   │   If still approved: proceed to LAYERS_ASSEMBLED → dispatch
   │   If rejected at dispatch: FAILED with failure_reason: schedule_policy_rejection
   ▼ DISPATCHED → REALIZED (normal pipeline)
@@ -329,7 +329,7 @@ tolerance:
 
 | Policy | Rule |
 |---|---|
-| `SCH-001-DCM` | DCM evaluates GateKeeper policies twice on scheduled requests: at declaration (fail-fast) and at dispatch (current state). Both must pass |
+| `SCH-001-DCM` | DCM evaluates Gating policies twice on scheduled requests: at declaration (fail-fast) and at dispatch (current state). Both must pass |
 | `SCH-002-DCM` | DCM rejects scheduled requests with a past not_before (422) |
 | `SCH-003-DCM` | DCM transitions requests failing dispatch-time policy re-evaluation to FAILED with failure_reason: schedule_policy_rejection |
 | `SCH-004-DCM` | DCM permits cancellation of SCHEDULED requests at any time before dispatch via DELETE /api/v1/requests/{uuid} |
