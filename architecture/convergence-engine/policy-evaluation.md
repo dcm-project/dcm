@@ -237,7 +237,7 @@ The Policy Manager service hosts the matrix evaluator. It is invoked from:
 
 | Call site | When |
 |---|---|
-| Request Processor (during assembly) | Step 5 of nine-step assembly — evaluates all GateKeeper + Validation + Transformation + Governance Matrix rules against the assembled payload |
+| Request Processor (during assembly) | Step 5 of nine-step assembly — evaluates all Gating Policy + Validation + Transformation + Governance Matrix rules against the assembled payload |
 | Provider Dispatcher | Before provider dispatch — evaluates outbound governance matrix against the dispatch payload + target provider |
 | Federation Tunnel | Before every cross-DCM message — evaluates outbound governance matrix against the message + remote DCM peer |
 | Notification Router | Before every notification delivery — evaluates outbound governance matrix against the notification payload + destination |

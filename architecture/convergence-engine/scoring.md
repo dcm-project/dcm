@@ -23,7 +23,7 @@ Document Type: Architecture Reference — Scoring Model Specification
 > See also: [Provider Contract](https://github.com/croadfeldt/udlm/blob/main/contracts/provider-contract.md) | [Policy Contract](https://github.com/croadfeldt/udlm/blob/main/contracts/policy-contract.md)
 > > **See also:** [Authority Tier Model](https://github.com/croadfeldt/udlm/blob/main/governance/authority-tier-model.md) — the ordered authority tier list, custom tier definition, dynamic threshold format, and ATM system policies.
 
-> **Design Priority:** The Scoring Model is the primary mechanism for Priority 2 (ease of use) in service of Priority 1 (security). The auto-approval threshold (SMX-008: ≤ 50) and compliance-class GateKeepers are non-negotiable security properties. Profile thresholds and signal weights are the ease-of-use scaling mechanism. See [Design Priorities](https://github.com/croadfeldt/udlm/blob/main/design-principles/design-priorities.md).
+> **Design Priority:** The Scoring Model is the primary mechanism for Priority 2 (ease of use) in service of Priority 1 (security). The auto-approval threshold (SMX-008: ≤ 50) and compliance-class Gating Policies are non-negotiable security properties. Profile thresholds and signal weights are the ease-of-use scaling mechanism. See [Design Priorities](https://github.com/croadfeldt/udlm/blob/main/design-principles/design-priorities.md).
 
 ---
 
@@ -42,7 +42,7 @@ This document specifies the scoring half of the hybrid. For boolean decisions, s
 
 The scoring model adds three capabilities to the existing architecture:
 
-1. **Operational GateKeeper policies** contribute a weighted risk score instead of producing a binary deny. The aggregate score drives approval routing.
+1. **Operational Gating policies** contribute a weighted risk score instead of producing a binary deny. The aggregate score drives approval routing.
 2. **Advisory Validation policies** produce a completeness score and warning list without blocking the request.
 3. **Five scoring signals** aggregate into a request risk score that determines approval routing tier — replacing the current per-policy approval flag with a continuous, profile-governed threshold system.
 
@@ -50,16 +50,16 @@ The scoring model adds three capabilities to the existing architecture:
 
 The scoring model does **not**:
 - Apply to Governance Matrix decisions — these remain boolean always
-- Apply to compliance-class GateKeeper policies — PHI→BAA, sovereign data→sovereign provider remain hard gates
+- Apply to compliance-class Gating policies — PHI→BAA, sovereign data→sovereign provider remain hard gates
 - Apply to authentication, authorization, or five-check boundary enforcement
 - Apply to lifecycle state transitions
 - Replace the Policy Engine — it is a function within it
 
 ---
 
-## 2. GateKeeper Enforcement Classes
+## 2. Gating Policy Enforcement Classes
 
-Every GateKeeper policy declares an `enforcement_class`. This is a required field in the Policy base contract (added in this document).
+Every Gating policy declares an `enforcement_class`. This is a required field in the Policy base contract (added in this document).
 
 ```yaml
 enforcement_class: compliance | operational
@@ -67,7 +67,7 @@ enforcement_class: compliance | operational
 
 ### 2.1 Compliance Class
 
-Behavior: **boolean gate**. A compliance-class GateKeeper that fires produces a `deny` decision. The request is halted immediately. No score is produced.
+Behavior: **boolean gate**. A compliance-class Gating Policy that fires produces a `deny` decision. The request is halted immediately. No score is produced.
 
 **Use for:**
 - Data classification boundary rules (PHI requires BAA accreditation)
@@ -77,8 +77,8 @@ Behavior: **boolean gate**. A compliance-class GateKeeper that fires produces a 
 - Any rule where "score-around" creates legal or compliance liability
 
 ```yaml
-# Example compliance-class GateKeeper
-policy_type: gatekeeper
+# Example compliance-class Gating Policy
+policy_type: gating
 enforcement_class: compliance
 handle: "system/compliance/phi-baa-required"
 match:
@@ -99,7 +99,7 @@ output:
 
 ### 2.2 Operational Class
 
-Behavior: **risk score contribution**. An operational-class GateKeeper that fires contributes a weighted score to the request risk score. The request is not immediately halted. Instead the aggregate score determines routing.
+Behavior: **risk score contribution**. An operational-class Gating Policy that fires contributes a weighted score to the request risk score. The request is not immediately halted. Instead the aggregate score determines routing.
 
 **Use for:**
 - Cost ceiling policies (request cost exceeds Tenant recommendation)
@@ -109,10 +109,10 @@ Behavior: **risk score contribution**. An operational-class GateKeeper that fire
 - Business rule preferences that should escalate review, not block
 
 ```yaml
-# Example operational-class GateKeeper
-policy_type: gatekeeper
+# Example operational-class Gating Policy
+policy_type: gating
 enforcement_class: operational
-handle: "tenant/payments/gatekeeper/cost-ceiling"
+handle: "tenant/payments/gating/cost-ceiling"
 scoring_weight: 35           # contribution to request risk score when fired
 match:
   payload_type: request.layers_assembled
@@ -134,7 +134,7 @@ Profiles can override the enforcement class of individual policies. This is the 
 ```yaml
 # In a profile definition:
 policy_enforcement_overrides:
-  - policy_handle: "tenant/payments/gatekeeper/cost-ceiling"
+  - policy_handle: "tenant/payments/gating/cost-ceiling"
     override_enforcement_class: compliance   # escalate to hard gate in this profile
     rationale: "FSI profile: all cost violations are hard gates"
 
@@ -196,20 +196,20 @@ output:
 
 The request risk score is assembled from five independent signals. Each signal is normalized to 0–100. The aggregate is a weighted sum, also normalized to 0–100.
 
-### 4.1 Signal 1 — Operational GateKeeper Score
+### 4.1 Signal 1 — Operational Gating Policy Score
 
-**Source:** All operational-class GateKeeper policies that fired during policy evaluation.
-**Composition:** Sum of `risk_score_contribution` values from all fired operational GateKeepers.
-**Normalization:** Capped at 100 before weighting. Multiple GateKeepers can fire; their contributions accumulate.
+**Source:** All operational-class Gating policies that fired during policy evaluation.
+**Composition:** Sum of `risk_score_contribution` values from all fired operational Gating Policies.
+**Normalization:** Capped at 100 before weighting. Multiple Gating Policies can fire; their contributions accumulate.
 **Default weight in aggregate:** 0.45
 
 ```yaml
-operational_gatekeeper_score:
+operational_gating_score:
   fired_policies:
-    - handle: "tenant/payments/gatekeeper/cost-ceiling"
+    - handle: "tenant/payments/gating/cost-ceiling"
       contribution: 35
       reason: "Cost $620/month exceeds ceiling $500"
-    - handle: "platform/gatekeeper/off-hours"
+    - handle: "platform/gating/off-hours"
       contribution: 15
       reason: "Request submitted outside business hours"
   raw_score: 50     # sum of contributions
@@ -235,7 +235,7 @@ operational_gatekeeper_score:
 # Events that contribute to actor risk history score
 actor_risk_events:
   - event: validation_failure        # base_contribution: 5
-  - event: gatekeeper_deny           # base_contribution: 10
+  - event: gating_deny           # base_contribution: 10
   - event: compliance_deny           # base_contribution: 20
   - event: policy_override_requested # base_contribution: 8
   - event: drift_caused              # base_contribution: 15
@@ -302,7 +302,7 @@ verification_multipliers:
 
 ```
 request_risk_score =
-  (operational_gatekeeper_score × 0.45) +
+  (operational_gating_score × 0.45) +
   (completeness_score           × 0.15) +
   (actor_risk_history_score     × 0.20) +
   (quota_pressure_score         × 0.10) +
@@ -339,7 +339,7 @@ scoring_thresholds:
   # the review process and deliberation are the organization's responsibility.
   # DCM records votes via Admin API; external systems (ServiceNow, Jira, Slack)
   # may call the API on behalf of authorized group members. See [Design Priorities](https://github.com/croadfeldt/udlm/blob/main/design-principles/design-priorities.md).
-  # Note: compliance-class GateKeeper deny always halts regardless of score
+  # Note: compliance-class Gating Policy deny always halts regardless of score
 ```
 
 ### 5.1 Per-Profile Threshold Defaults
@@ -349,9 +349,9 @@ scoring_thresholds:
 | `minimal` | < 45 | 45–74 | 75–100 | — | default |
 | `dev` | < 40 | 40–69 | 70–100 | — | default |
 | `standard` | < 25 | 25–59 | 60–79 | 80–100 | default |
-| `prod` | < 15 | 15–49 | 50–74 | 75–100 | gatekeeper_weight: 0.50 |
-| `fsi` | < 10 | 10–39 | 40–69 | 70–100 | gatekeeper_weight: 0.55, actor_weight: 0.25 |
-| `sovereign` | < 5 | 5–29 | 30–59 | 60–100 | gatekeeper_weight: 0.60 |
+| `prod` | < 15 | 15–49 | 50–74 | 75–100 | gating_weight: 0.50 |
+| `fsi` | < 10 | 10–39 | 40–69 | 70–100 | gating_weight: 0.55, actor_weight: 0.25 |
+| `sovereign` | < 5 | 5–29 | 30–59 | 60–100 | gating_weight: 0.60 |
 
 ### 5.2 Resource-Type Threshold Overrides
 
@@ -390,7 +390,7 @@ A profile can declare that a specific operational-class policy should behave as 
 ```yaml
 # In profile definition:
 policy_enforcement_overrides:
-  - policy_handle: "platform/gatekeeper/cpu-size-limit"
+  - policy_handle: "platform/gating/cpu-size-limit"
     override_enforcement_class: compliance
     rationale: "Prod profile: CPU limit is a hard constraint, not a risk signal"
     applies_to_resource_types: ["Compute.VirtualMachine"]
@@ -399,7 +399,7 @@ policy_enforcement_overrides:
 And conversely, a compliance-class policy that is **not** a regulatory mandate can be demoted to operational in lower-trust profiles:
 
 ```yaml
-  - policy_handle: "platform/gatekeeper/naming-convention"
+  - policy_handle: "platform/gating/naming-convention"
     override_enforcement_class: operational
     scoring_weight_override: 20
     rationale: "Dev profile: naming violations are warnings, not blocks"
@@ -427,14 +427,14 @@ score_record:
   profile_uuid: <uuid>
   
   signal_breakdown:
-    operational_gatekeeper:
+    operational_gating:
       score: 50
       weight: 0.45
       weighted_contribution: 22.5
       fired_policies:
-        - handle: "tenant/payments/gatekeeper/cost-ceiling"
+        - handle: "tenant/payments/gating/cost-ceiling"
           contribution: 35
-        - handle: "platform/gatekeeper/off-hours"
+        - handle: "platform/gating/off-hours"
           contribution: 15
     completeness:
       score: 20
@@ -497,10 +497,10 @@ The scoring model slots into the existing pipeline without replacing any compone
 ```
 Policy Engine evaluation run:
   1. Evaluate all matching policies (existing behavior)
-  2. Compliance-class GateKeeper fires → HALT (existing deny behavior)
+  2. Compliance-class Gating Policy fires → HALT (existing deny behavior)
   3. Structural Validation fails → HALT (existing fail behavior)
   4. Governance Matrix DENY fires → HALT (existing behavior, unchanged)
-  5. NEW: Collect operational GateKeeper contributions → Signal 1
+  5. NEW: Collect operational Gating Policy contributions → Signal 1
   6. NEW: Collect advisory Validation contributions → Signal 2
   7. NEW: Fetch actor risk history score → Signal 3
   8. NEW: Calculate quota pressure score → Signal 4
@@ -519,15 +519,15 @@ Steps 2–4 handle standard policy evaluation. Steps 5–13 extend the model wit
 
 | Policy | Rule |
 |--------|------|
-| `SMX-001` | Every GateKeeper policy must declare `enforcement_class: compliance` or `enforcement_class: operational`. Policies without a declared enforcement_class are treated as compliance-class. |
+| `SMX-001` | Every Gating policy must declare `enforcement_class: compliance` or `enforcement_class: operational`. Policies without a declared enforcement_class are treated as compliance-class. |
 | `SMX-002` | Every Validation policy must declare `output_class: structural` or `output_class: advisory`. Policies without a declared output_class are treated as structural. |
-| `SMX-003` | Compliance-class GateKeeper policies with `regulatory_mandate: true` cannot be overridden to operational by any profile. This flag is set by platform admins and is audited. |
+| `SMX-003` | Compliance-class Gating policies with `regulatory_mandate: true` cannot be overridden to operational by any profile. This flag is set by platform admins and is audited. |
 | `SMX-004` | The Governance Matrix is always boolean. No Governance Matrix Rule may declare a scoring weight or enforcement_class. |
 | `SMX-005` | Signal weights in a profile must sum to 1.00. Profiles with invalid weight sums fail validation at activation time. |
 | `SMX-006` | Score Records are immutable. Threshold changes do not retroactively alter historical Score Records. |
 | `SMX-007` | Actor risk history scores are not exposed to consumers beyond the actor's own history. Platform admins have full access. |
 | `SMX-008` | A profile's `auto_approve_below` threshold may not exceed 50. Auto-approving requests with risk scores above 50 is prohibited in all profiles. |
-| `SMX-009` | Operational-class GateKeeper `scoring_weight` values must be declared between 1 and 100. Weights above 100 are validation errors. The aggregate of all fired policies is capped at 100 before weighting. |
+| `SMX-009` | Operational-class Gating Policy `scoring_weight` values must be declared between 1 and 100. Weights above 100 are validation errors. The aggregate of all fired policies is capped at 100 before weighting. |
 | `SMX-010` | Score breakdown must be included in the audit trail for every request that receives a routing decision. A request with no Score Record is an audit integrity violation. |
 
 ---

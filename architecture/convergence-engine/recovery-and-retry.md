@@ -314,7 +314,7 @@ audit_record:
 
 ## 5. Recovery policy evaluation
 
-UDLM defines Recovery Policies as a formal policy type alongside GateKeeper,
+UDLM defines Recovery Policies as a formal policy type alongside Gating Policy,
 Validation, and Transformation. DCM evaluates Recovery Policies via the same
 Policy Manager. The evaluation precedence is the same as all other policies:
 

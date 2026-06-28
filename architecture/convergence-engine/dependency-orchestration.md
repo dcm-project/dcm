@@ -72,7 +72,7 @@ The Request Orchestrator parses the submission and:
 4. **Validates field injection paths** — checks `from_field` paths against
    the dependency's resource type spec; per profile, validation may be
    advisory (warn), enforced (reject), or policy-gated (also pass through
-   GateKeeper)
+   Gating Policy)
 5. **Allocates entity UUIDs** for each request (so the group response can
    return entity_uuid immediately)
 6. **Resolves local refs** to actual entity UUIDs in the dependency graph

@@ -52,7 +52,7 @@ intent until decommissioned.
 | Responsibility | How DCM fulfills it |
 |---|---|
 | Walk an entity from intent to realized | Request Orchestrator drives the nine-step pipeline; Request Processor performs assembly |
-| Evaluate policy at every transition | Policy Manager evaluates GateKeeper / Validation / Transformation / Recovery / Orchestration Flow / Governance Matrix policies via OPA |
+| Evaluate policy at every transition | Policy Manager evaluates Gating Policy / Validation / Transformation / Recovery / Orchestration Flow / Governance Matrix policies via OPA |
 | Select a provider for placement | Placement Manager runs the six-step placement algorithm: sovereignty pre-filter → eligibility filter → capability filter → reserve query → scoring → tie-break |
 | Dispatch with scoped credentials | API Gateway requests a `dcm_interaction` credential from the Credential Provider, scoped to the specific provider + entity + operation, valid for PT15M–PT1H per profile |
 | React to provider events | Provider callbacks land at the Provider Callback API; the Request Orchestrator routes to Realized State persistence and event emission |
