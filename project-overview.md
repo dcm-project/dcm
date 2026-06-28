@@ -67,7 +67,7 @@ Comparing these four states continuously is how DCM detects drift, enforces gove
 
 | Policy Type | What It Does |
 |-------------|-------------|
-| **GateKeeper** | Halts requests or contributes weighted risk scores for approval routing |
+| **Gating Policy** | Halts requests or contributes weighted risk scores for approval routing |
 | **Validation** | Checks structural correctness; halts on failure or accumulates advisory warnings |
 | **Transformation** | Automatically enriches request payloads (injects values, enforces field locks) |
 | **Orchestration Flow** | Defines named workflows as explicit, ordered pipeline steps |
@@ -165,7 +165,7 @@ DCM's runtime is a policy-driven event loop. There is no hard-coded pipeline —
 Event (Data state change — e.g., request submitted)
   → Policy Engine evaluates all matching Policies
   → Policies produce typed outputs:
-      GateKeeper: approve / halt / risk score
+      Gating Policy: approve / halt / risk score
       Validation: pass / fail / warning
       Transformation: inject fields / lock values / annotate provenance
       Placement: constraints + preferences → Provider selected
@@ -195,7 +195,7 @@ When a consumer submits a service request, DCM executes a governed assembly pipe
 
 3. Policy evaluation
    → Validation Policies check structural correctness
-   → GateKeeper Policies assess risk and enforce business rules
+   → Gating Policies assess risk and enforce business rules
    → Placement Engine selects provider (constraints + scoring)
    → Requested State written (the approved, assembled dispatch payload)
 
@@ -218,7 +218,7 @@ When a consumer submits a service request, DCM executes a governed assembly pipe
 Every business rule in DCM is a Policy artifact — stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. There are no approval workflows embedded in code, no hard-coded placement rules, no statically defined pipeline stages.
 
 This means:
-- Adding a new approval step = writing a GateKeeper policy
+- Adding a new approval step = writing a Gating policy
 - Changing where a resource is placed = updating a Placement policy  
 - Auto-injecting a required field = writing a Transformation policy
 - Defining what happens on failure = writing a Recovery policy
