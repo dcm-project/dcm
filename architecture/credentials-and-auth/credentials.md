@@ -212,7 +212,7 @@ Triggers: security.credential_compromised, security.anomalous_usage_detected,
   ▼ Old credential revoked immediately
   ▼ New credential issued and delivered via fastest available channel
   ▼ Security event record written with full context
-  ▼ Compliance-class GateKeeper firing audited against the event
+  ▼ Compliance-class Gating Policy firing audited against the event
   ▼ Platform admin notified regardless of profile
 ```
 
