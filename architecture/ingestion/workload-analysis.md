@@ -140,7 +140,7 @@ discovery.new_entity_found
   │   Transformation Policy: compute workload_archetype from signals
   │   Transformation Policy: compute resource_type_match from archetype
   │   Transformation Policy: compute migration_readiness from MTA signals
-  │   GateKeeper Policy: flag if confidence < medium for manual review
+  │   Gating Policy: flag if confidence < medium for manual review
   │
   ▼ Orchestration Step 4: Write WorkloadProfile to Realized State
   │   WorkloadProfile entity → OPERATIONAL
@@ -257,7 +257,7 @@ Response 200:
 |--------|------|
 | `WLA-001` | Workload Analysis fires automatically for every entity entering Discovered State without a matching Realized State record. It is not optional — it is part of the brownfield ingestion pipeline. |
 | `WLA-002` | WorkloadProfile entities are versioned. When re-analysis produces a different classification, the old WorkloadProfile enters DECOMMISSIONED state and a new one is created. The chain is preserved for audit. |
-| `WLA-003` | If classification confidence is `low` or `undetermined`, the WorkloadProfile GateKeeper policy fires and the entity is routed to manual review before ingestion can proceed to PROMOTED. |
+| `WLA-003` | If classification confidence is `low` or `undetermined`, the WorkloadProfile Gating policy fires and the entity is routed to manual review before ingestion can proceed to PROMOTED. |
 | `WLA-004` | The MTA Information Provider is the reference implementation for workload_analysis information type in Red Hat environments. Custom implementations must provide the same output schema. |
 | `WLA-005` | Workload Analysis results are stored in Realized State as `process_resource_entity` instances. They are immutable once written — re-analysis creates a new entity, not an update. |
 | `WLA-006` | Migration readiness scores and archetype classifications are advisory — they inform human decision-making and Orchestration Flow Policies but do not automatically trigger migrations. |
