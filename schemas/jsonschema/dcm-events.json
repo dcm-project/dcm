@@ -441,7 +441,7 @@
         }
       }
     },
-    "request_gatekeeper_rejected_payload": {
+    "request_gating_rejected_payload": {
       "type": "object",
       "required": [
         "request_uuid",
