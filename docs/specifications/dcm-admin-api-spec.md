@@ -655,7 +655,7 @@ Response 200:
     ]
   },
   "signal_weights": {
-    "operational_gatekeeper": 0.45,
+    "operational_gating": 0.45,
     "completeness": 0.15,
     "actor_risk_history": 0.20,
     "quota_pressure": 0.10,
@@ -689,7 +689,7 @@ Response 422: { "error": "threshold_invalid", "reason": "auto_approve_below exce
 ```
 POST /api/v1/admin/profiles/{profile_name}/scoring/overrides
 {
-  "policy_handle": "platform/gatekeeper/cpu-size-limit",
+  "policy_handle": "platform/gating/cpu-size-limit",
   "override_enforcement_class": "compliance",
   "rationale": "Prod profile: CPU limit is a hard constraint",
   "applies_to_resource_types": ["Compute.VirtualMachine"]
@@ -782,7 +782,7 @@ Response 200:
       "approval_type": "policy_contribution",
       "tier": "authorized",
       "subject_uuid": "<policy_uuid>",
-      "subject_handle": "tenant/payments/gatekeeper/cost-ceiling",
+      "subject_handle": "tenant/payments/gating/cost-ceiling",
       "required_dcmgroup_uuid": "<uuid>",     # for authorized tier
       "quorum_required": 3,
       "votes_recorded": 1,

@@ -532,7 +532,7 @@ information_provider_capabilities:
 external_policy_evaluation_capabilities:
   mode: 1 | 2 | 3 | 4
   policy_types_supported:
-    - gatekeeper
+    - gating
     - validation
     - transformation
     - recovery
