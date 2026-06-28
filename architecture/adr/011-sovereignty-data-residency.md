@@ -14,7 +14,7 @@ Sovereignty is enforced at three levels:
 
 1. **Provider declaration** — Every provider declares its sovereignty zones and data residency scope at registration. This is not self-reported trust — it's validated against the accreditation model.
 
-2. **Policy enforcement** — Sovereignty policies are GateKeeper policies with hard enforcement. They fire on every lifecycle operation (not just initial provisioning). A resource in EU-WEST stays in EU-WEST for its entire lifecycle, including updates, scaling, and rehydration.
+2. **Policy enforcement** — Sovereignty policies are Gating policies with hard enforcement. They fire on every lifecycle operation (not just initial provisioning). A resource in EU-WEST stays in EU-WEST for its entire lifecycle, including updates, scaling, and rehydration.
 
 3. **Placement pre-filter** — The placement engine eliminates non-compliant providers before scoring begins. Sovereignty is a hard gate, not a soft preference.
 

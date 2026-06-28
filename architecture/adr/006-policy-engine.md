@@ -13,7 +13,7 @@ Enterprise infrastructure requires governance: sizing limits, security constrain
 Every request is policy-evaluated before provisioning. Policies are code artifacts (Rego), not configuration. They fire automatically when data matches conditions and produce typed outputs.
 
 **What policies govern:**
-- **Who can request what** (GateKeeper: allow/deny based on role, tenant, resource type)
+- **Who can request what** (Gating Policy: allow/deny based on role, tenant, resource type)
 - **Whether the request is valid** (Validation: field constraints, range checks, format)
 - **How the request is enriched** (Transformation: inject monitoring agents, set backup policies, apply naming conventions)
 - **What happens when things fail** (Recovery: retry, requeue, compensate)
