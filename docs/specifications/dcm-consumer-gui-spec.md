@@ -858,7 +858,7 @@ All compliance constraints are enforced by the DCM control plane — the GUI is 
 - Accreditation status visible in entity overview
 - Audit trail always accessible; chain integrity status shown
 
-The GUI cannot be used to bypass policy — every action goes through the Consumer API which applies the full five-check boundary model (doc 26), scoring, GateKeeper, and policy evaluation.
+The GUI cannot be used to bypass policy — every action goes through the Consumer API which applies the full five-check boundary model (doc 26), scoring, Gating Policy, and policy evaluation.
 
 ---
 

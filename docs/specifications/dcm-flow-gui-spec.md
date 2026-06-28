@@ -100,7 +100,7 @@ The primary view shows the live execution graph: which policies are active, whic
                                           │
                               ┌───────────┼───────────┐
                               ▼           ▼            ▼
-                      [GateKeeper:      [Transform:   [GovMatrix:
+                      [Gating Policy:      [Transform:   [GovMatrix:
                        vm-size-limits]  inject-mon.]  phi-boundary]
                               └───────────┼───────────┘
                                           ▼
@@ -109,7 +109,7 @@ The primary view shows the live execution graph: which policies are active, whic
 
 **Visual conventions:**
 - **Node color by domain:** system=blue, platform=green, tenant=yellow, resource_type=purple
-- **Node shape by policy type:** GateKeeper=shield, Transformation=gear, Recovery=arrow, Governance Matrix=lock, Orchestration Flow=rectangle
+- **Node shape by policy type:** Gating Policy=shield, Transformation=gear, Recovery=arrow, Governance Matrix=lock, Orchestration Flow=rectangle
 - **Edge thickness:** proportional to firing frequency (last 1h)
 - **Edge color:** green=allow path, red=deny path, amber=conditional
 - **Node badge:** shadow mode indicator (S), deprecated indicator (D)
@@ -133,10 +133,10 @@ Response 200:
       {
         "node_id": "<uuid>",                 # policy_uuid
         "label": "vm-size-limits",
-        "policy_type": "gatekeeper",
+        "policy_type": "gating",
         "domain": "tenant",
         "tenant_uuid": "<uuid>",
-        "handle": "tenant/payments/gatekeeper/vm-size-limits",
+        "handle": "tenant/payments/gating/vm-size-limits",
         "version": "1.2.0",
         "status": "active",
         "shadow_mode": false,
@@ -184,9 +184,9 @@ GET /flow/api/v1/graph/nodes/{policy_uuid}
 Response 200:
 {
   "policy_uuid": "<uuid>",
-  "handle": "tenant/payments/gatekeeper/vm-size-limits",
+  "handle": "tenant/payments/gating/vm-size-limits",
   "version": "1.2.0",
-  "policy_type": "gatekeeper",
+  "policy_type": "gating",
   "domain": "tenant",
   "concern_type": "security",
   "enforcement": "soft",
@@ -209,7 +209,7 @@ Response 200:
     { "timestamp": "<ISO 8601>", "result": "allow", "request_uuid": "<uuid>" }
   ],
 
-  "git_path": "policy-store/tenant/payments/gatekeeper/vm-size-limits/v1.2.0.yaml",
+  "git_path": "policy-store/tenant/payments/gating/vm-size-limits/v1.2.0.yaml",
   "pr_url": null,             # null if no pending PR; URL if change in review
 
   "compliance_basis": null,
@@ -360,8 +360,8 @@ POST /flow/api/v1/policies/generate
 
 Request body:
 {
-  "policy_type": "gatekeeper",
-  "handle": "tenant/payments/gatekeeper/vm-size-limits",
+  "policy_type": "gating",
+  "handle": "tenant/payments/gating/vm-size-limits",
   "concern_type": "security",
   "domain": "tenant",
   "tenant_uuid": "<uuid>",
@@ -384,8 +384,8 @@ Request body:
 
 Response 200:
 {
-  "yaml": "# DCM GateKeeper Policy\n...",
-  "rego": "package dcm.gatekeeper.vm_size_limits\n\ndeny contains reason if {\n    input.payload.type == \"request.layers_assembled\"\n    input.payload.fields.cpu_count.value > 32\n    reason := sprintf(\"cpu_count %d exceeds maximum 32\", [input.payload.fields.cpu_count.value])\n}\n",
+  "yaml": "# DCM Gating Policy\n...",
+  "rego": "package dcm.gating.vm_size_limits\n\ndeny contains reason if {\n    input.payload.type == \"request.layers_assembled\"\n    input.payload.fields.cpu_count.value > 32\n    reason := sprintf(\"cpu_count %d exceeds maximum 32\", [input.payload.fields.cpu_count.value])\n}\n",
   "validation": {
     "valid": true,
     "warnings": []
@@ -409,8 +409,8 @@ POST /flow/api/v1/policies/validate-rego
 
 Request body:
 {
-  "rego": "package dcm.gatekeeper.example\n\ndeny contains reason if {\n    input.payload.fields.cpu_count.value > 32\n    reason := \"too many CPUs\"\n}\n",
-  "policy_type": "gatekeeper"
+  "rego": "package dcm.gating.example\n\ndeny contains reason if {\n    input.payload.fields.cpu_count.value > 32\n    reason := \"too many CPUs\"\n}\n",
+  "policy_type": "gating"
 }
 
 Response 200:
@@ -509,14 +509,14 @@ Request body:
     "roles": ["developer"],
     "group_memberships": ["payments-team"]
   },
-  "include_policy_types": ["gatekeeper", "transformation", "governance_matrix"]
+  "include_policy_types": ["gating", "transformation", "governance_matrix"]
 }
 
 Response 200:
 {
   "simulation_uuid": "<uuid>",
   "result": "rejected",            # allowed | rejected | degraded
-  "terminal_reason": "GateKeeper policy rejected at step request.layers_assembled",
+  "terminal_reason": "Gating policy rejected at step request.layers_assembled",
 
   "execution_trace": [
     {
@@ -539,8 +539,8 @@ Response 200:
       "policies_evaluated": [
         {
           "policy_uuid": "<uuid>",
-          "policy_handle": "tenant/payments/gatekeeper/vm-size-limits",
-          "policy_type": "gatekeeper",
+          "policy_handle": "tenant/payments/gating/vm-size-limits",
+          "policy_type": "gating",
           "result": "deny",
           "reason": "cpu_count 64 exceeds maximum 32",
           "duration_ms": 8
@@ -604,8 +604,8 @@ Response 200:
   "shadow_policies": [
     {
       "policy_uuid": "<uuid>",
-      "handle": "tenant/payments/gatekeeper/new-cost-check",
-      "policy_type": "gatekeeper",
+      "handle": "tenant/payments/gating/new-cost-check",
+      "policy_type": "gating",
       "status": "proposed",
       "shadow_since": "<ISO 8601>",
       "pr_url": "https://git.corp.example.com/dcm-policies/pulls/143",
@@ -725,7 +725,7 @@ Response 200:
           "memory_gb": { "value": 8 }
         }
       },
-      "downstream_payload_types": ["request.policies_evaluated", "recovery.gatekeeper_denied"]
+      "downstream_payload_types": ["request.policies_evaluated", "recovery.gating_denied"]
     }
   ]
 }
@@ -788,7 +788,7 @@ Response 200:
         { "path": "tenant_uuid",       "type": "uuid", "required": true },
         { "path": "fields",            "type": "object", "required": true }
       ],
-      "policy_types_applicable": ["gatekeeper", "validation", "transformation",
+      "policy_types_applicable": ["gating", "validation", "transformation",
                                    "recovery", "orchestration_flow"]
     }
   ]
@@ -918,10 +918,10 @@ All Flow GUI API errors follow the standard DCM error format:
 
 The Execution Graph View has a **Score Mode** toggle that overlays risk scoring information:
 
-- Each operational-class GateKeeper node displays its `scoring_weight`
+- Each operational-class Gating Policy node displays its `scoring_weight`
 - Node background color shifts from green (weight 1–20) through amber (21–50) to red (51–100)
 - A running score accumulator shows the current aggregate as the user traces a path through the graph
-- Compliance-class GateKeeper nodes display a lock icon — they are always boolean
+- Compliance-class Gating Policy nodes display a lock icon — they are always boolean
 
 ### 11.2 API — Get Score Configuration for Graph Overlay
 
@@ -965,7 +965,7 @@ The Flow Simulation output (Section 5) is extended with a score breakdown panel:
 Simulation result: risk_score=47, routing=reviewed
 
 Score breakdown:
-  Operational GateKeepers:  50 × 0.45 = 22.5
+  Operational Gating Policies:  50 × 0.45 = 22.5
     ├── cost-ceiling:        +35 ("Cost $620/month exceeds $500")
     └── off-hours:           +15 ("Request outside business hours")
   Completeness:             20 × 0.15 = 3.0

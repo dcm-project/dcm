@@ -159,7 +159,7 @@ Dashboard widgets (configurable per role):
 
 - Score threshold table per profile: approval routing tiers vs score ranges
 - Visual slider interface for threshold adjustment (guardrail: auto_approve_below ≤ 50 enforced — slider hard-stops at 50)
-- Signal weight editor: operational_gatekeeper (45%), completeness (15%), actor_risk_history (20%), quota_pressure (10%), provider_accreditation (10%) — weights must sum to 100%
+- Signal weight editor: operational_gating (45%), completeness (15%), actor_risk_history (20%), quota_pressure (10%), provider_accreditation (10%) — weights must sum to 100%
 - Preview: submit a sample request to see the score it would receive under current config
 
 ### 8.2 Policy Enforcement Override
