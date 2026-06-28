@@ -60,7 +60,7 @@ DCM provides these capabilities at the management plane level — above individu
 - **Policy-governed** — organizational policies applied at request time via DCM's Policy Engine
 - **Cross-cluster** — the same resource type managed across multiple clusters through DCM
 - **Self-service** — automatically available in the DCM Service Catalog for consumer request
-- **Sovereignty-compliant** — placement and operational constraints enforced by DCM's GateKeeper policies
+- **Sovereignty-compliant** — placement and operational constraints enforced by DCM's Gating policies
 - **Audit-complete** — full provenance chain from intent through realization
 
 ### 1.2 Scope
