@@ -36,9 +36,9 @@ Orchestration Flow Policy: system/workflows/request-lifecycle
           request.dispatched]
 
 # Dynamic policies (Level 2 orchestration)
-GateKeeper:      org/gatekeeper/vm-size-limits         (fires on request.layers_assembled)
+Gating Policy:      org/gating/vm-size-limits         (fires on request.layers_assembled)
 Transformation:  org/transformation/inject-monitoring  (fires on request.layers_assembled)
-GateKeeper:      system/gatekeeper/sovereignty-check   (fires on request.placement_complete)
+Gating Policy:      system/gating/sovereignty-check   (fires on request.placement_complete)
 ```
 
 ### Step-by-step
@@ -76,7 +76,7 @@ Event: request.intent_captured
 Event: request.layers_assembled
 → [PARALLEL] All policies matching this payload type evaluate simultaneously:
 
-  GateKeeper vm-size-limits evaluates:
+  Gating Policy vm-size-limits evaluates:
     input.payload.fields.cpu_count.value = 4
     4 <= 32 → allow: true
 
@@ -86,7 +86,7 @@ Event: request.layers_assembled
       operation: "set",
       value: "https://metrics.internal.prod.example.com" }
 
-→ All GateKeepers: allow
+→ All Gating Policies: allow
 → Transformations applied to payload
 → New event: request.policies_evaluated
 ```
@@ -132,13 +132,13 @@ Consumer polls: GET /api/v1/requests/req-001/status
 
 ## 1.2 Human Approval Gate (Conditional Step Insertion)
 
-A production VM request that requires manager approval before dispatch. Shows how a GateKeeper policy inserts a waiting step without modifying the named workflow.
+A production VM request that requires manager approval before dispatch. Shows how a Gating policy inserts a waiting step without modifying the named workflow.
 
 ### Setup: Additional active policy
 
 ```rego
-# GateKeeper fires on request.policies_evaluated for prod VMs over $100/month
-package dcm.gatekeeper.prod_vm_approval_gate
+# Gating Policy fires on request.policies_evaluated for prod VMs over $100/month
+package dcm.gating.prod_vm_approval_gate
 
 deny contains reason if {
     input.payload.type == "request.policies_evaluated"
@@ -157,11 +157,11 @@ approval_type := "manager_approval" if count(deny) > 0
 
 ```
 After Step 3 (dynamic policies evaluate):
-→ GateKeeper prod_vm_approval_gate fires
+→ Gating Policy prod_vm_approval_gate fires
 → deny: ["Production VMs over $100/month require manager approval"]
 → requires_approval: true, approval_type: "manager_approval"
 
-→ Policy Engine sees GateKeeper deny WITH requires_approval flag
+→ Policy Engine sees Gating Policy deny WITH requires_approval flag
 → Entity enters AWAITING_APPROVAL state (not FAILED)
 → Notification dispatched:
     audience: manager (from actor's group membership via relationship graph)
@@ -174,7 +174,7 @@ POST /api/v1/requests/req-001:approve
 { "approval_type": "manager_approval", "approver_uuid": "mgr-001" }
 
 → payload.approvals["manager_approval"] = { approved: true, by: "mgr-001" }
-→ GateKeeper re-evaluates: approval present → allow
+→ Gating Policy re-evaluates: approval present → allow
 → Pipeline resumes from request.policies_evaluated
 → Placement → Dispatch → Realization (same as 1.1 Steps 4-5)
 ```
@@ -183,10 +183,10 @@ POST /api/v1/requests/req-001:approve
 
 ## 1.3 Policy-Gated Request — Hard Block with Clear Error
 
-Shows a request blocked by a hard GateKeeper with a consumer-visible error message.
+Shows a request blocked by a hard Gating Policy with a consumer-visible error message.
 
 ```rego
-package dcm.gatekeeper.approved_os_images
+package dcm.gating.approved_os_images
 
 deny contains reason if {
     input.payload.type == "request.layers_assembled"
@@ -202,14 +202,14 @@ deny contains reason if {
 Consumer submits: { "os_family": "windows-server" }
 
 → request.layers_assembled fires
-→ GateKeeper approved_os_images: deny
+→ Gating Policy approved_os_images: deny
 → Entity → FAILED (no requires_approval flag → hard block)
 
 Consumer response:
 { "status": "FAILED",
   "failure_reason": "OS 'windows-server' is not in the approved image list.",
   "retry_eligible": true,
-  "policy_uuid": "gatekeeper-approved-os-uuid",
+  "policy_uuid": "gating-approved-os-uuid",
   "suggestion": "Resubmit with os_family: rhel, ubuntu-lts, or coreos" }
 ```
 
@@ -731,7 +731,7 @@ DCM injects into assembled payload as a data layer:
 Assembly reaches Step 5 (pre-placement policy processing):
 
 DCM sends payload to OPA sidecar:
-POST http://opa-sidecar:8181/v1/data/dcm/gatekeeper/vm_size_limits
+POST http://opa-sidecar:8181/v1/data/dcm/gating/vm_size_limits
 {
   "input": {
     "payload": {
@@ -1398,7 +1398,7 @@ itsm_provider_registration:
 1. Consumer: POST /api/v1/requests
      fields: { ... VM configuration ... }
 
-2. GateKeeper policy fires (prod tenant + restricted network):
+2. Gating policy fires (prod tenant + restricted network):
      action: require_itsm_approval
      itsm_provider_uuid: <servicenow-provider-uuid>
      change_type: standard
@@ -1645,7 +1645,7 @@ Selected: Provider B
 Shadow execution lets a new policy run against real traffic without affecting
 outcomes. Divergences are surfaced for review before the policy goes active.
 
-**Use case:** Testing a new cost-cap gatekeeper before enforcement.
+**Use case:** Testing a new cost-cap gating before enforcement.
 
 ```yaml
 # GitOps PR: policies/cost-cap-v1.yaml
@@ -1653,7 +1653,7 @@ policy:
   handle: "tenant/acme/cost-cap-1000"
   version: "1.0.0"
   status: proposed               # shadow mode — evaluates but does not enforce
-  type: gatekeeper
+  type: gating
   rules:
     - condition: "cost_estimate.monthly_usd > 1000 AND tenant.uuid == 'acme-uuid'"
       action: gate
@@ -1844,7 +1844,7 @@ authority_tiers:
     description: "CISO office — for high-impact or compliance-relevant changes"
 ```
 
-**GateKeeper policy requiring CISO approval:**
+**Gating policy requiring CISO approval:**
 
 ```rego
 package dcm.policy.gate.sovereign_decommission
@@ -1856,7 +1856,7 @@ gate if {
 }
 
 output := {
-    "output_type": "gatekeeper",
+    "output_type": "gating",
     "action": "require_approval",
     "approval_tiers": ["platform_admin", "ciso_office"],   # sequential
     "approval_mode": "sequential",
@@ -1870,7 +1870,7 @@ output := {
 ```
 Request: Decommission VM (restricted data, sovereign profile)
 
-GateKeeper fires:
+Gating Policy fires:
   Request → AWAITING_APPROVAL (tier: platform_admin)
   Notification → Platform Admin audience (urgency: high)
 
@@ -1922,7 +1922,7 @@ DCM pipeline:
      (DC2 data center layer, current security baseline, current network config)
 
   3. Policy evaluation runs fresh
-     (current GateKeeper, Validation, Transformation, Placement policies)
+     (current Gating Policy, Validation, Transformation, Placement policies)
      Note: Placement constraint: exclude DC1, require DC2
 
   4. Placement Engine selects DC2 provider
@@ -2582,7 +2582,7 @@ resource_type_specification:
         - type: enum
           allowed_values: [tier_1, tier_2, tier_3]
           # Static enum — tier names are intrinsic to the resource type.
-          # Each tier carries policy implications enforced by GateKeeper policies.
+          # Each tier carries policy implications enforced by Gating policies.
 
     web_replica_count:
       type: integer
@@ -3011,7 +3011,7 @@ Assembled payload at this point (before policies):
 
 Step 4 — POLICY EVALUATION
 ────────────────────────────
-  GateKeeper — Sovereignty Check:
+  Gating Policy — Sovereignty Check:
     PASS: location.sovereignty_zone = eu-west-sovereign
           tenant data classification ≤ restricted
           No cross-border transfer
@@ -3030,7 +3030,7 @@ Step 4 — POLICY EVALUATION
     ADD: fqdn = payments-api-01.fra-dc1.eu-west.corp.example.com
     Provenance: { source: policy/transform/naming-convention }
 
-  GateKeeper — Cost Gate (if estimate > threshold):
+  Gating Policy — Cost Gate (if estimate > threshold):
     Estimated cost: $0.38/hour → $274/month
     Tenant monthly budget: $5,000 remaining
     PASS: within budget
@@ -3150,7 +3150,7 @@ composite service definition decomposes the request into constituent requests:
     location: loc-fra-dc1
     db_engine: postgresql
     storage_gb: 500
-    high_availability: true            // enforced by tier_1 GateKeeper policy
+    high_availability: true            // enforced by tier_1 Gating policy
     backup_enabled: true               // injected by environment layer
 
 Environment layer injection (env-layer-production):
@@ -3162,7 +3162,7 @@ Environment layer injection (env-layer-production):
   monitoring: mandatory
   log_retention_days: 90
 
-Tier 1 GateKeeper policies fire:
+Tier 1 Gating policies fire:
   → Minimum 3 web VMs enforced (3 requested ✓)
   → HA required on database (high_availability: true injected)
   → LTM required in front of web tier (LoadBalancer constituent ✓)
@@ -3242,7 +3242,7 @@ Step 3 — LAYER ASSEMBLY (fresh — current layers used, not original)
      reflects DC2 infrastructure, not DC1)
 
 Step 4 — POLICY EVALUATION (fresh — current policies applied)
-  GateKeeper — Sovereignty Check:
+  Gating Policy — Sovereignty Check:
     PASS: loc-ams-dc2 in eu-west-sovereign zone
           Same regulatory scope — GDPR/NIS2 still applies
 
@@ -3334,12 +3334,12 @@ Layer Resolution — key changes since original provisioning:
 
 Policy changes since original provisioning:
 
-  New GateKeeper: "vulnerability_scan_on_rehydrate" (added 2026-06-01)
+  New Gating Policy: "vulnerability_scan_on_rehydrate" (added 2026-06-01)
     → Requires: vulnerability_scan_schedule declared before realization
     → Transformation: adds vulnerability_scan_enabled: true, schedule: weekly
 
   Tier 1 minimum web replicas: increased from 3 to 4 (policy updated 2026-08-01)
-    → GateKeeper fires: current request has web_replica_count: 3
+    → Gating Policy fires: current request has web_replica_count: 3
     → Policy action: AUTO_ADJUST (adds one more VM to constituent requests)
     → Consumer notified: "web_replica_count adjusted from 3 to 4 per updated Tier 1 policy"
     → New VM constituent added to rehydration dispatch
@@ -3371,11 +3371,11 @@ Audit record highlights:
   os_image: auto-upgraded from os-img-rhel-9-4 (retired) → os-img-rhel-9-5
     by: policy/transform/os-image-auto-upgrade
   web_replica_count: 3 → 4
-    by: policy/gatekeeper/tier1-minimum-replicas v2.0
+    by: policy/gating/tier1-minimum-replicas v2.0
   log_retention_days: 90 → 365
     by: environment layer env-layer-production v1.2
   vulnerability_scan_enabled: false → true
-    by: policy/gatekeeper/vulnerability-scan-on-rehydrate v1.0
+    by: policy/gating/vulnerability-scan-on-rehydrate v1.0
 ```
 
 ---
