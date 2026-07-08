@@ -429,6 +429,27 @@ DCM is designed for CNCF ecosystem compatibility:
 
 ---
 
+## 10a. Identifier implementation (UUID — RFC 9562)
+
+DCM realizes udlm `contracts/identifier-scheme.md` §2.1 (normative). Implementation requirements:
+
+- **Generation:** entity/artifact identity = **UUIDv4** from the platform CSPRNG
+  (`uuid.uuid4()`, `crypto.randomUUID()`, `gen_random_uuid()`); audit-chain leaves and event ids =
+  **UUIDv7** (RFC 9562 §5.7) for index locality + total order. No other versions are ever minted.
+- **Validation at ingest (every API boundary):** reject malformed UUIDs and prohibited versions —
+  check the version nibble AND variant bits
+  (`^[0-9a-f]{8}-[0-9a-f]{4}-[47][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$`, version per field
+  schema). Error: `validation.identifier_invalid`.
+- **Canonical form everywhere:** lowercase hyphenated, no braces, no `urn:` prefix — normalize on
+  write, compare case-insensitively never (storage is already canonical).
+- **Storage:** native `uuid` column type where the store supports it (Postgres `uuid`,
+  `gen_random_uuid()` default for v4); never store as free text.
+- **Resolution:** cross-entity references resolve by `uuid` (authoritative); `handle` is advisory
+  display/lookup sugar and every handle change is audited (identifier-scheme §2.2). Resolution by
+  name alone is a conformance violation (udlm SPEC-DESIGN hard constraint 30).
+- **Lifecycle:** uuids are minted exactly once, survive tenant/realization migration, remain
+  resolvable after `retired` (tombstone, DEP-007), and are NEVER reused (identifier-scheme §5).
+
 ## 10. Policy-family-to-standard mapping (DCM realization)
 
 | Policy family | Standards basis |
