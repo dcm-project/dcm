@@ -37,3 +37,11 @@ This framing keeps DCM's scope honest: DCM enables the platform foundation; real
 Use Case end-to-end still requires the organization (People/Process) and the consumer's
 ability to adopt it (Enablement). DAV is the engine that evaluates all three; DCM is what
 "good" looks like for the platform pillar, and the spec DAV validates against in AD mode.
+
+## Data ownership boundary
+
+UDLM provides the design language and minimal requirements. DCM is one realization
+(implementation) of that language. **Neither UDLM nor DCM owns or stores sensitive
+customer data** (contract pricing, customer PII, credential values). They provide
+the plumbing, integration hooks, and event bus for data exchange — the sensitive
+instance data stays with the customer's systems or the credential management service.
