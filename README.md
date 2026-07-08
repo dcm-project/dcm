@@ -67,7 +67,7 @@ dcm/
 ├── taxonomy/DCM-Taxonomy.md
 ├── schemas/                               ← OpenAPI, JSON Schema, SQL
 ├── deployment/                            ← (existing deployment artifacts)
-├── dav/                                   ← DCM validation framework
+├── dav/                                   ← validation/assessment testbed (non-normative consumer)
 ├── project-overview.md
 ├── LICENSE
 └── README.md
@@ -106,12 +106,19 @@ events, schema sharing, conformance), see
 
 | Repository | Purpose |
 |-----------|---------|
+| [control-plane](https://github.com/dcm-project/control-plane) | The DCM control plane — runtime source for the catalog, placement, policy, and service-provider domains in a single process |
+| [cli](https://github.com/dcm-project/cli) | `dcm` command-line client (catalog, policy, provider operations) |
+| [kubevirt-service-provider](https://github.com/dcm-project/kubevirt-service-provider) | Service provider — VMs via KubeVirt/CNV |
+| [k8s-container-service-provider](https://github.com/dcm-project/k8s-container-service-provider) | Service provider — containers via Kubernetes Deployments/Services |
+| [acm-cluster-service-provider](https://github.com/dcm-project/acm-cluster-service-provider) | Service provider — OpenShift clusters via ACM/HyperShift |
 | [dcm-examples](https://github.com/dcm-project/dcm-examples) | Reference implementations — Summit demo with Go services, Ansible, OpenShift manifests |
 | [dcm-project.github.io](https://github.com/dcm-project/dcm-project.github.io) | Project website — documentation segmented by domain |
-| [catalog-manager](https://github.com/dcm-project/catalog-manager) | Service catalog implementation |
-| [service-provider-manager](https://github.com/dcm-project/service-provider-manager) | Provider registration |
-| [policy-manager](https://github.com/dcm-project/policy-manager) | Policy CRUD and evaluation |
-| [placement-manager](https://github.com/dcm-project/placement-manager) | Provider selection |
-| [api-gateway](https://github.com/dcm-project/api-gateway) | API ingress (Traefik) |
 | [enhancements](https://github.com/dcm-project/enhancements) | Design proposals |
 | [shared-workflows](https://github.com/dcm-project/shared-workflows) | CI/CD workflows |
+
+> **Runtime topology note.** The catalog, placement, policy, and service-provider domains were originally separate
+> services (`catalog-manager`, `placement-manager`, `policy-manager`, `service-provider-manager`, `api-gateway`).
+> They were consolidated into the single **control-plane** process in May 2026 — they now call each other in-process
+> on the provisioning path rather than over HTTP — and those five repositories are archived. The architecture docs
+> in this repository describe the logical decomposition (the control plane's internal services); the table above
+> lists the repositories that hold the current runtime.

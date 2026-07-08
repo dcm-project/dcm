@@ -63,12 +63,11 @@ DCM manages the complete lifecycle of infrastructure resources — from bare met
 
 Comparing these four states continuously is how DCM detects drift, enforces governance, and enables rehydration (replaying original intent through current policies to reproduce a resource in a new location or after failure).
 
-**Policy** is every rule that governs DCM behavior — expressed as code, stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. Eight typed policy schemas cover every governance need:
+**Policy** is every rule that governs DCM behavior — expressed as code, stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. Seven typed policy schemas cover every governance need:
 
 | Policy Type | What It Does |
 |-------------|-------------|
-| **Gating Policy** | Halts requests or contributes weighted risk scores for approval routing |
-| **Validation** | Checks structural correctness; halts on failure or accumulates advisory warnings |
+| **Validation** | The unified request-evaluation policy. Halts requests (`enforcement_class: compliance`), contributes risk scores (`enforcement_class: operational`), checks structural correctness (`output_class: structural`), or accumulates advisory warnings (`output_class: advisory`) |
 | **Transformation** | Automatically enriches request payloads (injects values, enforces field locks) |
 | **Orchestration Flow** | Defines named workflows as explicit, ordered pipeline steps |
 | **Recovery** | Governs what DCM does when things go wrong (timeout, failure, drift) |
@@ -165,8 +164,7 @@ DCM's runtime is a policy-driven event loop. There is no hard-coded pipeline —
 Event (Data state change — e.g., request submitted)
   → Policy Engine evaluates all matching Policies
   → Policies produce typed outputs:
-      Gating Policy: approve / halt / risk score
-      Validation: pass / fail / warning
+      Validation: approve / halt / risk score / pass / fail / warning
       Transformation: inject fields / lock values / annotate provenance
       Placement: constraints + preferences → Provider selected
       Orchestration Flow: ordered step sequence
@@ -194,8 +192,7 @@ When a consumer submits a service request, DCM executes a governed assembly pipe
    → Transformation Policies inject and lock required fields
 
 3. Policy evaluation
-   → Validation Policies check structural correctness
-   → Gating Policies assess risk and enforce business rules
+   → Validation Policies check correctness, assess risk, and enforce business rules
    → Placement Engine selects provider (constraints + scoring)
    → Requested State written (the approved, assembled dispatch payload)
 
@@ -218,7 +215,7 @@ When a consumer submits a service request, DCM executes a governed assembly pipe
 Every business rule in DCM is a Policy artifact — stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. There are no approval workflows embedded in code, no hard-coded placement rules, no statically defined pipeline stages.
 
 This means:
-- Adding a new approval step = writing a Gating policy
+- Adding a new approval step = writing a Validation policy with enforcement_class: compliance
 - Changing where a resource is placed = updating a Placement policy  
 - Auto-injecting a required field = writing a Transformation policy
 - Defining what happens on failure = writing a Recovery policy
