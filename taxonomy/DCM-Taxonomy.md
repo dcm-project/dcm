@@ -35,8 +35,7 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 
 | Term | Definition |
 |------|-----------|
-| **GateKeeper Policy** | Typed Policy. Declares `enforcement_class: compliance` (boolean deny — halts request) or `operational` (contributes `risk_score_contribution` to request risk score). Compliance-class is the default and fail-safe. See [Scoring Model](data-model/scoring-model/). |
-| **Validation Policy** | Typed Policy. Declares `output_class: structural` (boolean pass/fail — halts on fail) or `advisory` (contributes completeness score + warning list without blocking). Structural is the default and fail-safe. See [Scoring Model](data-model/scoring-model/). |
+| **Validation Policy** | Typed Policy. The unified request-evaluation policy type. Carries two orthogonal properties: `enforcement_class` — `compliance` (boolean deny — halts request) or `operational` (contributes `risk_score_contribution` to request risk score); `output_class` — `structural` (boolean pass/fail — halts on fail) or `advisory` (contributes completeness score + warning list without blocking). Compliance + structural is the default and fail-safe. A Validation Policy with `enforcement_class: compliance` is the hard gate (what was formerly "Gating Policy"). See [Scoring Model](data-model/scoring-model/). |
 | **Transformation Policy** | Typed Policy. Output: mutations[] — field additions, changes, locks. Fires on request payload. All mutations collected and applied with provenance. |
 | **Recovery Policy** | Typed Policy. Output: action + parameters. Fires on failure/timeout trigger conditions. Governs what DCM does when things go wrong. |
 | **Orchestration Flow Policy** | Typed Policy. Output: ordered step sequence. Fires on pipeline payload type events. Named workflow artifacts — the explicit, visible pipeline skeleton. |
@@ -75,7 +74,7 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 | **Denaturalization** | Service Provider converts provider-native result back to DCM unified format after execution. |
 | **Rehydration** | Replaying a resource's intent state to a new provider or context. Produces a new Requested State from the existing Intent State. |
 | **Contributor** | An actor type that authored a Data artifact. Recorded in artifact_metadata.contributed_by. Types: platform_admin, consumer, service_provider, peer_dcm. Determines review requirements. |
-| **Two-Level Orchestration** | Level 1: Named Workflow Artifacts (Orchestration Flow Policy, ordered: true) — explicit sequence skeleton. Level 2: Dynamic Policies (GateKeeper, Transformation, Recovery) — fire conditionally on same events without being declared in the workflow. |
+| **Two-Level Orchestration** | Level 1: Named Workflow Artifacts (Orchestration Flow Policy, ordered: true) — explicit sequence skeleton. Level 2: Dynamic Policies (Validation, Transformation, Recovery) — fire conditionally on same events without being declared in the workflow. |
 | **Reserve Query** | A parallel capacity query sent to all eligible provider candidates. Providers confirm capacity and hold it for PT5M. The Placement Engine selects the winner and releases other holds. |
 
 
@@ -170,7 +169,7 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 | **CMDB CI Mapping** | ITSM integration configuration mapping DCM resource type FQNs to ITSM CI class names (e.g. `Compute.VirtualMachine → cmdb_ci_server` in ServiceNow). Used for `create_cmdb_ci`, `update_cmdb_ci`, and `retire_cmdb_ci` actions. |
 | **recorded_via** | Field on DCM approval vote records identifying the system that submitted the vote (dcm_admin_ui / servicenow / jira / slack_bot / api_direct / other). Used by ITSM integration inbound approval routing and in audit records for compliance traceability. |
 | **ITSM-001–007** | ITSM integration system policies. Key: ITSM-002 (DCM never requires ITSM — non-blocking default), ITSM-003 (inbound webhooks must be authenticated), ITSM-005 (block_until_created must have timeout — pipeline never permanently stalled). |
-| **ITSM-POL-001–004** | ITSM Policy system policies. Key: ITSM-POL-002 (ITSM Policies are side-effect only — not GateKeeper substitutes), ITSM-POL-003 (full audit record per evaluation), ITSM-POL-004 (multiple ITSM Policies on same event fire independently). |
+| **ITSM-POL-001–004** | ITSM Policy system policies. Key: ITSM-POL-002 (ITSM Policies are side-effect only — not Validation Policy substitutes), ITSM-POL-003 (full audit record per evaluation), ITSM-POL-004 (multiple ITSM Policies on same event fire independently). |
 
 
 ### Web Interface Terms
@@ -296,10 +295,10 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 
 | Term | Definition |
 |------|-----------|
-| **enforcement_class** | Required property of GateKeeper policies. `compliance`: boolean deny gate — always halts on fire. `operational`: contributes `risk_score_contribution` to the request risk score. |
+| **enforcement_class** | Required property of Validation policies. `compliance`: boolean deny gate — always halts on fire. `operational`: contributes `risk_score_contribution` to the request risk score. |
 | **output_class** | Required property of Validation policies. `structural`: boolean pass/fail. `advisory`: contributes completeness score and warnings without blocking. |
-| **request_risk_score** | Aggregate score (0–100) assembled from five weighted signals: operational GateKeeper contributions, completeness, actor risk history, quota pressure, provider accreditation richness. Drives approval routing. |
-| **risk_score_contribution** | The weighted score a fired operational-class GateKeeper contributes to the request risk score. Declared as `scoring_weight` (1–100) in the policy. |
+| **request_risk_score** | Aggregate score (0–100) assembled from five weighted signals: operational Validation Policy contributions, completeness, actor risk history, quota pressure, provider accreditation richness. Drives approval routing. |
+| **risk_score_contribution** | The weighted score a fired operational-class Validation Policy contributes to the request risk score. Declared as `scoring_weight` (1–100) in the policy. |
 | **completeness_score** | Aggregate of advisory Validation contributions. Represents how incomplete or unusual the request is — higher = more warnings. Does not block requests. |
 | **actor_risk_history_score** | Decay-weighted (λ=0.1, half-life ≈7 days) history of an actor's previous request outcomes. Contributes to request risk score. Not exposed to other consumers. |
 | **quota_pressure_score** | Continuous score representing how close a Tenant is to quota limits for the requested resource type. Zero below 75% utilization; 100 at full quota. |
@@ -335,6 +334,8 @@ Terms to avoid because they introduce ambiguity. Use the precise alternatives in
 | **Orchestrator** (as a standalone component) | Suggests a single sequencer; DCM orchestration is policy-driven, not procedural | **Request Orchestrator** (the event bus) + **Orchestration Flow Policy** (named workflow) + **Policy Engine** (evaluator) |
 | **Tangible / Intangible** | Nothing in DCM architecture is intangible — these words add no precision | Describe what the thing actually is |
 | **Workflow** (without qualification) | Ambiguous between Level 1 (named Orchestration Flow Policy) and general process | **Named Workflow** (Orchestration Flow Policy with `ordered: true`) or **dynamic policy** (conditional policy) |
+| **Gatekeeper** | Collides with OPA Gatekeeper operator in OpenShift | **Validation Policy** with `enforcement_class: compliance` |
+| **Gating Policy** | Merged into Validation Policy (2026-06-30). Gating is an `enforcement_class` property, not a separate policy type | **Validation Policy** with `enforcement_class: compliance` for hard gates, `enforcement_class: operational` for risk-score contributors |
 | **Producer** | DCM uses "Provider" terminology with typed contracts | **Service Provider** (provisions resources) or the specific provider type |
 | **Shore / Ship / Enclave** | Legacy terminology from defense IT contexts; replaced in DCM | **Hub DCM** (central/global) / **Regional DCM** (distributed regional) / **Sovereign DCM** (air-gapped/compliance-isolated) |
 | **User** (generic) | Ambiguous across domains — humans "use" DCM in every domain | **Consumer**, **Developer**, **Application Owner**, **Platform Engineer**, **SRE**, **Tenant Admin**, **Policy Author** |
