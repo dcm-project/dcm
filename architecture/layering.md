@@ -142,19 +142,20 @@ where the genuinely-shared bits will be lifted from UDLM.
 
 ---
 
-## Implications for DAV (the verification framework)
+## Implications for verification/assessment consumers
 
-DAV tests use cases against the architecture. Per this layering, that's two
-distinct questions:
+A verification consumer (an assessment realization or test harness — non-normative;
+nothing here depends on a specific tool) tests use cases against the architecture.
+Per this layering, that's two distinct questions:
 
 1. **"Does UDLM support this use case?"** — does the substrate accommodate the
    entities, states, contracts, lifecycle the UC needs?
 2. **"Does DCM operationalize it correctly?"** — does the convergence loop,
    provider orchestration, and runtime actually realize it?
 
-DAV's `spec_refs` use namespaced paths to disambiguate:
+Such a consumer's `spec_refs` use namespaced paths to disambiguate:
 - `udlm/contracts/event-catalog.md` — substrate reference
 - `dcm/architecture/convergence-engine/policy-evaluation.md` — realization reference
 
-The two repos are independently fetchable; DAV resolves cross-repo references
+The two repos are independently fetchable; cross-repo references are resolved
 during use-case evaluation.

@@ -19,7 +19,7 @@
 | Operation (LRO) shape completeness | 1 | ✅ | Polling section added to consumer spec |
 | lifecycle_state casing | Mixed | ⚠️ Noted | UPPERCASE in YAML examples, lowercase in prose — by design |
 | Resource Type naming | Mixed | ⚠️ Noted | `resource_type` (field) vs `resource_type_fqn` (format ref) — not a conflict |
-| Provider type count references | 1 | ✅ Already correct | All references say "eleven" or "11" |
+| Provider type count references | 1 | ⚠️ Superseded by ADR-005 | ADR-005 abolished a fixed provider-type COUNT in favor of declared CAPABILITY; the UDLM provider-contract kinds are service/information/process/peer_dcm (auth = a capability). "Eleven/11" is legacy — align to the capability model. |
 | Anti-vocabulary: 'widget' | 0 | N/A | Clean — eliminated in prior sessions |
 
 ---
@@ -190,7 +190,7 @@ These were identified but are not bugs — they are intentional or context-appro
 | `Resource Type Spec` vs `Resource Type Specification` | Shortened form acceptable in prose; full form in formal definitions |
 | `Realized State` vs `realized state` | Title case for the formal concept, lowercase in general prose |
 | `related_entity_type: internal/external` in doc 09 | Not entity_type values — relationship scope descriptors, correct as-is |
-| Provider type count varies ("nine", "eleven", "11") | All refer to the same 11 types; "nine" may be a historical reference pre-two additions |
+| Provider type count varies ("nine", "eleven", "11") | Moot after ADR-005 — providers are typed by declared capability, not a fixed count (see ADR-002 supersede note). |
 
 ---
 
