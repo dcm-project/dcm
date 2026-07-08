@@ -1,38 +1,35 @@
 uuid: uc-seed-obs-001
 handle: observability/udlm-universal-telemetry-export
 scenario:
-  description: A platform operations team connects its existing observability
-    tooling (metrics TSDB, log aggregator, alerting pipeline, SIEM) to DCM
-    without writing bespoke adapters. All telemetry the platform produces —
-    resource metrics, lifecycle events, audit records, policy decisions, log
-    streams — is exported as UDLM-modeled data with discoverable schemas, so
-    any consuming tool subscribes to the same uniform entity and event
-    vocabulary. The export is policy-scoped (a subscriber sees only what its
-    authorization and data-classification policies allow), retention-governed,
-    and itself auditable. This is the UDLM goal stated as a use case - one
-    universal way to export data, consumable by any tool.
+  description: A platform operations team connects its existing observability tooling
+    (metrics TSDB, log aggregator, alerting pipeline, SIEM) to DCM. Rather than DCM
+    writing N per-tool adapters, DCM exposes ONE UDLM-modeled, schema-discoverable
+    export surface over STANDARD TRANSPORTS — OTLP, Prometheus scrape, and a message-bus
+    subscription against the published event catalog. "No bespoke adapters" means no
+    DCM-side per-tool integration code — any tool that speaks a standard transport
+    consumes the same uniform entity/event vocabulary directly. Where a consumer speaks
+    a proprietary protocol, a thin standard exporter sits at the CONSUMER edge (one per
+    protocol, outside DCM), not inside DCM. The export is policy-scoped (a subscriber
+    sees only what its authorization and data-classification policies allow),
+    retention-governed, and itself auditable.
   actor:
     persona: platform-operator
     profile: standard
-  intent: Establish a universal telemetry export so monitoring, alerting,
-    logging, and audit tooling consume DCM data through one UDLM-modeled
-    interface instead of per-tool integrations
+  intent: Establish a universal telemetry export so monitoring, alerting, logging, and
+    audit tooling consume DCM data through one UDLM-modeled interface over standard
+    transports, with no DCM-side per-tool adapters
   success_criteria:
-  - Telemetry entities (metrics, events, log records, audit records) are
-    exposed as UDLM-modeled data with schemas discoverable by the consumer
-    at subscription time - no out-of-band schema agreement
-  - A curated event stream subscription delivers lifecycle, drift, policy,
-    and audit events to the subscriber via the message bus using the
-    published event catalog vocabulary
-  - Resource-level metrics are exported through the observability export
-    surface so an external metrics store can scrape or receive them without
-    a DCM-specific adapter
-  - Export scope is policy-evaluated per subscriber - data classification
-    and tenancy boundaries restrict what each consumer receives
-  - Subscription creation, schema discovery, and export access are recorded
-    in the audit trail with actor, intent, and outcome
-  - A second, different consuming tool can be attached using the same
-    discovery and subscription path with no export-side changes
+  - Telemetry entities (metrics, events, log records, audit records) are exposed as
+    UDLM-modeled data with schemas discoverable by the consumer at subscription time
+  - A curated event-stream subscription delivers lifecycle, drift, policy, and audit
+    events via the message bus using the published event-catalog vocabulary
+  - Resource metrics are exported over a standard transport (OTLP / Prometheus scrape)
+    consumable with no DCM-specific adapter
+  - Export scope is policy-evaluated per subscriber (data classification + tenancy)
+  - Subscription creation, schema discovery, and export access are recorded in the
+    audit trail
+  - A second, different consuming tool attaches via the same discovery/subscription
+    path with no export-side change (proof the surface is uniform, not per-tool)
   dimensions:
     lifecycle_phase: new_request
     resource_complexity: composite_service
@@ -43,20 +40,20 @@ scenario:
   profile: standard
   expected_domain_interactions:
   - domain: data
-    interaction: telemetry entities and event catalog exposed as UDLM-modeled,
+    interaction: telemetry entities + event catalog exposed as UDLM-modeled,
       schema-discoverable data
   - domain: provider
-    interaction: information provider serves export/discovery endpoints;
+    interaction: information provider serves export/discovery over standard transports;
       message bus delivers the curated event stream
   - domain: policy
-    interaction: subscriber authorization, data-classification scoping, and
-      retention policy evaluated for the export
+    interaction: subscriber authorization, data-classification scoping, and retention
+      policy evaluated for the export
   - domain: audit
-    interaction: subscription lifecycle and export access recorded in the
-      tamper-evident audit chain
+    interaction: subscription lifecycle and export access recorded in the tamper-evident
+      audit chain
 generated_by:
   mode: authoring
-  source: ai-assisted
+  source: llm-guided
   model: claude-opus-4-8
   prompt_version: seed-1.0
   timestamp: '2026-06-07T18:30:00.000000+00:00'
@@ -64,17 +61,19 @@ tags:
 - observability
 - udlm
 - telemetry-export
-- monitoring
-- alerting
-- logging
+- standard-transports
+- otlp
+- prometheus
+- message-bus
 - universal-consumption
 - happy-path
 - standard-profile
 - foundational
-version: 1.0.0
+version: 1.1.0
 metadata:
   admitted_at: '2026-06-07T18:30:00.000000+00:00'
   admitted_dcm_version: preview
   promoted_from_run: null
   initial_baseline_path: null
   author: chris@croadfeldt
+  edited: '2026-06-29 — honest adapter model: one UDLM surface over standard transports, edge translators outside DCM (Piotr PR-65 #9)'

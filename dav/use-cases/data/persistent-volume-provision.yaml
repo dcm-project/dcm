@@ -19,14 +19,14 @@ scenario:
   dimensions:
     lifecycle_phase: new_request
     resource_complexity: cross_dependency_payload
-    policy_complexity: single_gatekeeper
+    policy_complexity: single_validation
     provider_landscape: single_eligible
     governance_context: standard_governance
     failure_mode: happy_path
   profile: dev
   expected_domain_interactions:
   - domain: policy
-    interaction: tenant-isolation gatekeeper evaluates volume request against tenant's
+    interaction: tenant-isolation gating evaluates volume request against tenant's
       storage class eligibility
   - domain: provider
     interaction: storage provider allocates block volume in eligible class

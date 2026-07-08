@@ -59,7 +59,7 @@ scenario:
       conversion recorded with before/after provenance
 generated_by:
   mode: authoring
-  source: ai-assisted
+  source: llm-guided
   model: claude-opus-4-8
   prompt_version: seed-1.0
   timestamp: '2026-06-07T21:30:00.000000+00:00'

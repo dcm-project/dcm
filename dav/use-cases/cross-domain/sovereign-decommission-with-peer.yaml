@@ -1,20 +1,30 @@
 uuid: uc-seed-002a
 handle: cross-domain/sovereign-decommission-with-peer
 scenario:
-  description: A sovereign-profile tenant initiates decommissioning of a resource
-    that has been replicated to a peer DCM instance for disaster-recovery compliance.
-    The decommission must coordinate with the peer to ensure both replicas are released
-    and the audit trail is consistent across both DCM instances.
+  description: A resource has been replicated to a peer DCM instance for
+    disaster-recovery. Decommissioning it is a PEER-COORDINATED operation — a
+    two-phase release across both DCM instances with a single, consistent
+    cross-DCM audit trail. (This is distinct from rehydration — rehydrate replays
+    Intent into a new Requested state on another provider; this releases both
+    existing replicas.) The peer-coordination mechanic is profile-independent; the
+    SOVEREIGN profile is what MANDATES it here — sovereign data-residency requires
+    that a DR replica exists and that its release is residency-checked and
+    coordinated, not silently dropped. The peer must satisfy the provenance floor
+    (its attested capability set must cover what this transaction requires) for the
+    coordinated release to preserve end-to-end provenance.
   actor:
     persona: sovereign-tenant-admin
     profile: sovereign
   intent: Decommission a resource such that both the local and the peer replica are
-    released
+    released, with a consistent cross-DCM audit record
   success_criteria:
-  - Local replica is released only after peer acknowledges the decommission
-  - If the peer is unreachable, the decommission is held in a pending state, not silently
-    completed
-  - Final audit record includes the peer acknowledgement evidence
+  - Local replica is released only after the peer acknowledges the decommission
+  - If the peer is unreachable, the decommission is held in a pending state, not
+    silently completed
+  - The peer's attested capability set is verified to meet the transaction's
+    provenance requirements before coordination proceeds
+  - Final audit record includes the peer acknowledgement evidence and is consistent
+    across both DCM instances
   - Sovereign data-residency constraints are not violated during the wind-down
   dimensions:
     lifecycle_phase: decommission
@@ -26,15 +36,16 @@ scenario:
   profile: sovereign
   expected_domain_interactions:
   - domain: policy
-    interaction: sovereignty policy evaluates residency at decommission
+    interaction: sovereignty policy mandates the peer replica + residency check at
+      decommission; verifies peer meets the provenance floor before coordinating
   - domain: provider
-    interaction: peer_dcm provider coordinates with remote DCM
+    interaction: peer_dcm provider coordinates the two-phase release with the remote DCM
   - domain: provider
-    interaction: service provider releases local resource
+    interaction: service provider releases the local resource only after peer-ack
   - domain: data
     interaction: resource record marked released with peer-ack metadata
   - domain: audit
-    interaction: cross-DCM audit record stitched together
+    interaction: cross-DCM audit record stitched together consistently
 generated_by:
   mode: authoring
   source: human-authored
@@ -46,12 +57,15 @@ tags:
 - decommission
 - sovereign
 - peer-dcm
+- peer-coordinated
+- provenance-floor
 - edge-case
 - failure-mode
-version: 1.0.0
+version: 1.1.0
 metadata:
   admitted_at: '2026-04-20T18:41:39.741660+00:00'
   admitted_dcm_version: preview
   promoted_from_run: null
   initial_baseline_path: null
   author: chris@croadfeldt
+  edited: '2026-06-29 — reframe peer-coordinated (not rehydrate), sovereign-as-mandate, peer provenance floor (Piotr PR-65 #4)'

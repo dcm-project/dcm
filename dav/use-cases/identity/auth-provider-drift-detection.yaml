@@ -1,37 +1,47 @@
 uuid: uc-seed-003a
 handle: identity/auth-provider-drift-detection
 scenario:
-  description: The DCM control plane detects that the identity provider's view of
-    a tenant's user group membership no longer matches DCM's cached view. Drift detection
-    must identify the discrepancy, evaluate whether it is permissible under the tenant's
-    governance policy, and either remediate or escalate for human review.
+  description: DCM delegates identity to the IdP and does NOT keep an authoritative
+    membership cache (see identity/connected-delegation). Under a sovereign /
+    disconnected deployment, DCM is permitted to hold a point-in-time IDENTITY
+    PROJECTION (provenance=observed) so it can keep operating while the IdP is
+    unreachable. This use case detects that such a projection (or a previously
+    materialized authorization decision) has DIVERGED from the IdP once connectivity
+    or a reconciliation cycle allows comparison — classifies the divergence under the
+    tenant's governance policy, and either remediates or escalates for human review.
+    This is explicitly the disconnected/sovereign + audit case; in a connected
+    deployment DCM delegates live and there is no cache to drift.
   actor:
-    persona: platform-engineer
-    profile: prod
-  intent: Detect and respond to drift between DCM's identity cache and the authoritative
-    IdP
+    persona: sovereign-tenant-admin
+    profile: sovereign
+  intent: Detect and respond to divergence between DCM's disconnected identity
+    projection and the authoritative IdP, under sovereign/disconnected operation
   success_criteria:
-  - Drift is detected within one reconciliation cycle of the source change
-  - Discrepancies are classified by severity based on policy (silent fixup vs escalation)
-  - Automated remediation only runs for governance-approved drift categories
-  - Escalation produces a reviewable record including before/after state
+  - Divergence is detected within one reconciliation cycle of connectivity/comparison
+  - The identity projection is provenance-marked observed and is never treated as the
+    system of record for membership
+  - Discrepancies are classified by severity per governance policy (silent fixup vs
+    escalation)
+  - Automated remediation only runs for governance-approved divergence categories
+  - Escalation produces a reviewable, audited record including before/after state
   dimensions:
     lifecycle_phase: drift_detection
     resource_complexity: cross_dependency_payload
     policy_complexity: human_escalation_required
     provider_landscape: single_eligible
-    governance_context: standard_governance
+    governance_context: sovereignty_enforced
     failure_mode: data_inconsistency
-  profile: prod
+  profile: sovereign
   expected_domain_interactions:
   - domain: provider
-    interaction: auth provider polls IdP for canonical state
+    interaction: auth provider re-resolves canonical state from the IdP (authoritative)
   - domain: data
-    interaction: compare cached vs canonical identity state
+    interaction: compare the observed point-in-time projection vs canonical IdP state
   - domain: policy
-    interaction: classify drift severity and remediation path
+    interaction: classify divergence severity and remediation path; gate on whether a
+      projection is permitted (disconnected/sovereign)
   - domain: audit
-    interaction: record drift detection, classification, and action
+    interaction: record divergence detection, classification, and action
 generated_by:
   mode: authoring
   source: human-authored
@@ -42,12 +52,15 @@ tags:
 - identity
 - auth
 - drift-detection
-- prod-profile
+- delegated-identity
+- disconnected-projection
+- sovereign-profile
 - human-in-loop
-version: 1.0.0
+version: 1.1.0
 metadata:
   admitted_at: '2026-04-20T18:41:39.744455+00:00'
   admitted_dcm_version: preview
   promoted_from_run: null
   initial_baseline_path: null
   author: chris@croadfeldt
+  edited: '2026-06-29 — re-scope to disconnected/sovereign projection drift; DCM delegates, holds references not membership (Piotr PR-65 #8 / DR-C)'
