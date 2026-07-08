@@ -24,7 +24,7 @@ Resource Type, or DCM placement sees. This note settles "do we need a generic au
 - **Provider:** identified by the **outcome capability** it offers — it `realize_resources` of type
   `Observability.LogShipper` (and other outcome types). It is **not** "the Ansible provider" or "the AAP
   provider." Its name is the outcome family, not the engine.
-- **Method:** inside the provider. Today: `ansible-runner` invoking the roadfeldt-ansible `alloy` role.
+- **Method:** inside the provider. Today: `ansible-runner` invoking the the estate's private Ansible repo `alloy` role.
   Tomorrow: an AAP job template, or a container. **Swapping the method is an internal provider change
   with zero impact** on the type, the consumer, or DCM. That swap-invisibility *is* the proof the
   boundary is correct.
@@ -117,7 +117,7 @@ audited event against that service.
 
 `Observability.LogShipper` (`udlm/registry/resource-types/observability.log-shipper.json`) — spec:
 `{ target.host, sink.url, source, labels }` — realized by an outcome provider that runs the
-roadfeldt-ansible **`alloy`** role (journald → Loki). The consumer asks for a LogShipper on a host; the
+the estate's private Ansible repo **`alloy`** role (journald → Loki). The consumer asks for a LogShipper on a host; the
 provider naturalizes the spec into role vars, runs it, and reports `status` / `last_shipped_at` for drift.
 The homelab's roles (`alloy`, `node_exporter`, `smartctl`, `fan_control`, …) become the first real DCM
 **outcome** catalog — the live reference proving the model on actual automation.

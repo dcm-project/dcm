@@ -88,14 +88,19 @@ One root word does both jobs, and that is the point — no second concept is nee
 
 ---
 
-## 4. Composite, not Compound
+## 4. Composite **Resource**, not Compound Service — and Atomic **Resource**
 
-Same concept, two names: engineering's vocabulary says **Compound Service**; UDLM/DCM say **Composite Service** (`composite-service-model.md`, doc 30, ADRs).
+Two reconciliations here, one consequence of the other.
 
-**Resolution: Composite.** A *composite* is assembled from parts that **retain their identity**; a *compound* (chemistry) is elements bonded into a new substance where the parts **lose** identity. Our Composition Visibility model (`transparent`/`selective` expose constituents as their own addressable DCM entities) proves the constituents keep their identity — so **composite is the technically correct word**. Engineering updates one vocabulary entry; UDLM doc names and ADRs already say Composite.
+**(a) Composite, not Compound.** A *composite* is assembled from parts that **retain their identity**; a *compound* (chemistry) is elements bonded into a new substance where the parts **lose** identity. Our Composition Visibility model (`transparent`/`selective` expose constituents as their own addressable DCM entities) proves the constituents keep their identity — so **composite is the technically correct word**.
 
-- **Atomic Service** — smallest complete, actionable unit; a catalog item tightly coupled to a single yielded resource.
-- **Composite Service** — composed of multiple constituents (Atomic Services / resource types) that remain individually addressable; one catalog item, one composite entity, one `entity_uuid`.
+**(b) Resource, not Service — naming the *thing*, consistent with §1–2.** Under *Service = act, Resource = thing*, you **compose things, not acts**: a 3-tier app is web + app + db — a composition of **resources**, not of acts. So the composed noun is **Composite Resource**, and the indivisible leaf is **Atomic Resource**. This falls straight out of the `service_provider → Resource Provider` (name-by-yield) rule — the catalog names the *resource* yielded; the *act* of offering/rendering it is still a Service.
+
+- **Atomic Resource** — the smallest complete, actionable, indivisible yielded thing; one catalog item tightly coupled to a single resource. *(renames engineering's "Atomic Service" — which already wanted a nickname — and resolves the nickname by naming the thing, not the act.)*
+- **Composite Resource** — composed of multiple constituents (Atomic Resources / resource types) that remain individually addressable; one catalog item, one composite entity, one `entity_uuid`. *(renames "Composite Service".)*
+- A **Service** (the act) yields an Atomic or Composite **Resource**; the offering/catalog item is the authored definition of that resource, consumed as a service. (The offering's own lifecycle — author/version/approve/manage — is the composite-resource management capability; see the composite-offering enhancement.)
+
+This supersedes "Composite Service" in `composite-service-model.md` / doc 30 / ADRs — those rename Service→Resource on the *yielded-thing* noun (the act-side wording stays "service").
 
 ---
 
@@ -152,6 +157,6 @@ It is not us dictating to engineering: two of the substantive moves are ours to 
 1. **Resource Provider rename** — agree in principle on the named-by-yield rule + OSAC rationale, then sequence the rename (proposal: alias first, flip the canonical name second, deprecate `service_provider` last).
 2. **Service at both ends** — confirm "Service = the act" is acceptable as the shared definition (consumer offering ⇄ provider rendering), with **Resource** as the yielded thing.
 3. **Realize / Realized** — confirm *realize* = the act, *Realized* = the state (one canonical pair, no "fulfillment" as the act); engineering narrows its anti-`realize` entry to the casual-prose sense.
-4. **Composite** — confirm the single term.
-5. **Atomic Service nickname** — engineering flagged it wants one; "Atomic Service" reads fine under this model, but the team's call.
+4. **Composite Resource** (not Compound Service, not "Composite Service") — confirm composing **things** → the noun is Resource; the act stays Service.
+5. **Atomic Resource** — confirm; this *also resolves* engineering's "Atomic Service (need a nickname)" by naming the thing, not the act. (renames "Atomic Service".)
 6. Whether these land as **UDLM DecisionRecords / DCM ADRs** once agreed (they are architecturally significant enough to warrant the WHY-record).

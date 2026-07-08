@@ -17,7 +17,7 @@ never becomes the system of record for lifecycle state; it applies logic over UD
 ## What DCM owns (the verbs)
 - **Assembly** — Intent → Requested: merge Layers (data) under Policy (logic), recording per-field
   provenance back into the UDLM record.
-- **Policy evaluation** — Validation, Transformation, Gating Policy; the **Governance Matrix** and
+- **Policy evaluation** — Validation Policy, Transformation; the **Governance Matrix** and
   **sovereignty/accreditation/trust** decisions; placement.
 - **Dependency-graph application** — validate the DAG (`RDG-001`), order forward execution, run
   compensation in reverse, schedule rehydration in dependency order.

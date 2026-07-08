@@ -6,6 +6,8 @@ substrate carries only *identity*, a *version-pinned conformance reference*, and
 the standard's schema. See UDLM `design-principles/core-tenets.md` **T5** and
 `design-principles/adopted-standards.md`.
 
+> **License verdicts & the full adoption ledger live in UDLM** — `registry/standards-adoption-register.md` (what/why/where/when/who + license-compatibility verdict per standard, CI-enforced by ADOPT-001). This document does not restate verdicts; it states the DCM RUNTIME requirements.
+
 That is the **Data** half. This document states the **DCM** half: the requirements DCM must implement
 and enable so adopted standards actually work at runtime. It is an application of the
 **Data ⇄ Policy boundary** (`data-policy-boundary.md`): **the data declares which standard versions are
