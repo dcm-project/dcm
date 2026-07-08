@@ -40,8 +40,8 @@
   platform exists or a canned solution is desired, a packaged
   **dcm-observability** component serves as the authoritative
   telemetry/monitoring platform (provider-contract §7 / PRV-007).
-  First consumer and reference-implementation test bed: the roadfeldt
-  homelab observability stack (`roadfeldt-observability`).
+  First consumer and reference-implementation test bed: a homelab
+  observability stack.
 - **Brownfield inventory ingestion — adopt, don't recreate** *(added
   2026-06-07)* — migrating existing configuration-management estates (Ansible
   inventory) into DCM. Patterns established from live homelab migrations:
@@ -153,7 +153,7 @@ DCM needs a webhook integration model that allows external systems to be notifie
 - Notify an external ITSM system (ServiceNow, Jira) when a request is created, updated, or completed
 - Notify a monitoring system when Entity lifecycle state changes
 - Notify a FinOps platform when new Resource/Service Entities are realized or decommissioned
-- Notify a compliance system when GateKeeper policies fire or sovereignty constraints are applied
+- Notify a compliance system when Gating policies fire or sovereignty constraints are applied
 
 **Operational Notifications**
 - Notify SRE teams when provider capacity falls below threshold
@@ -176,7 +176,7 @@ DCM needs a webhook integration model that allows external systems to be notifie
 
 7. **Filtering** — can webhook registrations declare filters — only receive events of specific types, for specific Resource Types, for specific Tenants, or for specific Resource Groups?
 
-8. **Policy Engine integration** — should GateKeeper and other policy types be able to trigger webhook notifications as a policy action? This would make webhooks a first-class policy response alongside ALERT, REVERT, etc.
+8. **Policy Engine integration** — should Gating Policy and other policy types be able to trigger webhook notifications as a policy action? This would make webhooks a first-class policy response alongside ALERT, REVERT, etc.
 
 9. **Provider webhook obligations** — should providers be required to support webhook endpoints as part of their Provider Contract? Or is webhook support optional for providers?
 
@@ -234,25 +234,25 @@ The Intent State is captured when a consumer submits a request but the exact str
 
 ---
 
-### TOPIC-003 — GateKeeper vs Validation Policy Distinction
+### TOPIC-003 — Gating Policy vs Validation Policy Distinction
 
 **Area:** Policy Engine  
 **Priority:** P2  
 **Status:** 🟢 Resolved
 **Resolved:** 2026-03
-**Resolution:** GateKeeper has enforcement_class (compliance=boolean deny, operational=risk score). Validation has output_class (structural=boolean fail, advisory=completeness score). GateKeeper can both block AND modify. See doc 29 (Scoring Model), AI Prompt Sections 17, 61.  
+**Resolution:** Gating Policy has enforcement_class (compliance=boolean deny, operational=risk score). Validation has output_class (structural=boolean fail, advisory=completeness score). Gating Policy can both block AND modify. See doc 29 (Scoring Model), AI Prompt Sections 17, 61.  
 **Raised:** 2026-03  
 
 #### Description
 
-The distinction between GateKeeper and Validation policy categories needs better examples and a clearer formal definition. Both involve checking data against rules, but GateKeeper has override authority while Validation is pass/fail only. The boundary between them needs to be unambiguous.
+The distinction between Gating Policy and Validation policy categories needs better examples and a clearer formal definition. Both involve checking data against rules, but Gating Policy has override authority while Validation is pass/fail only. The boundary between them needs to be unambiguous.
 
 #### Questions to Resolve
 
-1. What is the precise trigger condition that makes a policy a GateKeeper vs a Validation policy?
-2. Can a GateKeeper policy both block AND modify in the same execution?
-3. Are there cases where Validation and GateKeeper would produce different outcomes for the same rule?
-4. Should GateKeeper policies require explicit authorization (e.g., only CISO-owned policies can be GateKeeper)?
+1. What is the precise trigger condition that makes a policy a Gating Policy vs a Validation policy?
+2. Can a Gating policy both block AND modify in the same execution?
+3. Are there cases where Validation and Gating Policy would produce different outcomes for the same rule?
+4. Should Gating policies require explicit authorization (e.g., only CISO-owned policies can be Gating Policy)?
 
 #### References
 - [Layering and Versioning](https://github.com/croadfeldt/udlm/blob/main/foundations/layering-and-versioning.md) — Policy Layer section
@@ -351,7 +351,7 @@ The dependency model currently assumes dependencies are resolved within a single
 2. What authorization is required for a cross-tenant dependency? Does the owning Tenant need to approve?
 3. How does cost attribution work for cross-tenant service consumption?
 4. How does drift detection work when a dependency is in another Tenant?
-5. Can a GateKeeper policy block cross-tenant dependencies?
+5. Can a Gating policy block cross-tenant dependencies?
 
 ---
 

@@ -298,7 +298,7 @@ Policies don't need special awareness of patterns. Each constituent is a standar
 
 | Policy | Fires on which constituent | What it does |
 |--------|---------------------------|-------------|
-| Sovereignty GateKeeper | All 6 | Ensures all constituents land in EU-WEST |
+| Sovereignty Gating Policy | All 6 | Ensures all constituents land in EU-WEST |
 | VM sizing limits | App Server only | Validates replica count and VM size within tenant tier |
 | DB storage limits | Database only | Validates db_storage_gb within allowed range |
 | Network naming | Network Segment, DNS | Enforces naming conventions |

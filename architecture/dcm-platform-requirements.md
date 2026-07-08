@@ -60,7 +60,7 @@ Manages the physical and virtual infrastructure that DCM's providers abstract. I
 
 ## Policy and Compliance Owner
 
-Defines and manages the governance rules that DCM enforces. Authors GateKeeper policies (allow/deny), validation policies, sovereignty constraints, and override approval rules. Reviews audit trails and compliance reports.
+Defines and manages the governance rules that DCM enforces. Authors Gating policies (allow/deny), validation policies, sovereignty constraints, and override approval rules. Reviews audit trails and compliance reports.
 
 - **Key activities:** Author and activate policies, configure policy profiles (minimal through sovereign), review override requests (dual-approval), verify audit integrity, manage compliance rescans
 
@@ -134,7 +134,7 @@ A platform engineer defines resource types and catalog items. A resource type sp
 
 ### UC-004: Configure Organizational Policies
 
-A policy and compliance owner authors the baseline policy set: a sovereignty GateKeeper policy that blocks resources from deploying outside designated zones (hard enforcement); a sizing validation policy that enforces CPU and memory limits per tenant tier; a naming transformation policy that auto-generates standardized hostnames; a monitoring transformation policy that injects the organization's monitoring agent into every production resource; and a cost GateKeeper policy that blocks requests exceeding budget thresholds. Each policy is first deployed in **shadow mode** — it evaluates against real traffic and logs results without blocking requests. After validation, the policy is promoted to active. Policies use the Gatekeeper ConstraintTemplate pattern: reusable Rego logic with parameterized instances.
+A policy and compliance owner authors the baseline policy set: a sovereignty Gating policy that blocks resources from deploying outside designated zones (hard enforcement); a sizing validation policy that enforces CPU and memory limits per tenant tier; a naming transformation policy that auto-generates standardized hostnames; a monitoring transformation policy that injects the organization's monitoring agent into every production resource; and a cost Gating policy that blocks requests exceeding budget thresholds. Each policy is first deployed in **shadow mode** — it evaluates against real traffic and logs results without blocking requests. After validation, the policy is promoted to active. Policies use the Gatekeeper ConstraintTemplate pattern: reusable Rego logic with parameterized instances.
 
 **Success criteria:** Policies evaluate correctly in shadow mode. No false positives on legitimate requests. Activation enforces the policy on all matching requests. Audit records produced for every evaluation.
 
@@ -165,7 +165,7 @@ A consumer developer browses the service catalog, selects "Virtual Machine — S
 2. **Layer assembly** — 5 data layers merge organizational context (datacenter, environment, compliance, tenant, provider defaults) into the consumer's 6 fields, producing 10+ fields with full provenance
 3. **Dependency resolution** — Resource type spec declares VM requires Network.IPAddress; DCM creates an IP sub-request automatically
 4. **IP policy evaluation** — Sovereignty, subnet isolation, and pool selection policies evaluate against the IP sub-request; IPAM provider selected and IP allocated
-5. **VM policy evaluation** — GateKeeper (sizing, sovereignty, approved OS images), Validation (field constraints), and Transformation (monitoring injection) policies evaluate
+5. **VM policy evaluation** — Gating Policy (sizing, sovereignty, approved OS images), Validation (field constraints), and Transformation (monitoring injection) policies evaluate
 6. **Placement** — Sovereignty pre-filter eliminates non-compliant providers; remaining providers scored by capacity and confidence; best provider selected
 7. **Dispatch** — Request Orchestrator sends the assembled payload (including the dependency-injected IP address) to the selected provider; the provider naturalizes DCM's unified payload into its native API
 8. **Realization** — Provider provisions the VM, denaturalizes the result back to DCM's format, and callbacks with realized state
@@ -264,7 +264,7 @@ A consumer or TTL trigger initiates decommission. DCM checks for dependencies: i
 
 ### UC-050: Enforce Sovereignty and Data Residency
 
-All resources handling restricted, PHI, or PCI data are placed exclusively in designated sovereignty zones. The sovereignty GateKeeper policy fires on **every lifecycle operation** (initial provisioning, update, scale, rehydration, ownership transfer) — not just initial provisioning. A resource in EU-WEST stays in EU-WEST for its entire lifecycle.
+All resources handling restricted, PHI, or PCI data are placed exclusively in designated sovereignty zones. The sovereignty Gating policy fires on **every lifecycle operation** (initial provisioning, update, scale, rehydration, ownership transfer) — not just initial provisioning. A resource in EU-WEST stays in EU-WEST for its entire lifecycle.
 
 Override requires dual-approval: two approvers from different roles, with written justification and compensating controls. Every override produces a Merkle audit leaf at field granularity.
 
@@ -593,7 +593,7 @@ No new policy types are needed. Each constituent is a standard resource type, an
 
 | Policy | Fires on | What it does |
 |--------|---------|-------------|
-| Sovereignty GateKeeper | All 6 constituents | Ensures everything lands in EU-WEST |
+| Sovereignty Gating Policy | All 6 constituents | Ensures everything lands in EU-WEST |
 | VM sizing limits | App Server | Validates replicas and VM size within tenant tier |
 | DB storage limits | Database | Validates db_storage_gb within allowed range |
 | Network naming | Network Segment, DNS | Enforces naming conventions |
