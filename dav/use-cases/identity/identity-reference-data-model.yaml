@@ -1,0 +1,54 @@
+uuid: uc-identity-reference-data-model
+handle: identity/identity-reference-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-C: confirm UDLM models delegated identity correctly — DCM holds identity
+    references (subject/group IDs, claims mappings) and, only under disconnected/sovereign, an immutable
+    point-in-time projection marked provenance=observed. DCM is never the authoritative system of record
+    for membership.'
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  intent: Validate UDLM models identity as references + observed projection, not a membership store
+  success_criteria:
+  - Identity references (subject/group IDs, claims mappings) are modeled
+  - An optional point-in-time identity projection is modeled with provenance=observed
+  - The model marks the IdP as authoritative; DCM is not the membership system of record
+  - The projection is gated to disconnected/sovereign use, not a default cache
+  - Divergence between projection and IdP is representable as a drift record
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: cross_dependency_payload
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: identity references + observed projection modeled; IdP authoritative
+  - domain: provider
+    interaction: auth provider is the delegation surface to the IdP
+  - domain: audit
+    interaction: projection provenance and divergence recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-c
+- identity
+- delegated-identity
+- data-model-validation
+- trifecta
+- udlm
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

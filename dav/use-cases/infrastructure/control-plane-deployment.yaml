@@ -1,0 +1,59 @@
+uuid: uc-pipeline-cp-001
+handle: infrastructure/control-plane-deployment
+scenario:
+  description: A platform engineer deploys the DCM control plane onto the bootstrapped
+    Kubernetes cluster. The control plane includes the convergence engine, policy
+    engine, request orchestrator, and the four-state data stores. This UC validates
+    that DCM itself is operational and ready to accept requests.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Deploy the DCM control plane onto the Kubernetes cluster
+  success_criteria:
+  - DCM control plane components are deployed and healthy (livez/readyz passing)
+  - Four-state data stores (intent, requested, realized, discovered) are initialized
+  - Policy engine is operational and evaluating
+  - Request orchestrator is accepting events
+  - Control plane deployment is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: multi_dependent
+    policy_complexity: no_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: container runtime deploys control plane pods
+  - domain: data
+    interaction: control plane entities created
+  - domain: audit
+    interaction: deployment events recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- infrastructure
+- control-plane
+- deployment
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 1
+    sequence: 4
+    week: wk2
+    depends_on:
+    - uc-pipeline-cluster-001
+  preconditions:
+  - Kubernetes cluster is operational with all declared nodes joined
+  postconditions:
+  - DCM control plane is deployed and accepting requests
+  - Four-state stores are initialized and UDLM-conformant

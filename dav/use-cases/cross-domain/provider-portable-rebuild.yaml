@@ -1,0 +1,69 @@
+uuid: uc-pipeline-portable-001
+handle: cross-domain/provider-portable-rebuild
+scenario:
+  description: A service provider becomes unavailable during or after provisioning.
+    The placement engine re-resolves the affected resources onto an alternate eligible
+    provider. Provider-specific references are rewritten. The rebuild proceeds using
+    only the intent state and the new provider's capabilities. This UC validates that
+    DCM's provider abstraction enables true portability — resources are not locked
+    to a single provider.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Re-resolve and rebuild resources on an alternate provider after provider
+    failure
+  success_criteria:
+  - Provider unavailability is detected (via health check or explicit deregistration)
+  - Affected resources are re-resolved onto an alternate eligible provider
+  - Provider-specific references (naturalization) are rewritten for the new provider
+  - Resources are re-realized on the alternate provider
+  - Realized state matches the original intent (provider-neutral fields)
+  - The re-resolution and rebuild are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: multi_dependent
+    policy_complexity: multi_validation
+    provider_landscape: multi_eligible
+    governance_context: standard_governance
+    failure_mode: single_provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: original provider unavailable; alternate selected via placement engine
+  - domain: policy
+    interaction: validation policies re-evaluated for alternate provider
+  - domain: data
+    interaction: provider references rewritten; realized state updated
+  - domain: audit
+    interaction: portability event and re-resolution recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- cross-domain
+- portability
+- provider
+- rebuild
+- stretch
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 5
+    sequence: 13
+    week: wk5
+    depends_on:
+    - uc-pipeline-composite-001
+  preconditions:
+  - Resources are realized on a specific provider
+  - An alternate eligible provider is registered
+  - The original provider becomes unavailable
+  postconditions:
+  - Resources are re-realized on the alternate provider
+  - Intent-to-realized alignment is maintained

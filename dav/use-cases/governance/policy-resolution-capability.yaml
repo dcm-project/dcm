@@ -1,0 +1,53 @@
+uuid: uc-policy-resolution-capability
+handle: governance/policy-resolution-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-E: confirm DCM provides policy applicability by resolved-profile
+    membership — it resolves the request profile (approved-list selection or platform default), evaluates
+    only the policies in that profile, and records a three-state audit outcome (evaluated-pass / evaluated-fail
+    / out-of-scope) with out-of-scope distinct from skipped-and-passed.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Validate DCM resolves the request profile and produces three-state policy outcomes
+  success_criteria:
+  - DCM resolves the request's profile and selects that profile's policies by construction
+  - Policies not in the resolved profile are not evaluated
+  - The audit outcome distinguishes evaluated-pass, evaluated-fail, and out-of-scope
+  - Out-of-scope policies are never recorded as skipped-and-passed (no silent soft-pass)
+  - No global policy fall-through evaluates policies outside the resolved profile
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: engine resolves profile, selects its policies, emits three-state outcomes
+  - domain: data
+    interaction: request stores the resolved profile and its policy set
+  - domain: audit
+    interaction: policies-evaluated listed honestly with three-state outcomes
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-e
+- policy
+- resolved-profile
+- capability-validation
+- trifecta
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

@@ -1,0 +1,66 @@
+uuid: uc-pipeline-profile-001
+handle: infrastructure/profile-based-deployment
+scenario:
+  description: A platform engineer deploys a full environment from a software profile
+    definition alone, onto plain VMs with no pre-existing state. The software profile
+    declares the complete stack (OS, runtime, middleware, and application layers).
+    This UC validates that software profiles are sufficient for reproducible
+    deployments without manual configuration steps.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Deploy a full environment from a software profile definition alone
+  success_criteria:
+  - Software profile definition is complete and validated
+  - Deployment proceeds from profile alone (no manual configuration)
+  - All stack layers (OS, runtime, middleware, application) are deployed
+  - Deployed environment matches the profile specification
+  - Deployment is reproducible (running it again produces identical results)
+  - Deployment events are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: full_stack
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: service provider deploys from profile specification
+  - domain: data
+    interaction: profile definition consumed; realized state recorded
+  - domain: policy
+    interaction: validation policy checks profile completeness
+  - domain: audit
+    interaction: profile-based deployment recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- infrastructure
+- profile
+- deployment
+- reproducible
+- stretch
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 5
+    sequence: 14
+    week: wk5
+    depends_on:
+    - uc-pipeline-cp-001
+  preconditions:
+  - Software profile definition exists and is validated
+  - Target VMs are available and accessible
+  postconditions:
+  - Full environment is deployed matching the profile specification
+  - Deployment is reproducible

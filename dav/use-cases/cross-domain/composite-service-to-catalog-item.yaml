@@ -1,0 +1,66 @@
+uuid: uc-pipeline-catalog-001
+handle: cross-domain/composite-service-to-catalog-item
+scenario:
+  description: A platform engineer registers a composite service definition as a
+    catalog item in DCM. The composite service declares multiple constituent resource
+    types (e.g., web tier, app tier, database tier) with dependencies between them.
+    A process provider may convert an external format (e.g., likeC4) to DCM's native
+    composite service format before registration. DCM does not natively speak
+    customer-specific formats; UDLM is the core design language.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Register a composite service definition as a catalog item
+  success_criteria:
+  - Composite service definition is registered as a catalog item
+  - All constituent resource types are declared with dependencies
+  - Dependency graph is acyclic and validated
+  - Catalog item is visible in the service catalog
+  - Registration is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: process provider converts external format if needed; service provider
+      registers catalog item
+  - domain: data
+    interaction: catalog item and constituent definitions created
+  - domain: policy
+    interaction: validation policy checks composite definition completeness
+  - domain: audit
+    interaction: registration recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- cross-domain
+- composite-service
+- catalog
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 2
+    sequence: 5
+    week: wk3
+    depends_on:
+    - uc-pipeline-cp-001
+    - uc-pipeline-authn-001
+  preconditions:
+  - DCM control plane is deployed and accepting requests
+  - Actor holds a valid Keycloak token
+  postconditions:
+  - Composite service catalog item is registered and visible
+  - Constituent dependency graph is validated and stored

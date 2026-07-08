@@ -1,0 +1,50 @@
+uuid: uc-audit-chain-data-model
+handle: governance/audit-chain-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-D: confirm UDLM models the audit-chain data — audit events, epochs,
+    signed tree heads, and inclusion/consistency proofs as append-only, schema-defined artifacts addressable
+    by handle and epoch.'
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  intent: Validate UDLM models the audit chain (events, epochs, tree heads, proofs) as append-only
+  success_criteria:
+  - Audit events are modeled as append-only artifacts addressable by handle and epoch
+  - Epochs and their signed tree heads are modeled
+  - Inclusion and consistency proofs are modeled as read-only derived artifacts
+  - The model enforces append-only semantics (no in-place mutation of recorded events)
+  - Signing/attestation metadata for tree heads is modeled
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: audit events, epochs, tree heads, and proofs modeled append-only
+  - domain: audit
+    interaction: proof artifacts derived read-only from the chain
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-d
+- audit
+- data-model-validation
+- trifecta
+- udlm
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

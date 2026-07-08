@@ -1,0 +1,53 @@
+uuid: uc-audit-chain-proofs-capability
+handle: governance/audit-chain-proofs-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-D: confirm DCM provides the transparency-log capability — produce
+    signed Merkle tree heads, inclusion proofs for requested events, and consistency proofs across epochs,
+    with signing key material kept in-boundary under sovereign profile. (Single-signer v1; external witness
+    validation is a tracked follow-up.)'
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  intent: Validate DCM can produce signed tree heads + inclusion/consistency proofs with in-boundary signing
+  success_criteria:
+  - DCM produces signed tree heads for every audit epoch covering a requested range
+  - DCM produces inclusion proofs for each requested event
+  - DCM produces consistency proofs across epoch tree heads
+  - Signing key material is kept within the sovereignty boundary
+  - v1 is single-signer; split-view/equivocation is a known limitation pending external witnesses
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: DCM generates tree heads, inclusion proofs, and consistency proofs
+  - domain: policy
+    interaction: sovereignty policy pins signing-key residency
+  - domain: provider
+    interaction: information provider serves tree-heads and proofs
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-d
+- audit
+- transparency-log
+- capability-validation
+- trifecta
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

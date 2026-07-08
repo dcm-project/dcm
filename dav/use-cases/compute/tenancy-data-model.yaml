@@ -1,0 +1,52 @@
+uuid: uc-tenancy-data-model
+handle: compute/tenancy-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for A2: confirm UDLM models the data behind data-plane tenant isolation
+    — resource tenancy fields binding a resource to its tenant, and the tenant_boundary DCMGroup that
+    network/storage attachments are confined to.'
+  actor:
+    persona: application-team-member
+    profile: standard
+  intent: Validate UDLM models resource tenancy fields and the tenant_boundary DCMGroup
+  success_criteria:
+  - A resource record models the tenancy fields binding it to its tenant
+  - The tenant boundary is modeled as a tenant_boundary DCMGroup
+  - Network and storage attachments reference the tenant boundary in the model
+  - An attachment crossing the tenant boundary is representable as a rejected/violating state
+  - The isolation decision is representable in the audit model
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resource tenancy fields + tenant_boundary DCMGroup modeled
+  - domain: policy
+    interaction: tenant-isolation applicability representable
+  - domain: audit
+    interaction: isolation decision representable
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- a2
+- tenancy
+- data-model-validation
+- trifecta
+- udlm
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

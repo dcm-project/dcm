@@ -1,0 +1,61 @@
+uuid: uc-pipeline-bm-001
+handle: infrastructure/bare-metal-pxe-bootstrap
+scenario:
+  description: A platform engineer boots bare-metal nodes via PXE. The discovery ISO
+    phones home with hardware inventory. ABI (Agent-Based Installer) installs the
+    operating system and base packages. This UC validates the bootstrap path from
+    powered-off hardware to a node ready for cluster formation. Deployment target is
+    containers (Podman/OCP); no direct OS/KVM install.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Bootstrap bare-metal nodes via PXE and ABI to a cluster-ready state
+  success_criteria:
+  - Bare-metal nodes PXE-boot from the discovery ISO
+  - Each node phones home with hardware inventory (CPU, memory, disk, NIC)
+  - ABI completes OS installation and base package deployment
+  - Node is accessible via SSH/console and reports healthy status
+  - Bootstrap events are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: bare-metal service provider executes PXE boot and ABI install
+  - domain: data
+    interaction: hardware inventory records created in discovered state
+  - domain: audit
+    interaction: bootstrap events recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- infrastructure
+- bare-metal
+- pxe
+- bootstrap
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 1
+    sequence: 2
+    week: wk2
+    depends_on:
+    - uc-pipeline-authn-001
+  preconditions:
+  - Actor holds a valid Keycloak token with platform-engineer role claims
+  postconditions:
+  - Bare-metal nodes are bootstrapped with OS and base packages
+  - Hardware inventory is recorded in the discovered store

@@ -1,0 +1,55 @@
+uuid: uc-telemetry-export-capability
+handle: observability/telemetry-export-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for A9: confirm DCM provides the universal telemetry-export capability —
+    a single UDLM-modeled, schema-discoverable export surface over standard transports (OTLP / Prometheus
+    / message-bus) with per-subscriber authorization and data-classification scoping, and no DCM-side
+    per-tool adapters.'
+  actor:
+    persona: platform-operator
+    profile: standard
+  intent: Validate DCM exposes one UDLM export surface over standard transports with per-subscriber policy
+  success_criteria:
+  - DCM exposes a single export/discovery surface consumable over standard transports (OTLP/Prometheus/bus)
+  - Schemas are discoverable by a consumer at subscription time (no out-of-band agreement)
+  - Export scope is policy-evaluated per subscriber (authorization + data classification)
+  - A second consuming tool attaches via the same path with no export-side change
+  - No DCM-side per-tool integration adapter is required
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: information provider serves export/discovery over standard transports; message bus delivers
+      events
+  - domain: policy
+    interaction: per-subscriber authorization and data-classification scoping evaluated
+  - domain: data
+    interaction: telemetry exposed as UDLM-modeled discoverable data
+  - domain: audit
+    interaction: subscription and export access recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- a9
+- observability
+- capability-validation
+- trifecta
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

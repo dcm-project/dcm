@@ -1,0 +1,71 @@
+uuid: uc-pipeline-rehydrate-001
+handle: cross-domain/dynamic-rehydration
+scenario:
+  description: All managed resources are destroyed (simulating a disaster). The system
+    reads the stored intent states and dependency graph from the data model, derives
+    a rebuild plan dynamically (not a static replay), re-evaluates validation policies
+    (including sovereignty), resolves providers via the placement engine, and executes
+    the rebuild. This is the headline demo — proving that DCM can reconstruct a full
+    environment from its data model alone.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Dynamically rebuild all resources from stored intent after total destruction
+  success_criteria:
+  - All resources are destroyed (realized state cleared)
+  - System derives a rebuild plan from stored intent and dependency graph
+  - The plan is computed dynamically, not replayed from a recorded sequence
+  - Validation policies (including sovereignty) are re-evaluated during rebuild
+  - Providers are resolved via the standard placement engine
+  - All resources are re-realized in the correct dependency order
+  - UUIDs are preserved across the destroy/rebuild cycle
+  - Post-rebuild realized state matches the original intent state
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: full_stack
+    policy_complexity: multi_validation
+    provider_landscape: multi_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent state read, dependency graph computed, all four states repopulated
+  - domain: policy
+    interaction: validation policies re-evaluated including sovereignty
+  - domain: provider
+    interaction: service providers re-realize each resource
+  - domain: audit
+    interaction: full destroy and rebuild arc recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- cross-domain
+- rehydration
+- dynamic
+- rebuild
+- headline
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 4
+    sequence: 11
+    week: wk4
+    depends_on:
+    - uc-pipeline-composite-001
+    - uc-pipeline-4state-001
+  preconditions:
+  - Resources were previously realized and are now destroyed
+  - Intent state and dependency graph are preserved in the data stores
+  postconditions:
+  - All resources are re-realized matching original intent
+  - UUIDs are preserved
+  - Four-state stores are fully repopulated

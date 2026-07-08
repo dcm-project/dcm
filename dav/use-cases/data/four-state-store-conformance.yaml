@@ -1,0 +1,61 @@
+uuid: uc-pipeline-4state-001
+handle: data/four-state-store-conformance
+scenario:
+  description: A platform engineer verifies that the four-state data stores (intent,
+    requested, realized, discovered) conform to the UDLM specification. Each store
+    maintains the correct entity lifecycle, UUIDs are stable across states, and state
+    transitions follow the declared rules. This UC validates the data substrate that
+    all provisioning, drift detection, and rehydration UCs depend on.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Verify four-state data store conformance to the UDLM specification
+  success_criteria:
+  - Intent store preserves the original consumer declaration immutably
+  - Requested store records the policy-approved dispatch payload
+  - Realized store records provider-confirmed outcomes as authoritative
+  - Discovered store records independently observed current state
+  - Entity UUIDs are stable across all four states
+  - State transitions follow UDLM lifecycle rules (no skipping states)
+  - Four-state stores are queryable via the standard API
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: no_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: all four state stores are exercised and verified
+  - domain: audit
+    interaction: conformance verification recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- data
+- four-state
+- udlm
+- conformance
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 2
+    sequence: 7
+    week: wk2-3
+    depends_on:
+    - uc-pipeline-cp-001
+  preconditions:
+  - DCM control plane is deployed with four-state stores initialized
+  postconditions:
+  - Four-state stores are UDLM-conformant and queryable
+  - Entity lifecycle transitions are validated

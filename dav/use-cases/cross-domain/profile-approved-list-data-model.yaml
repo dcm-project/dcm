@@ -1,0 +1,55 @@
+uuid: uc-profile-approved-list-data-model
+handle: cross-domain/profile-approved-list-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-B: confirm UDLM models the approved-list profile data — the instance
+    approved_profiles set + default_profile, a profile as a named capability set, the tenant_boundary
+    and policy_profile DCMGroups, and the compliance/sovereignty overlay (Sovereignty Zone + Accreditation)
+    as a separate axis composed with the profile.'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  intent: Validate UDLM models approved-list profiles, default, and the profile/overlay binding
+  success_criteria:
+  - The instance models an approved_profiles set and a default_profile
+  - A profile is modeled as a named, versioned capability set (not a fixed enum value)
+  - Tenant is a tenant_boundary DCMGroup bound to a policy_profile DCMGroup — no separate mapping artifact
+  - Compliance/sovereignty overlay (Sovereignty Zone + Accreditation) is a distinct, composable axis
+  - Quota allocations and claims-mapping references are modeled on the tenant
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: approved_profiles, default_profile, capability-set profiles, DCMGroups, overlay, quotas
+      modeled
+  - domain: policy
+    interaction: profile binding expressed via policy_profile DCMGroup
+  - domain: audit
+    interaction: profile + overlay binding recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-b
+- profile
+- approved-list
+- data-model-validation
+- trifecta
+- udlm
+- fsi-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

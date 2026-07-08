@@ -1,0 +1,61 @@
+uuid: uc-pipeline-cluster-001
+handle: infrastructure/cluster-bootstrap
+scenario:
+  description: A platform engineer forms a Kubernetes cluster from bootstrapped
+    bare-metal nodes. The cluster is stood up using containers (Podman/OCP) on the
+    bootstrapped nodes. This UC validates that the infrastructure substrate is ready
+    for the control plane deployment.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Form a Kubernetes cluster from bootstrapped bare-metal nodes
+  success_criteria:
+  - Kubernetes cluster is formed from bootstrapped nodes
+  - Cluster API server is reachable and responding
+  - Node membership matches the declared intent
+  - Cluster formation is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: multi_dependent
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: cluster service provider orchestrates node joining
+  - domain: data
+    interaction: cluster entity created in intent and realized stores
+  - domain: policy
+    interaction: validation policy checks node readiness before joining
+  - domain: audit
+    interaction: cluster formation recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- infrastructure
+- cluster
+- kubernetes
+- bootstrap
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 1
+    sequence: 3
+    week: wk2
+    depends_on:
+    - uc-pipeline-bm-001
+  preconditions:
+  - Bare-metal nodes are bootstrapped with OS and base packages
+  postconditions:
+  - Kubernetes cluster is operational with all declared nodes joined
+  - Cluster entity is recorded in intent and realized stores

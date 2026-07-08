@@ -1,0 +1,52 @@
+uuid: uc-policy-applicability-data-model
+handle: governance/policy-applicability-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-E: confirm UDLM models the data behind policy applicability — the
+    approved-list/default, the resolved profile and its policy set on the request record, and a three-state
+    policy outcome (evaluated-pass / evaluated-fail / out-of-scope) in the audit model.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Validate UDLM models resolved-profile policy sets and three-state audit outcomes
+  success_criteria:
+  - The request record models the resolved profile and the set of policies it carries
+  - 'The audit model represents three policy outcomes: evaluated-pass, evaluated-fail, out-of-scope'
+  - Out-of-scope is a first-class modeled outcome, not an absence or a pass
+  - Approved-list and default profile are modeled at the instance level
+  - Policy membership in a profile is modeled (which policies a profile carries)
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resolved profile + policy set on the request; three-state outcome modeled
+  - domain: policy
+    interaction: profile->policy membership modeled
+  - domain: audit
+    interaction: three-state outcome represented
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-e
+- policy
+- data-model-validation
+- trifecta
+- udlm
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

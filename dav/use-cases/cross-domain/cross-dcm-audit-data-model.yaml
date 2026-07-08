@@ -1,0 +1,50 @@
+uuid: uc-cross-dcm-audit-data-model
+handle: cross-domain/cross-dcm-audit-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for A4: confirm UDLM models the data for peer-coordinated decommission —
+    peer-ack metadata on the released resource and a cross-DCM audit record stitched consistently across
+    both instances.'
+  actor:
+    persona: sovereign-tenant-admin
+    profile: sovereign
+  intent: Validate UDLM models peer-ack metadata and a consistent cross-DCM audit record
+  success_criteria:
+  - The released resource record models peer-acknowledgement metadata
+  - A cross-DCM audit record is modeled and is consistent across both instances
+  - Pending (held) state is representable when the peer is unreachable
+  - The peer's attested capability set at transaction time is recorded
+  - Residency-check evidence is captured in the model
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: system_defaults_only
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: peer-ack metadata + cross-DCM audit record modeled consistently
+  - domain: audit
+    interaction: cross-instance audit stitched
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- a4
+- peer-dcm
+- data-model-validation
+- trifecta
+- udlm
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

@@ -1,0 +1,71 @@
+uuid: uc-pipeline-composite-001
+handle: cross-domain/composite-service-provision
+scenario:
+  description: An application team submits a composite service request (e.g., a
+    three-tier web application — web, app, database). DCM decomposes the composite
+    into constituents, resolves dependencies, evaluates validation policies
+    (including sovereignty constraints), selects providers via the placement engine,
+    and realizes each constituent in dependency order. This is the "easy consumption"
+    proof — a single intent produces a full running stack.
+  actor:
+    persona: application-team-member
+    profile: standard
+  intent: Provision a composite service from a single intent declaration
+  success_criteria:
+  - Composite service request is accepted and decomposed into constituents
+  - Dependencies are resolved and constituents are dispatched in the correct order
+    (dependency rounds)
+  - Validation policies (including sovereignty) are evaluated before each dispatch
+  - Each constituent is realized by the selected service provider
+  - All four states (intent, requested, realized, discovered) are populated for the
+    composite entity
+  - The composite entity status reflects OPERATIONAL when all required constituents
+    succeed
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multi_validation
+    provider_landscape: multi_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: validation policies evaluate sovereignty and business rules before
+      dispatch
+  - domain: provider
+    interaction: service providers realize each constituent
+  - domain: data
+    interaction: composite entity created across all four states
+  - domain: audit
+    interaction: full provisioning arc recorded with dependency ordering
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- cross-domain
+- composite-service
+- provision
+- full-stack
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 2
+    sequence: 6
+    week: wk3
+    depends_on:
+    - uc-pipeline-catalog-001
+  preconditions:
+  - Composite service catalog item is registered and visible
+  - Actor holds a valid Keycloak token with tenant and role claims
+  postconditions:
+  - Composite service is realized with all constituents operational
+  - All four states reflect the complete provisioning arc
+  - Intent matches realized state

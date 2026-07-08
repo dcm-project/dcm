@@ -1,0 +1,52 @@
+uuid: uc-telemetry-udlm-data-model
+handle: observability/telemetry-udlm-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for A9: confirm UDLM models the telemetry-export data — metrics, lifecycle/drift/policy
+    events, log records, and audit records as UDLM-modeled, schema-discoverable entities, plus a published
+    event catalog vocabulary for the curated event stream.'
+  actor:
+    persona: platform-operator
+    profile: standard
+  intent: Validate UDLM models telemetry/events/audit as schema-discoverable data + event catalog
+  success_criteria:
+  - Metrics, events, log records, and audit records are modeled as UDLM entities
+  - Schemas for those entities are discoverable (machine-readable) by consumers
+  - A published event-catalog vocabulary is modeled for the curated event stream
+  - Data-classification and tenancy are modeled on telemetry for per-subscriber scoping
+  - Retention governance for exported telemetry is representable
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: telemetry/events/audit modeled as schema-discoverable UDLM entities + event catalog
+  - domain: policy
+    interaction: data-classification + retention modeled for scoping
+  - domain: audit
+    interaction: export access representable
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- a9
+- observability
+- data-model-validation
+- trifecta
+- udlm
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

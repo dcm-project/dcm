@@ -1,0 +1,51 @@
+uuid: uc-peer-coordination-capability
+handle: cross-domain/peer-coordination-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for A4: confirm DCM provides the peer-coordination capability — a two-phase
+    release across DCM instances, verifying the peer meets the provenance floor before coordinating, releasing
+    local only after peer-ack, and holding (not silently completing) when the peer is unreachable.'
+  actor:
+    persona: sovereign-tenant-admin
+    profile: sovereign
+  intent: Validate DCM can run a peer-coordinated two-phase release with hold-on-unreachable
+  success_criteria:
+  - DCM coordinates a two-phase release with a peer DCM instance
+  - The peer's attested capability set is verified to meet the provenance floor before coordinating
+  - Local release happens only after the peer acknowledges
+  - If the peer is unreachable the operation is held pending, not silently completed
+  - Residency constraints are checked during the coordinated wind-down
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: peer_dcm_disconnect
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer_dcm provider coordinates the two-phase release
+  - domain: policy
+    interaction: sovereignty policy mandates the peer replica and verifies the provenance floor
+  - domain: audit
+    interaction: peer-ack evidence captured
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- a4
+- peer-dcm
+- capability-validation
+- trifecta
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

@@ -1,0 +1,54 @@
+uuid: uc-audit-chain-output-verification
+handle: governance/audit-chain-output-verification
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-D (closes the produce->verify loop): an auditor takes the signed
+    tree heads + inclusion and consistency proofs DCM produced and independently re-verifies them; the
+    proofs validate for untampered events, and a tampered or missing event is detected. This validates
+    the OUTPUT of governance/audit-merkle-tree-verification, not just that proofs are produced.'
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  intent: Validate an auditor can independently re-verify the audit-chain proofs and detect tampering
+  success_criteria:
+  - Independently re-verifying inclusion proofs against the signed tree heads succeeds for untampered
+    events
+  - Consistency proofs confirm the tree heads form a coherent append-only sequence
+  - A tampered or removed event is detected (its proof fails verification)
+  - Verification is a read-only operation that modifies no tenant resources
+  - Under sovereign profile the signing key material never leaves the boundary during verification
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: auditor re-verifies inclusion and consistency proofs against signed tree heads
+  - domain: policy
+    interaction: sovereignty policy confirms signing-key residency during verification
+  - domain: data
+    interaction: audit events looked up by handle and epoch for proof generation
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-d
+- audit
+- output-verification
+- produce-verify-loop
+- trifecta
+- sovereign-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

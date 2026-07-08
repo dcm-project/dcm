@@ -1,0 +1,54 @@
+uuid: uc-brownfield-adoption-capability
+handle: cross-domain/brownfield-adoption-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-A: confirm DCM provides the capability to adopt an existing estate
+    in place (ingest hosts/groups/credentials as entities with zero resource recreation), track divergence
+    as drift during a coexistence window, perform the cutover authority flip (legacy->DCM-authoritative),
+    and remain reversible before cutover. This checks the CAPABILITY exists to support cross-domain/ansible-inventory-brownfield-ingestion.'
+  actor:
+    persona: platform-operator
+    profile: standard
+  intent: Validate DCM exposes the brownfield adopt-in-place + coexistence + cutover capability
+  success_criteria:
+  - DCM can ingest discovered resources as entities without recreating or restarting them (adopt-in-place)
+  - DCM tracks divergence between legacy-controlled state and ingested entities as drift during coexistence
+  - DCM supports a cutover that flips authority to the DCM API as the single control path
+  - Ingestion is reversible before cutover (removing DCM management leaves the estate as found)
+  - Post-cutover out-of-band change handling is a policy-configurable action (default reject+alert)
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: information provider enumerates the existing estate for adopt-in-place
+  - domain: policy
+    interaction: coexistence policy classifies drift by phase; cutover flips management authority
+  - domain: data
+    interaction: entities adopted with brownfield provenance; no resource recreation
+  - domain: audit
+    interaction: adoption, drift, and cutover recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-a
+- brownfield
+- capability-validation
+- trifecta
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

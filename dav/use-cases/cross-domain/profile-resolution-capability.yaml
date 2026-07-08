@@ -1,0 +1,55 @@
+uuid: uc-profile-resolution-capability
+handle: cross-domain/profile-resolution-capability
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-B: confirm DCM provides profile resolution (an instance declares
+    an approved list of profiles + a default; near-term the default applies instance-wide) and atomic
+    tenant onboarding (identity boundary + profile binding + quotas + auth claims, all-or-nothing).'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  intent: Validate DCM resolves the instance profile from the approved list + default and onboards atomically
+  success_criteria:
+  - DCM resolves the instance profile from the platform approved list and default
+  - Tenant onboarding binds the tenant to the resolved profile via a policy_profile DCMGroup
+  - Onboarding is atomic — either all steps persist or none do
+  - A compliance/sovereignty overlay is composed with the profile, not folded into it
+  - Profiles are capability sets compared by content set-containment, not by rank
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: mixed
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: profile resolution from approved-list+default; onboarding atomicity enforced by orchestration
+      flow policy
+  - domain: data
+    interaction: tenant bound to instance profile; compliance overlay composed separately
+  - domain: provider
+    interaction: auth provider configured with the tenant claims-mapping reference
+  - domain: audit
+    interaction: atomic onboarding recorded as one record
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-b
+- profile
+- approved-list
+- capability-validation
+- trifecta
+- fsi-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

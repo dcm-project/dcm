@@ -1,0 +1,66 @@
+uuid: uc-pipeline-sov-001
+handle: governance/sovereignty-validation-policy
+scenario:
+  description: A platform engineer configures a sovereignty validation policy that
+    blocks resource placement in non-compliant zones. When a provisioning request
+    arrives, the validation policy (enforcement_class compliance) evaluates the request
+    against the declared sovereignty zone constraints. Non-compliant placements are
+    denied. This UC validates that sovereignty constraints are enforced as hard gates
+    in the provisioning pipeline.
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  intent: Configure and enforce sovereignty validation policy for resource placement
+  success_criteria:
+  - Sovereignty validation policy is registered and active
+  - Placement requests within compliant zones are approved
+  - Placement requests to non-compliant zones are denied with a clear sovereignty
+    violation error
+  - Policy evaluation and outcome are recorded in the audit trail
+  - The policy operates correctly in shadow mode before enforcement
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: cross_domain
+    provider_landscape: multi_eligible
+    governance_context: sovereign_mandate
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty validation policy evaluates placement constraints
+  - domain: provider
+    interaction: placement engine selects only compliant providers
+  - domain: data
+    interaction: policy evaluation results stored
+  - domain: audit
+    interaction: sovereignty evaluation recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- governance
+- sovereignty
+- validation-policy
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 2
+    sequence: 8
+    week: wk3
+    depends_on:
+    - uc-pipeline-cp-001
+  preconditions:
+  - DCM control plane is deployed
+  - Sovereignty zones are registered
+  - At least one validation policy with enforcement_class compliance is configured
+  postconditions:
+  - Sovereignty constraints are enforced at placement time
+  - Non-compliant placements are blocked

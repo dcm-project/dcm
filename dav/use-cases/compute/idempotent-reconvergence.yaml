@@ -1,0 +1,63 @@
+uuid: uc-pipeline-idempotent-001
+handle: compute/idempotent-reconvergence
+scenario:
+  description: An application team re-applies an unchanged intent to an already-realized
+    resource. The system must recognize that the intent matches the current realized
+    state and produce a no-op — no new dispatch, no new provider calls, no duplicate
+    resources. This validates the idempotency guarantee that is critical for safe reconvergence
+    and rehydration.
+  actor:
+    persona: application-team-member
+    profile: standard
+  intent: Re-apply unchanged intent and verify no-op reconvergence
+  success_criteria:
+  - Re-applied intent is accepted and processed through the pipeline
+  - System detects that realized state already matches the intent
+  - No new provider dispatch occurs (no-op)
+  - No duplicate resources are created
+  - The no-op decision and its rationale are recorded in the audit trail
+  - Resource UUIDs remain stable (no reassignment)
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent compared against realized state
+  - domain: policy
+    interaction: validation policy evaluates the re-applied request
+  - domain: audit
+    interaction: no-op decision recorded with rationale
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- compute
+- idempotent
+- reconvergence
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 3
+    sequence: 10
+    week: wk4
+    depends_on:
+    - uc-pipeline-composite-001
+  preconditions:
+  - Resource is realized and matches the previously declared intent
+  - Four-state stores are populated
+  postconditions:
+  - No new provider dispatch occurred
+  - Resource state is unchanged
+  - Audit trail records the no-op

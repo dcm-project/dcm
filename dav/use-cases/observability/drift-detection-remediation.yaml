@@ -1,0 +1,68 @@
+uuid: uc-pipeline-drift-001
+handle: observability/drift-detection-remediation
+scenario:
+  description: The drift reconciliation component compares discovered state (what actually
+    exists) against realized state (what was provisioned). When a divergence is detected,
+    a drift record is produced with field-by-field comparison and severity classification.
+    Remediation actions are triggered per recovery policy. This UC validates the operational
+    steady-state monitoring loop.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Detect drift between discovered and realized state and remediate per recovery
+    policy
+  success_criteria:
+  - Discovered state is probed and compared against realized state
+  - Divergences produce drift records with field-by-field comparison
+  - Drift records include severity classification (info, warning, critical)
+  - Recovery policy triggers appropriate remediation actions
+  - Remediation results are recorded and verified
+  - Drift detection cycle completes within the profile-governed reconciliation window
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered and realized stores compared
+  - domain: policy
+    interaction: recovery policy governs remediation actions
+  - domain: provider
+    interaction: service provider executes remediation if needed
+  - domain: audit
+    interaction: drift detection and remediation recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- observability
+- drift
+- detection
+- remediation
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 3
+    sequence: 9
+    week: wk4
+    depends_on:
+    - uc-pipeline-composite-001
+    - uc-pipeline-4state-001
+  preconditions:
+  - Composite service is realized with all constituents operational
+  - Four-state stores are populated
+  - Drift reconciliation component is active
+  postconditions:
+  - Drift between discovered and realized states is detected and classified
+  - Remediation actions have been executed per recovery policy

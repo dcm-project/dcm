@@ -1,0 +1,54 @@
+uuid: uc-brownfield-adoption-data-model
+handle: cross-domain/brownfield-adoption-data-model
+version: 1.0.0
+scenario:
+  description: 'Validation UC for DR-A: confirm UDLM models the data needed for brownfield adoption —
+    brownfield provenance on entities, a per-entity management_authority (legacy|dcm) that flips at cutover,
+    Discovered-state drift records, DCMGroup mappings for ingested groups, and vault-backed credential
+    resources replacing embedded plaintext.'
+  actor:
+    persona: platform-operator
+    profile: standard
+  intent: Validate UDLM models the brownfield adoption data (provenance, management authority, drift)
+  success_criteria:
+  - Each ingested entity carries provenance marking it brownfield
+  - Each entity carries a management_authority field with values legacy or dcm
+  - Discovered-state drift records are modeled and persist across the coexistence window
+  - Ingested inventory groups map to DCMGroup entities with membership preserved
+  - Embedded plaintext credentials become vault-backed credential resources in the model
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: cross_dependency_payload
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: entities, DCMGroups, credential resources, and drift records modeled with brownfield
+      provenance
+  - domain: provider
+    interaction: config-management system represented as an information provider
+  - domain: audit
+    interaction: provenance and authority transitions recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: trifecta-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- dr-a
+- brownfield
+- data-model-validation
+- trifecta
+- udlm
+- standard-profile
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  note: trifecta validation UC (Piotr-feedback DRs)

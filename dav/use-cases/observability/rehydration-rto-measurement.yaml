@@ -1,0 +1,62 @@
+uuid: uc-pipeline-rto-001
+handle: observability/rehydration-rto-measurement
+scenario:
+  description: After a dynamic rehydration, the system measures recovery time objective
+    (RTO) and validates completeness. Every resource in the original intent must exist
+    in the rebuilt realized state with matching field values. The RTO measurement is
+    the time from destroy trigger to last resource reaching OPERATIONAL status.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  intent: Measure RTO and validate completeness after dynamic rehydration
+  success_criteria:
+  - RTO is measured from destroy trigger to last resource reaching OPERATIONAL
+  - Every resource in the original intent exists in the rebuilt realized state
+  - Field values in the rebuilt realized state match the original intent (within tolerance
+    for provider-assigned fields)
+  - Completeness percentage is calculated and reported
+  - RTO measurement and completeness results are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: full_stack
+    policy_complexity: no_policy
+    provider_landscape: multi_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent vs rebuilt realized compared for completeness
+  - domain: observability
+    interaction: RTO measured and reported
+  - domain: audit
+    interaction: RTO and completeness recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-30T22:00:00.000000+00:00'
+tags:
+- observability
+- rehydration
+- rto
+- measurement
+- pipeline
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-30T22:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  author: chris@croadfeldt
+  pipeline:
+    act: 4
+    sequence: 12
+    week: wk4
+    depends_on:
+    - uc-pipeline-rehydrate-001
+  preconditions:
+  - Dynamic rehydration has completed
+  - All resources are re-realized
+  postconditions:
+  - RTO is measured and recorded
+  - Completeness is verified (intent matches rebuilt realized)

@@ -1,0 +1,61 @@
+uuid: uc-tenant-iso-001
+handle: compute/vm-tenant-isolation-enforcement
+scenario:
+  description: A VM is provisioned for a team within a multi-tenant DCM deployment.
+    The platform must enforce tenant isolation at the data plane — the VM's network
+    and storage attachments are confined to the tenant boundary, and a tenant-isolation
+    policy is evaluated and applied before the attachments are realized. This is the
+    reusable data-plane tenancy building block, split out from compute/vm-standard-provision
+    (Piotr PR-65 #2) so the isolation concern is validated on its own.
+  actor:
+    persona: application-team-member
+    profile: standard
+  intent: Provision a VM whose network and storage attachments are confined to the
+    requesting team's tenant boundary
+  success_criteria:
+  - Tenant-isolation policy is evaluated and applied to the VM's network attachments
+  - Tenant-isolation policy is evaluated and applied to the VM's storage attachments
+  - Attachments that would cross the tenant boundary are rejected, not silently allowed
+  - The resource record carries the tenancy fields binding the VM to its tenant boundary
+  - The isolation decision (policies evaluated + outcome) is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: tenant-isolation policy evaluates network and storage attachments
+      against the tenant boundary
+  - domain: provider
+    interaction: network and storage providers realize attachments only within the
+      tenant boundary
+  - domain: data
+    interaction: resource record created with tenancy fields binding the VM to its
+      tenant_boundary DCMGroup
+  - domain: audit
+    interaction: isolation policies-evaluated and outcome recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-06-29T00:00:00.000000+00:00'
+tags:
+- compute
+- vm
+- tenancy
+- data-plane-isolation
+- standard-profile
+- foundational
+- split-from-vm-standard-provision
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-29T00:00:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
