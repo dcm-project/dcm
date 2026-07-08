@@ -625,7 +625,7 @@ Response 200 OK (if policy requires pre-validation report before submission):
   "dry_run": true,
   "validation_result": {
     "policies_evaluated": [...],
-    "gating_decisions": [{ "policy": "vm-size-limits", "result": "approved" }],
+    "validation_decisions": [{ "policy": "vm-size-limits", "result": "approved" }],
     "estimated_cost": {...},
     "sovereignty_check": { "satisfied": true, "constraints": ["data_residency: EU"] },
     "would_auto_approve": true
@@ -1271,7 +1271,7 @@ POST /api/v1/resources/transfers/{transfer_uuid}:reject
 
 ### 5.11 Extend Resource TTL
 
-Extends the TTL of a resource entity that has a lifecycle time constraint declared. Extension is subject to policy — a Gating Policy may reject or cap the extension.
+Extends the TTL of a resource entity that has a lifecycle time constraint declared. Extension is subject to policy — a Validation Policy may reject or cap the extension.
 
 ```
 POST /api/v1/resources/{entity_uuid}:extend-ttl
@@ -1956,7 +1956,7 @@ All error responses follow a consistent structure:
 | 409 | `not_suspended` | Resume attempted on a non-suspended resource |
 | 409 | `transfer_not_authorized` | No cross-tenant authorization between source and target Tenant |
 | 409 | `no_ttl_constraint` | TTL extension attempted on resource with no time constraint |
-| 422 | `policy_rejected` | Gating policy rejected the request |
+| 422 | `policy_rejected` | Validation policy rejected the request |
 | 422 | `constraint_violated` | Field value violates declared constraint |
 | 422 | `ttl_extension_rejected` | Policy rejected or capped the TTL extension request |
 | 429 | `rate_limit_exceeded` | Actor has exceeded request rate page_size |
@@ -1979,8 +1979,8 @@ POST /api/v1/contribute/policy
 X-DCM-Tenant: <tenant-uuid>
 
 {
-  "policy_type": "gating | transformation | recovery | lifecycle | orchestration_flow | governance_matrix_rule",
-  "handle": "tenant/{tenant-handle}/gating/{name}",
+  "policy_type": "validation | transformation | recovery | lifecycle | orchestration_flow | governance_matrix_rule",
+  "handle": "tenant/{tenant-handle}/validation/{name}",
   "domain": "tenant",
   "concern_type": "operational | security | compliance",
   "enforcement": "soft | hard",
@@ -1993,7 +1993,7 @@ X-DCM-Tenant: <tenant-uuid>
 Response 202 Accepted:
 {
   "contribution_uuid": "<uuid>",
-  "policy_handle": "tenant/payments/gating/cost-ceiling",
+  "policy_handle": "tenant/payments/validation/cost-ceiling",
   "status": "proposed",
   "shadow_mode": true,
   "review_required": true,
@@ -2046,7 +2046,7 @@ Response 200:
     {
       "contribution_uuid": "<uuid>",
       "artifact_type": "policy",
-      "handle": "tenant/payments/gating/cost-ceiling",
+      "handle": "tenant/payments/validation/cost-ceiling",
       "status": "proposed",
       "shadow_mode": true,
       "pr_url": "https://...",
