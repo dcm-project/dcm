@@ -166,22 +166,22 @@ entity:
     kubernetes_version: "1.29"
     node_count: 3
     api_endpoint: "https://cluster-01.eu-west.example.com"
-    kubeconfig_ref: <credential-provider-ref>  # via credential management service
+    kubeconfig_ref: <credential-provider-ref>  # via Credential Provider
 ```
 
 **Ownership scope:** When a Tenant owns a `Platform.KubernetesCluster` entity, that Tenant owns everything within the cluster boundary — including cluster-scoped resources (ClusterRoles, StorageClasses, PersistentVolumes, CRDs registered for that cluster). The cluster entity is the ownership boundary. DCM treats the cluster as an opaque resource from a Tenant ownership perspective — the Tenant gets the cluster; what's inside it belongs to them.
 
-**The composite service definition pattern:** A Cluster-as-a-Service catalog item typically composes multiple constituent resources:
+**The Composite Service pattern:** A Cluster-as-a-Service catalog item typically composes multiple constituent resources:
 ```yaml
 Platform.KubernetesCluster → constituent providers:
   - Compute resources (control plane + worker nodes)
   - Network resources (load balancer, ingress)
   - Storage resources (CSI driver + storage class)
   - DNS records (cluster API endpoint)
-  - Credential issuance (kubeconfig via credential management service)
+  - Credential issuance (kubeconfig via Credential Provider)
 ```
 
-This is a composite service definition — the cluster catalog item orchestrates all constituents and presents a single entity to the Tenant.
+This is a Composite Service — the cluster catalog item registers a composite definition listing the constituents, and DCM dispatches and aggregates them, presenting a single Composite Entity to the Tenant.
 
 **Sovereignty and accreditation:** Cluster placement follows the standard Placement Engine model. Sovereignty constraints declared by the Tenant apply to cluster placement — a GDPR-scoped Tenant requesting a cluster gets a cluster placed in an EU sovereignty zone. The CAPI provider (or managed K8s Service Provider) must hold appropriate accreditations.
 
