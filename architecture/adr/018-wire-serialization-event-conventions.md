@@ -27,7 +27,7 @@ UDLM defines the **data model** and fixes its on-the-wire casing — **`snake_ca
 
 4. **Events use the CloudEvents envelope** (CNCF). Event **payload** property keys are `snake_case`. Event **type identifiers / topics** are lowercase **dot notation** — `resource.discovered`, `entity.realized`, `resource.definition.created` — so brokers (Kafka/NATS/etc.) can **wildcard-route** (`resource.definition.*`). Topics are an event-naming concern, orthogonal to payload casing. (CloudEvents *context attributes* are themselves flatcase per the CloudEvents spec — neither snake nor camel — and are unaffected.)
 
-5. **No ad-hoc translation.** Frontends, third-party webhooks, and microservices consume the same snake_case shape; serialization config is centralized (Go tags), not reinvented per service. The one place casing changes is an **export adapter** at a foreign-domain boundary (e.g. projecting a resource into a Kubernetes CRD, which is camelCase by convention) — never inside the DCM/UDLM/DAV core.
+5. **No ad-hoc translation.** Frontends, third-party webhooks, and microservices consume the same snake_case shape; serialization config is centralized (Go tags), not reinvented per service. The one place casing changes is an **export adapter** at a foreign-domain boundary (e.g. projecting a resource into a Kubernetes CRD, which is camelCase by convention) — never inside the DCM/UDLM core.
 
 ## Options considered
 

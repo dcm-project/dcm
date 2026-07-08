@@ -19,6 +19,9 @@ Every request is policy-evaluated before provisioning. Policies are code artifac
 - **What happens when things fail** (Recovery: retry, requeue, compensate)
 - **How pipeline stages are ordered** (Orchestration Flow: dependency sequencing)
 - **What crosses boundaries** (Governance Matrix: sovereignty, data classification)
+- **Lifecycle-stage behavior** (Lifecycle Policy: per-operation rules over the entity lifecycle)
+
+That is the **7 base typed policies**; ADR-019 adds **Placement Policy** as the 8th. The README's "8 policy types" = these 7 + Placement.
 
 **Key design choices:**
 - Multi-pass evaluation with convergence — transformation policies can inject fields that other policies depend on

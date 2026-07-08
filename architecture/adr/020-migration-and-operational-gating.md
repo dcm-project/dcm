@@ -35,4 +35,4 @@ Migration and operational gating **reuse the existing typed policies** (no new t
 - No new policy *type* (beyond ADR-019); migration/operational gating are policy *configurations*.
 - Cross-domain: applies to any resource carrying `data_mobility` (any stateful domain).
 - Makes ADR-019's "change topology → rebuild" governed + proven: the rebuild is permission-checked, freshness-gated, and sequence-orchestrated.
-- DAV connection: the `process_validation` findings/evidence are the same validation-backed records DAV surfaces — one evidence model.
+- DAV connection: the `process_validation` findings/evidence are the same validation-backed records an assessment realization surfaces — one evidence model.

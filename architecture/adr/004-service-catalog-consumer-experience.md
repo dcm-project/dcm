@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 05 (Resource Type Hierarchy), Doc 06 (Resource/Service Entities)
+**Docs:** Resource Type Hierarchy (UDLM), Resource/Service Entities (UDLM)
 
 ## Context
 

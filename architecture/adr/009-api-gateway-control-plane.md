@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 25 (Control Plane Services), OpenAPI Specs
+**Docs:** Control Plane Services (UDLM), OpenAPI Specs
 
 ## Context
 

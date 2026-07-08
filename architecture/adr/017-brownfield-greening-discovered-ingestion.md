@@ -25,7 +25,7 @@ Define a **discovered-resource ingestion pipeline**:
    - **Third-party-generated**: a non-provider observer (probes, scanners, CMDB, import tools — e.g. the homelab's `virsh`/`oc`/`ceph`/ansible probes) emits Discovered records with **no provider attribution** — **unclaimed**.
 2. The **Discovered store** holds both, durably and queryably (see Decision A).
 3. **Reverse placement** (the inverse of the ADR-007 placement engine): given an unclaimed discovered resource, identify the provider(s) that own or can claim it — by `resourceType` + attributes + provider capability / adopted-standard matrices.
-4. **Provider claim / adoption**: the identified provider asserts control → the record moves **Discovered → Realized**, preserving the entity UUID (UDLM §28 adopt-then-append).
+4. **Provider claim / adoption**: the identified provider asserts control → the record moves **Discovered → Realized**, preserving the entity UUID (UDLM SPEC-DESIGN-REQUIREMENTS §28 (raw/unallocated lifecycle entry) adopt-then-append).
 5. **Intent backport / synthesis** (optional): derive Intent from the Realized/Discovered state so the resource becomes rebuildable (see Decision B).
 
 ```
@@ -44,7 +44,7 @@ existing resource
 
 ### Decision A — the Discovered store has a dual role (clarified, not a new store)
 
-UDLM today frames Discovered as *ephemeral* (per-cycle snapshots for drift detection). We **clarify** it as having two roles: (1) the ephemeral snapshot stream (drift), **and** (2) a **durable, per-UUID entity inventory** that is the **source of truth for what exists — including discovered-but-unclaimed resources**. We do **not** introduce a separate "inventory" store. This is consistent with UDLM §28 raw/unallocated resources (which already live durably in Discovered with `lifecycleState: available`). *Requires a `foundations/four-states.md` clarification — tracked #222.*
+UDLM today frames Discovered as *ephemeral* (per-cycle snapshots for drift detection). We **clarify** it as having two roles: (1) the ephemeral snapshot stream (drift), **and** (2) a **durable, per-UUID entity inventory** that is the **source of truth for what exists — including discovered-but-unclaimed resources**. We do **not** introduce a separate "inventory" store. This is consistent with UDLM §28 raw/unallocated resources (which already live durably in Discovered with `lifecycle_state: available`). *Landed 2026-07: `foundations/four-states.md` §2.4 now carries the Discovered dual-role clarification (udlm greening PR); #222 closed. `correlation_ids` is a real field on `realized-entity.schema.json`.*
 
 ### Decision B — Intent may be generated from Discovered, independent of Realized
 
@@ -61,7 +61,7 @@ The two avenues can observe the **same** real-world resource (a 3rd-party probe 
 
 Ingestion runs **entity resolution**: a new observation is matched against existing entities by these keys (strongest/globally-unique keys first); a match **merges into the existing entity UUID** (the UDLM universal linking key, four-states §3) instead of minting a new one. So when a provider later enumerates a resource a 3rd-party probe already discovered, it **correlates to the same entity and claims it** (Discovered-unclaimed → Realized) rather than creating a duplicate. This is what minimizes 3rd-party-discovered items that are subsequently also injected by a DCM provider.
 
-This builds on the §27 component `Identity` block (serial/wwn/mac/location) but applies at the **top-level resource**, so the discovered/realized record likely needs a dedicated `correlationIds` / `identifiers` field — *tracked as a follow-up*.
+This builds on the the component `Identity` block (UDLM common-elements §27 identity) (serial/wwn/mac/location) but applies at the **top-level resource**, so the discovered/realized record carries a dedicated `correlation_ids` field — *shipped on `realized-entity.schema.json` (udlm greening PR).*
 
 ## Options considered
 
@@ -74,7 +74,7 @@ This builds on the §27 component `Identity` block (serial/wwn/mac/location) but
 - The **homelab is the first application** and is entirely **Avenue 2** (no providers yet): its estate store (#219) is a Discovered store of **unclaimed** resources.
 - As providers arrive (Kea #208, Ceph #218, a libvirt provider), they **reverse-place and claim** those resources into Realized; Intent backport then makes the estate rebuildable for DR — DCM-at-home dogfooding DCM.
 - **Reverse placement** is a new engine alongside the forward placement engine (ADR-007).
-- Requires the UDLM `four-states.md` clarification in Decision A (#222).
+- The UDLM `four-states.md` clarification for Decision A (#222) has LANDED.
 - The dependency graph stays **emergent** from per-resource Discovered records (#219), never a hand-authored file.
 
 ## Best practices

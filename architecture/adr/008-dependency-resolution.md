@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 07 (Service Dependencies), Doc 30 (Composite Service Composition Model)
+**Docs:** Service Dependencies (UDLM), Composite Service Composition Model (UDLM)
 
 ## Context
 

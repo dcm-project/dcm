@@ -99,7 +99,7 @@ The model is comprehensive; the **mandated v1 implementation is small**, and unb
 - **P4 — Credential scoring profile** *(config, not new engine)*: portability as tiebreak.
 
 ## Trust attestation (we attest to ourselves)
-DCM/UDLM earn trust by **self-application** — running this model on themselves and publishing a verifiable **Trust Posture Statement** (a *projection* of existing records: DecisionRecord + Accreditation + CONFORMANCE + Audit; **zero new primitives**) at `/.well-known/udlm/trust-posture`. Same bar, same tooling we require of producers. DAV (the assessment realization) renders/self-assesses it. Full model: `trust-attestation.md`.
+DCM/UDLM earn trust by **self-application** — running this model on themselves and publishing a verifiable **Trust Posture Statement** (a *projection* of existing records: DecisionRecord + Accreditation + CONFORMANCE + Audit; **zero new primitives**) at `/.well-known/udlm/trust-posture`. Same bar, same tooling we require of producers. The render/assess role is fulfilled by **any conformant, independent assessor** — *non-normative*; nothing here names or depends on a specific tool. (A separate assessment/testbed consumer may exercise it.) Full model: `trust-attestation.md`.
 
 ## Options considered
 - **Implicit/internal trust (assert our own trustworthiness)** — rejected: unverifiable across boundaries.

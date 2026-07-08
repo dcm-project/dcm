@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 14 (Profiles), Doc B §18 (Overrides), Doc 26 (Governance Matrix)
+**Docs:** Profiles (UDLM), Policy Contract §18 Overrides (UDLM), Governance Matrix (UDLM)
 
 ## Context
 
@@ -14,7 +14,7 @@ Sovereignty is enforced at three levels:
 
 1. **Provider declaration** — Every provider declares its sovereignty zones and data residency scope at registration. This is not self-reported trust — it's validated against the accreditation model.
 
-2. **Policy enforcement** — Sovereignty policies are Gating policies with hard enforcement. They fire on every lifecycle operation (not just initial provisioning). A resource in EU-WEST stays in EU-WEST for its entire lifecycle, including updates, scaling, and rehydration.
+2. **Policy enforcement** — Sovereignty spans THREE policy homes after ADR-019/020 (no single home): **Gating** (hard allow/deny on placement zone, this section), **Governance-Matrix** (cross-boundary + migration permission, ADR-020), and **Placement Policy** (residency as a placement constraint, ADR-019). Sovereignty policies are Gating policies with hard enforcement. They fire on every lifecycle operation (not just initial provisioning). A resource in EU-WEST stays in EU-WEST for its entire lifecycle, including updates, scaling, and rehydration.
 
 3. **Placement pre-filter** — The placement engine eliminates non-compliant providers before scoring begins. Sovereignty is a hard gate, not a soft preference.
 

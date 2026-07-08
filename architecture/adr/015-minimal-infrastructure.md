@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 11 (Data Store Contracts), Doc 17 (Deployment)
+**Docs:** Data Store Contracts (UDLM), Deployment (UDLM)
 
 ## Context
 

@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** April 2026  
-**Docs:** Doc A (Provider Contract), Doc 53 (Capability Discovery)
+**Docs:** Doc A (Provider Contract), Capability Discovery (UDLM)
 
 ## Context
 

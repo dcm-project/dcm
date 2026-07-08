@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 03 (Layering and Versioning)
+**Docs:** Layering and Versioning (UDLM)
 
 ## Context
 

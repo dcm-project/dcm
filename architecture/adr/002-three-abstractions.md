@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 00 (Foundations)
+**Docs:** Foundations (UDLM)
 
 ## Context
 
@@ -14,7 +14,7 @@ Every component of DCM maps to exactly one of three foundational abstractions:
 
 **DATA** — Everything stored and versioned. The unified data model, entity lifecycle states, field-level provenance, data layers, and audit records. Data flows through a deterministic pipeline: Intent → Requested → Realized → Discovered.
 
-**PROVIDER** — Everything external. Any system DCM interacts with through a defined contract. Providers receive data from DCM, act on it, and return data to DCM. Six provider types cover all external interactions: service, information, meta, auth, peer_dcm, and process.
+**PROVIDER** — Everything external. Any system DCM interacts with through a defined contract. Providers receive data from DCM, act on it, and return data to DCM. Providers are distinguished by declared CAPABILITY, not a fixed type enum (**superseded on this point by ADR-005**, which abolished rigid provider types; the UDLM provider-contract kinds are service / information / process / peer_dcm, with auth expressed as a capability). The earlier 'six provider types' framing (service, information, meta, auth, peer_dcm, process) is retained here only as history.
 
 **POLICY** — Everything that decides. Rules that fire when data matches conditions and produce typed outputs: allow/deny, validation, field mutations, recovery actions, orchestration directives. Policies govern every transition and transformation in DCM.
 

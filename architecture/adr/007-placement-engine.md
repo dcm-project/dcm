@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** March 2026  
-**Docs:** Doc 50 (Placement), Doc 14 (Profiles)
+**Docs:** Placement (UDLM), Profiles (UDLM)
 
 ## Context
 
