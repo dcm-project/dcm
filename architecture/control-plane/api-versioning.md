@@ -38,6 +38,8 @@ Flow GUI API:      https://{dcm-instance}/flow/api/v1/
 
 The version segment (`v1`, `v2`, etc.) represents a major version. It increments only on breaking changes. Multiple major versions may coexist during a transition window (see Section 4).
 
+The four surfaces are separate because they are distinct **trust zones** — Consumer, Admin, Provider (OIS), and Flow each carry their own authentication and RBAC, and each versions independently (the Consumer API can be at `v2` while the Provider/OIS surface is still `v1`).
+
 ### 1.2 Version Granularity — Per-API, Not Per-Endpoint
 
 Versioning is **per-API surface**, not per-endpoint. When a breaking change occurs to any endpoint within an API surface, the entire surface increments to the next major version. This means:
