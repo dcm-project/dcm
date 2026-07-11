@@ -31,7 +31,7 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 | **Resource Type Registry** | Typed Provider. Capability: serve the Resource Type Registry (core, community, organization tiers). |
 | **Peer DCM** | Typed Provider. Another DCM instance participating in federation. Federation is the Provider abstraction applied across DCM instances. |
 
-### Policy Types (7)
+### Policy Types (8)
 
 | Term | Definition |
 |------|-----------|
@@ -233,6 +233,12 @@ The DCM taxonomy defines the precise vocabulary used throughout the architecture
 
 
 ### API Versioning Terms
+
+> **Baseline adopted by reference:** DCM uses **semantic versioning** (semver)
+> for version numbering and **RFC 8594** (`Deprecation` / `Sunset` HTTP headers)
+> for the deprecation signal — neither is redefined here. Only the DCM-specific
+> application below is normative: profile-governed support windows and the VER
+> policies.
 
 | Term | Definition |
 |------|-----------|
