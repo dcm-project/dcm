@@ -37,8 +37,11 @@ implementation choices express them concretely:
 ## 2. Approval tier model (runtime enforcement)
 
 UDLM defines the authority tier vocabulary (auto / reviewed / verified /
-authorized) and the rules for custom tier insertion. DCM enforces tiers at
-runtime through the following mechanisms.
+authorized) and the rules for custom tier insertion. The four tiers are an
+escalating human-gate ladder: `auto` = no human gate; `reviewed` = one
+approver; `verified` = two independent approvers; `authorized` = a quorum vote
+by a named group. DCM enforces tiers at runtime through the following
+mechanisms.
 
 | Tier | DCM enforcement |
 |---|---|

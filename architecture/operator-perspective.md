@@ -188,6 +188,23 @@ that the chosen mechanism produce wire-compatible behavior.
 
 See [`governance-enforcement/policy-profiles.md`](governance-enforcement/policy-profiles.md).
 
+### 5.1 Profiles govern the control plane, not the managed infrastructure
+
+Profiles are purely a control-plane lever: they govern *how* the control plane
+behaves — strictness, thresholds, automation level, review windows. They do not
+shape the infrastructure DCM manages. That is a different set of levers:
+
+- **Placement / validation / transformation policies** — what may be built,
+  where, and under what constraints.
+- **Catalog and composite-service definitions** — what infrastructure shapes
+  are offerable in the first place.
+- **Provider capability declarations** — what a provider can actually realize.
+
+Put simply: the **profile** decides how the control plane operates; **policy +
+catalog + provider** decide what infrastructure gets built and under what
+constraints. When tuning behavior, reach for the profile; when changing what
+DCM can provision, reach for policies, the catalog, and provider capabilities.
+
 ---
 
 ## 6. Common pitfalls

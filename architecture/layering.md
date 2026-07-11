@@ -71,6 +71,11 @@ split between UDLM (substrate) and DCM (realization).
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+> The **9-layer canonical location hierarchy** named above is DCM's concrete
+> location topology — Country → Region → … → Unit, nine levels — DCM's specific
+> choice for UDLM's abstract layered-topology contract. It is fully defined in
+> [topology/canonical-9-layer-hierarchy.md](topology/canonical-9-layer-hierarchy.md).
+
 ---
 
 ## The boundary rule

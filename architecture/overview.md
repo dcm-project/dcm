@@ -30,6 +30,16 @@ narrative operator perspective, see [operator-perspective.md](operator-perspecti
 
 ---
 
+## Reading order for new contributors
+
+1. Read this overview.
+2. Read [layering.md](layering.md) for the UDLM/DCM boundary.
+3. Read [operator-perspective.md](operator-perspective.md) for the operator narrative.
+4. Read [convergence-engine/overview.md](convergence-engine/overview.md) for how DCM walks data through the four states.
+5. Use the per-concern subdirectory READMEs to dive into specific areas as needed.
+
+---
+
 ## How this repo is organized
 
 DCM groups documentation by **architectural concern**, not by file number.
@@ -53,16 +63,6 @@ Adjacent top-level directories:
 | [`../examples/`](../examples/) | DCM-specific orchestration scenarios that build on UDLM canonical examples |
 | [`../reference/`](../reference/) | Implementation standards, operational reference, implementation specifications |
 | [`../deployment/`](../deployment/) | Deployment topology, Kubernetes manifests |
-
----
-
-## Reading order for new contributors
-
-1. Read this overview.
-2. Read [layering.md](layering.md) for the UDLM/DCM boundary.
-3. Read [operator-perspective.md](operator-perspective.md) for the operator narrative.
-4. Read [convergence-engine/overview.md](convergence-engine/overview.md) for how DCM walks data through the four states.
-5. Use the per-concern subdirectory READMEs to dive into specific areas as needed.
 
 ---
 
