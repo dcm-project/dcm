@@ -1,0 +1,23 @@
+---
+name: OpenAPI
+on:  # yamllint disable-line rule:truthy
+  push:
+  pull_request:
+
+jobs:
+  check-aep-compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      - name: Install Spectral
+        run: npm i @stoplight/spectral-cli -g
+      - name: Lint OpenAPI schemas against AEP guidelines
+        run: |
+          shopt -s nullglob
+          files=(schemas/openapi/*.yaml api/*.yaml)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No OpenAPI schemas present yet — the AEP gate activates once schemas/openapi/ lands (#81–#83)."
+          else
+            spectral lint -r .spectral.yaml "${files[@]}"
+          fi

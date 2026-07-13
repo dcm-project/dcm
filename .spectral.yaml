@@ -1,0 +1,5 @@
+# AEP OpenAPI linting ruleset for the DCM API schemas. Carried forward from the original
+# object/API first draft (dcm #18, @Fale) — that PR graduated into the structured schemas/
+# suite (#81–#89); this keeps its Spectral/AEP gate so the successor schemas stay AEP-conformant.
+extends:
+  - https://raw.githubusercontent.com/aep-dev/aep-openapi-linter/main/spectral.yaml
