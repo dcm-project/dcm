@@ -1,7 +1,7 @@
 # Request realization — the play
 
 **Purpose:** how DCM runs a request from portable intent to a built resource — the components, the sequence,
-and what an engineer has to build. The worked example is Ondra's: a user asks for a VM with cpu + memory,
+and what an engineer has to build. The worked example: a user asks for a VM with cpu + memory,
 the system picks OpenShift, and OpenShift needs a `namespace` the request never carried. This flow shows
 exactly where that value comes from. It performs the model staged in
 [udlm `docs/flows/request-realization.md`](https://github.com/croadfeldt/udlm/tree/main/docs/flows/request-realization.md);
