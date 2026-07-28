@@ -1,0 +1,63 @@
+uuid: uc-hammer-day0-day2-ops-017
+handle: day0-day2-ops/composite-decommission-partial-rollback
+scenario:
+  description: 'An application team decommissions a composite service at end of life via a DCM-sequenced
+    composite process that tears the constituents down in reverse-dependency order. The teardown of the
+    shared datastore constituent fails partway — its dependents are already gone but it will not delete
+    cleanly. The system must invoke rollback: because a clean teardown cannot complete, it must restore
+    the already-removed constituents to their prior state so the composite is left whole (not half-destroyed)
+    pending manual resolution.'
+  actor:
+    persona: application-team-member
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Decommission a composite in reverse-dependency order and roll back a partial teardown failure
+  success_criteria:
+  - The composite decommission is sequenced in reverse-dependency order across bound teardown calls
+  - A failure of the datastore teardown records a FAILED terminal outcome for that call
+  - 'Rollback fires: already-removed constituents are restored to their prior state'
+  - The composite is left whole (not half-destroyed) pending manual resolution
+  - No constituent is left orphaned or stranded by the partial teardown
+  - The partial teardown and the rollback are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: rollback_required
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: reads the dependency graph for reverse order and restores removed constituents on rollback
+  - domain: provider
+    interaction: executes each bound teardown call and reports the datastore failure
+  - domain: policy
+    interaction: mandates rollback when a composite teardown cannot complete cleanly
+  - domain: audit
+    interaction: records the partial teardown and the rollback to a whole composite
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- decommission
+- composite-process
+- rollback
+- teardown
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The composite and its internal dependency graph are recorded
+  - Per-constituent teardown calls exist
+  postconditions:
+  - The composite is restored whole after the partial failure
+  - The failure and rollback are auditable
+  note: batch=day0-day2-ops-2026-07-22

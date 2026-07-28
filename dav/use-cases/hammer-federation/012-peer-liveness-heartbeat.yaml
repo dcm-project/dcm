@@ -1,0 +1,56 @@
+uuid: uc-hammer-federation-012
+handle: federation/peer-liveness-heartbeat
+scenario:
+  description: 'An SRE relies on a periodic liveness signal from each federated peer DCM to know whether
+    it is reachable before routing work to it. The local DCM records the peer''s heartbeat and reachability
+    status, and a peer that misses its window is marked unreachable so the placement engine can avoid
+    it. This is a simple day-2 baseline: federation health is observable, and staleness is a first-class
+    state.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+    - provider-owner
+    - federation-peer-operator
+  intent: Track peer DCM liveness so placement can avoid unreachable peers
+  success_criteria:
+  - Each peer's heartbeat is received and its reachability status recorded
+  - A peer that misses its heartbeat window is marked unreachable
+  - The placement engine can read peer reachability before routing
+  - Reachability transitions (up/down) are timestamped
+  - No order is dispatched to a peer currently marked unreachable
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: peer_dcm_required
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer heartbeat received; reachability status maintained
+  - domain: data
+    interaction: reachability transitions recorded with timestamps
+  - domain: policy
+    interaction: default routing rule excludes peers marked unreachable
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- liveness
+- heartbeat
+- day-2
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

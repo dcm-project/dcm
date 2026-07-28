@@ -1,0 +1,62 @@
+uuid: uc-hammer-brownfield-018
+handle: brownfield-discovery/discover-sovereign-jurisdiction-adopt
+scenario:
+  description: 'Discovery finds a running database in an in-country datacenter that falls under a sovereign
+    data residency mandate. Adoption must not proceed on hardware attributes alone — the residency jurisdiction
+    of the discovered resource must be captured at discovery and re-evaluated against the sovereign profile
+    at adoption. If the resource holds regulated data but its location or its dependency edges (a backup
+    target abroad) would breach residency, adoption into managed state must be gated until the breach
+    is resolved. This probes whether sovereignty is a cross-domain constraint enforced on brownfield adoption,
+    not just on new provisioning.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Adopt a discovered resource under a sovereign residency mandate without breaching it
+  success_criteria:
+  - The residency jurisdiction of the discovered resource is captured at discovery
+  - Sovereignty is re-evaluated against the sovereign profile at the point of adoption
+  - Adoption is gated if the resource or its dependency edges would breach residency
+  - A cross-border dependency (e.g. a foreign backup target) is detected as a breach, not ignored
+  - Adoption proceeds only once the residency breach is resolved or waived by governance
+  - The residency evaluation and adoption gate are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery reports the resource's location and its dependency targets
+  - domain: data
+    interaction: residency jurisdiction captured on the entity and its dependency edges
+  - domain: policy
+    interaction: sovereignty cross-domain constraint gates adoption on residency compliance
+  - domain: audit
+    interaction: residency evaluation and adoption gate recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- sovereignty
+- residency
+- adoption-gate
+- sovereign
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

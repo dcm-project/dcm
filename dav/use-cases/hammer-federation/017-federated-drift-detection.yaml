@@ -1,0 +1,59 @@
+uuid: uc-hammer-federation-017
+handle: federation/federated-drift-on-peer-realized-resource
+scenario:
+  description: 'A resource realized on the local engineer''s behalf by a peer DCM has drifted: the peer''s
+    realized state no longer matches the intent the local DCM recorded. Because the local DCM does not
+    directly control the peer-owned resource, it must detect the drift from the peer''s reported realized
+    state, and it cannot simply re-converge on its own — remediation must be requested of the owning peer.
+    This tests drift detection and remediation authority across a federation boundary, where the detector
+    and the controller are different DCMs.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - federation-peer-operator
+  intent: Detect and remediate drift on a peer-realized resource across the federation boundary
+  success_criteria:
+  - Local DCM compares recorded intent against the peer's reported realized state
+  - Drift on the peer-realized resource is detected
+  - Local DCM does not attempt direct re-convergence on a resource it does not control
+  - A remediation request is issued to the owning peer
+  - Remediation authority (owning peer) is respected; local DCM tracks the request outcome
+  - Drift detection and the cross-boundary remediation request are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: recorded intent compared to peer-reported realized state; drift found
+  - domain: policy
+    interaction: recovery policy routes remediation to the owning peer, not local re-converge
+  - domain: provider
+    interaction: owning peer executes remediation on request; outcome tracked locally
+  - domain: audit
+    interaction: drift and cross-boundary remediation request recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- drift
+- remediation-authority
+- day-2
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

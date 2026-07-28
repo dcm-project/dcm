@@ -1,0 +1,64 @@
+uuid: uc-hammer-cost-quota-015
+handle: cost-quota/cross-tenant-cost-leakage-denied
+scenario:
+  description: 'A tenant-admin for tenant A issues a cost query that, through a shared pool join, would
+    return line items attributable to tenant B. The system must scope every cost statement to the requester''s
+    tenant boundary and refuse to leak another tenant''s cost detail — returning only A''s proportional
+    share of any shared resource, never B''s itemization. The mechanism under test is tenant isolation
+    on the cost/attribution plane: a chargeback engine that joins across a shared pool is a prime cross-tenant
+    leakage vector.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - finance-analyst
+    - security-officer
+  intent: Query cost and confirm no other tenant's detail leaks through shared joins
+  success_criteria:
+  - The cost query is scoped to the requesting tenant's boundary
+  - Shared-resource lines return only the requester's proportional share
+  - No other tenant's itemized cost detail is returned
+  - An attempt to widen scope past the tenant boundary is denied
+  - The scoping decision and the denied widening are recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: cross_dependency_payload
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: cost query joined across a shared pool but filtered to the tenant boundary
+  - domain: policy
+    interaction: tenant-isolation matrix denies cross-tenant cost disclosure
+  - domain: audit
+    interaction: scoping and denied scope-widening recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- multi-tenancy
+- isolation
+- leakage
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Tenants A and B share a pool with joinable cost lines
+  postconditions:
+  - Only the requester's share is returned
+  - Cross-tenant disclosure is denied and logged
+  note: batch=framework-hammer-2026-07-16

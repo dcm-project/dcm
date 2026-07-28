@@ -1,0 +1,60 @@
+uuid: uc-hammer-networking-007
+handle: networking/vlan-shared-tenant-stakes
+scenario:
+  description: 'A shared services VLAN (id 30, "platform-ingress") is used by three tenants at once: each
+    attaches workloads and each depends on it staying up. Tenant A files a decommission request for the
+    VLAN. The system must recognize the VLAN as a shared resource with multiple tenant stakes (M:N), refuse
+    to let one stakeholder unilaterally destroy a resource others depend on, and require either co-approval
+    or removal of the other stakes first. This tests whether a segment carries stakeholder relationships
+    or is treated as owned by whoever touched it last.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Attempt to decommission a VLAN that multiple tenants have active stakes in
+  success_criteria:
+  - The VLAN is modelled as a shared resource with multiple tenant stakeholders (M:N stakes)
+  - Each dependent tenant's stake is discoverable from the data model
+  - A single stakeholder's decommission request does not destroy the shared segment
+  - The system requires co-approval or removal of remaining stakes before decommission proceeds
+  - Denied/held decommission is reported with the blocking stakeholders named
+  - The attempt and its governance outcome are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: shared VLAN with per-tenant stakes read; dependents enumerated
+  - domain: policy
+    interaction: shared-resource decommission policy blocks unilateral destruction
+  - domain: audit
+    interaction: blocked decommission and blocking stakeholders recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- vlan
+- shared-resource
+- multi-tenancy
+- stakes
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

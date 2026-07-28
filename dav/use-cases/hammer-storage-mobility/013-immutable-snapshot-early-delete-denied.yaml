@@ -1,0 +1,61 @@
+uuid: uc-hammer-storage-mobility-013
+handle: storage-mobility/immutable-snapshot-early-delete-denied
+scenario:
+  description: 'A tenant admin, trying to reclaim capacity, issues a decommission against a snapshot held
+    in a WORM store whose retention lock has not yet expired. The system must treat the committed snapshot
+    as an immutable record and refuse the deletion until the lock window passes — even when the request
+    comes from the resource owner. This probes drift and lifecycle enforcement on immutable records: the
+    intent to delete must not be honored, and the attempt itself must be audited. Likely an unsupported/denied
+    verdict that proves the retention contract holds against privileged actors.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Delete a retention-locked snapshot before its lock expires
+  success_criteria:
+  - Decommission request targets a snapshot under an unexpired retention lock
+  - The deletion is refused because the retention lock is still active
+  - Refusal holds even though the requester owns the resource
+  - The snapshot and its data remain fully intact
+  - The lock expiry that blocks deletion is cited in the verdict
+  - The denied deletion attempt is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: retention-lock policy denies decommission within the lock window
+  - domain: data
+    interaction: immutable snapshot record left unchanged
+  - domain: audit
+    interaction: denied deletion attempt recorded with requester and lock expiry
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- immutability
+- retention
+- decommission
+- denied
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

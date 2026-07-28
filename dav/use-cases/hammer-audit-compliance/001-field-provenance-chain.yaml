@@ -1,0 +1,59 @@
+uuid: uc-hammer-audit-001
+handle: audit/field-provenance-chain
+scenario:
+  description: 'A compliance auditor selects a single field on a realized resource — the residency region
+    on a production database — and asks the system to reconstruct its full provenance chain: the original
+    intent that set it, every modification that touched it, which policy evaluation admitted each change,
+    which actor requested it, and which provider realized it. The architecture must reassemble a per-field
+    lineage across the resource lifecycle from the four-state stores and the audit trail, not merely return
+    the current value. This probes whether audit is field-granular and lineage-navigable rather than record-granular.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - sovereignty-authority
+  intent: Reconstruct the complete provenance chain of one field across its entire lifecycle
+  success_criteria:
+  - The current value of the field is returned with its originating intent record
+  - Every modification that changed the field is listed in causal order
+  - Each change links to the policy evaluation that admitted it
+  - Each change links to the requesting actor and their authorization at that time
+  - Each change links to the provider action that realized it
+  - The chain is complete with no gaps between the first intent and current state
+  - Values the auditor is not entitled to see are redacted without breaking the chain
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: per-field intent and realized history assembled across all four states
+  - domain: policy
+    interaction: each field change joined to the admitting policy evaluation
+  - domain: provider
+    interaction: realizing provider action resolved for each change
+  - domain: audit
+    interaction: field-level lineage stitched from the audit trail into a single chain
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- provenance
+- lineage
+- field-level
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

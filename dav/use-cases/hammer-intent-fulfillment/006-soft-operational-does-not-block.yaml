@@ -1,0 +1,60 @@
+uuid: uc-0e2052cf-1975-48f7-bfab-bf6f27713480
+handle: intent-fulfillment/soft-operational-does-not-block
+version: 1.0.0
+scenario:
+  description: >-
+    A container operationally depends on a DNS service, but the edge is SOFT (dependencies[].strength:
+    soft) — the container works better with it but can function without it. DNS is unrealized. Because
+    a soft operational dependency never blocks, the container still converges and realizes — degraded,
+    not blocked, not held. The convergence window is irrelevant to the container here: it does not wait
+    on a soft dependency at all. The unsatisfied soft dependency is not silent, though — the container
+    is surfaced as realized-degraded with a warning naming the missing DNS and what capability is
+    reduced, so the operator sees the degradation and can act. This is the hard/soft distinction the
+    registry already ships (strength: hard|soft), read through the operational nature: hard operational
+    blocks the dependent; soft operational lets it converge degraded and surfaces the shortfall.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: >-
+    Let a container converge and realize degraded when its soft operational DNS dependency is
+    unrealized — never blocked, never held — surfacing the degradation with the missing dependency
+    named
+  success_criteria:
+  - The container realizes despite its soft operational dependency (DNS) being unrealized — degraded, not blocked
+  - The container is not held pending on the soft dependency — the convergence window does not gate it
+  - The unsatisfied soft dependency is surfaced as a warning naming the missing DNS and the reduced capability — not silent
+  - The distinction is the edge strength (soft vs hard) under the operational nature — soft never blocks, hard does
+  - Were the same edge hard, the container would instead be blocked (per operational-dependency-cascade) — the strength is what differs
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the operational edge carries strength soft (dependencies[].strength); the container realizes degraded, not dangling
+  - domain: policy
+    interaction: soft operational dependency never blocks the dependent — converge degraded; hard would block
+  - domain: provider
+    interaction: DNS unrealized; the container is realized without it, capability reduced
+  - domain: audit
+    interaction: the degraded realization and the missing soft dependency are recorded and surfaced
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- soft-dependency
+- degraded
+- surfacing

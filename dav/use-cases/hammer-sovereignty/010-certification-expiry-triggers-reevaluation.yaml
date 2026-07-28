@@ -1,0 +1,70 @@
+uuid: uc-hammer-sovereignty-010
+handle: sovereignty/certification-expiry-triggers-reevaluation
+scenario:
+  description: 'A provider hosting residency-pinned workloads holds a sovereign certification (the compliance
+    credential the placement originally relied on) that reaches its expiry date. No intent changed, but
+    the credential the placement depended on is no longer valid. A compliance auditor expects the architecture
+    to treat certification expiry as a drift signal: detect that a still-realized resource now sits on
+    a provider whose certification has lapsed, re-evaluate the sovereignty policy, and trigger a recovery
+    policy that flags the resource and requires re-attestation or re-placement before the provider is
+    considered compliant again. This probes whether the model treats provider certifications as time-bounded
+    facts that must be re-checked, not one-time admission gates.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - security-officer
+    - sovereignty-authority
+  intent: Re-evaluate placements when a provider's sovereign certification expires
+  success_criteria:
+  - Certification expiry is ingested as a drift signal against realized resources
+  - The set of resources placed under the expired certification is identified
+  - Sovereignty policy is re-evaluated for those resources on expiry
+  - A recovery policy flags the affected resources as pending re-attestation or re-placement
+  - The provider is not treated as compliant again until re-attestation succeeds
+  - The expiry event, affected resources, and required action are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: certification expiry read as a time-bounded compliance fact
+  - domain: policy
+    interaction: sovereignty re-evaluated on expiry; recovery policy requires re-attestation or re-placement
+  - domain: data
+    interaction: affected resources flagged pending re-attestation
+  - domain: audit
+    interaction: expiry event, affected resources, and required action recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- certification-expiry
+- re-evaluation
+- recovery
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resources are realized on a provider under a now-expired sovereign certification
+  - Intent is unchanged
+  postconditions:
+  - Affected resources flagged pending re-attestation or re-placement
+  - Provider not treated compliant until re-attested
+  note: batch=framework-hammer-2026-07-16

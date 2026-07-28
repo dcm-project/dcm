@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-004
+handle: dr-rehydration/provider-portable-single-happy
+scenario:
+  description: 'A platform engineer rehydrates a single object-storage bucket in provider-portable mode
+    even though the original provider is still available. Provider-portable rehydration ignores the originally
+    realized provider binding and re-runs the placement engine to choose any eligible provider that satisfies
+    the intent''s capability and policy requirements. In this happy case the placement engine happens
+    to re-select the original provider, but it must do so through fresh eligibility evaluation, not by
+    replaying the old binding. This proves portable mode is genuinely re-placed, establishing the baseline
+    before substitution and sovereignty edges are introduced.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Rehydrate one resource in portable mode via fresh placement
+  success_criteria:
+  - Rehydration runs in provider-portable mode, ignoring the original provider binding
+  - Placement engine evaluates all eligible providers against the intent's requirements
+  - A provider is selected through fresh eligibility, not by replaying the old binding
+  - The resource is re-realized on the selected provider and satisfies intent
+  - The resource UUID is preserved even though placement was recomputed
+  - Placement rationale (candidates considered, provider chosen) is recorded
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent read; original provider binding intentionally not replayed
+  - domain: policy
+    interaction: eligibility and validation policies evaluated for candidate providers
+  - domain: provider
+    interaction: placement engine re-selects a provider and re-realizes the resource
+  - domain: audit
+    interaction: placement candidates and selection rationale recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- provider-portable
+- placement
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A single resource was realized and is now destroyed
+  - Multiple eligible providers exist, including the original
+  postconditions:
+  - Resource re-realized via fresh placement in portable mode
+  - UUID preserved; placement rationale recorded
+  note: batch=framework-hammer-2026-07-16

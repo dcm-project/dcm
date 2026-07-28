@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-018
+handle: dr-rehydration/full-stack-governance-matrix
+scenario:
+  description: 'A compliance auditor oversees a full-stack faithful rehydration of a regulated workload
+    where every resource must pass a governance matrix that combines residency, data-classification, encryption,
+    and approval-chain requirements before it may be re-realized. Rehydration cannot be a fast-path that
+    bypasses controls just because the resources previously existed; each resource must clear the full
+    governance matrix again at rebuild time, and the reconstruction must produce an audit-grade record
+    proving every control was enforced during recovery. This stresses whether DR preserves governance
+    rigor under time pressure, or whether recovery is a hole in the control plane. Heavy audit and matrix
+    enforcement across the whole stack.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Rehydrate a regulated full stack with full governance-matrix enforcement
+  success_criteria:
+  - Every resource is re-evaluated against the full governance matrix before re-realization
+  - Rehydration does not fast-path or bypass controls because resources previously existed
+  - Residency, data-class, encryption, and approval-chain checks all apply during recovery
+  - Any resource failing a matrix cell is blocked without blocking independent siblings
+  - The rebuild produces an audit-grade record proving each control was enforced
+  - The full destroy-to-recovery arc with per-control evidence is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    governance_context: audit_heavy
+    provider_landscape: multiple_eligible
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent and dependency graph read for the full regulated stack
+  - domain: policy
+    interaction: full governance matrix re-enforced per resource at rebuild time
+  - domain: provider
+    interaction: providers re-realize only resources that clear every matrix cell
+  - domain: audit
+    interaction: per-control evidence and full recovery arc recorded audit-grade
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- governance-matrix
+- audit-heavy
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A regulated full stack governed by a multi-cell matrix was realized and destroyed
+  - The governance matrix is still in force at rehydration
+  postconditions:
+  - Every resource re-cleared the full matrix before re-realization
+  - Audit-grade per-control evidence recorded
+  note: batch=framework-hammer-2026-07-16

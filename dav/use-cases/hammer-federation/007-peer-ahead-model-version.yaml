@@ -1,0 +1,59 @@
+uuid: uc-hammer-federation-007
+handle: federation/peer-ahead-of-ratified-model-version
+scenario:
+  description: 'A peer DCM has adopted a newer UDLM model version than the locally ratified one and dispatches
+    an order that uses a resource type and fields the local model does not yet recognize. The local DCM
+    must not blindly reject the whole interaction nor silently drop the unknown fields; it must detect
+    the version skew, apply a compatibility rule (accept known fields, quarantine unknown ones, or refuse
+    with a clear version-mismatch reason), and never persist a resource it cannot faithfully represent.
+    This tests federation across a model-version boundary and likely surfaces a gap in forward-compat.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+  intent: Handle an order from a peer running a model version ahead of the ratified one
+  success_criteria:
+  - Local DCM detects the peer is on a newer model version than ratified locally
+  - Unknown resource types/fields are identified rather than silently dropped
+  - A defined compatibility rule is applied (accept-known / quarantine-unknown / refuse)
+  - No resource is persisted that the local model cannot faithfully represent
+  - The peer receives a clear version-mismatch outcome, not an opaque failure
+  - If no forward-compat rule exists, the gap is reported as unsupported
+  - The version skew and disposition are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: model version skew detected; unknown fields quarantined not dropped
+  - domain: policy
+    interaction: compatibility policy decides accept/quarantine/refuse for unknown schema
+  - domain: audit
+    interaction: version mismatch and disposition recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- model-version
+- forward-compat
+- likely-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

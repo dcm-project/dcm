@@ -1,0 +1,60 @@
+uuid: uc-hammer-cost-quota-009
+handle: cost-quota/showback-vs-chargeback
+scenario:
+  description: 'The same estate must render two cost views: a non-binding showback that informs teams
+    of their consumption, and a binding chargeback that actually debits a tenant budget and decrements
+    quota. A finance-analyst switches a tenant from showback to chargeback mode. The system must treat
+    cost visibility and cost enforcement as separate policy modes over identical attribution data, and
+    only in chargeback mode may cost affect budget and quota. The mechanism under test is whether the
+    architecture separates cost reporting from cost enforcement as a policy toggle, or conflates the two.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Toggle a tenant between non-binding showback and binding chargeback
+  success_criteria:
+  - Showback and chargeback are modeled as distinct policy modes over one attribution set
+  - In showback mode cost is reported but budget and quota are untouched
+  - In chargeback mode the same cost debits budget and decrements quota
+  - Switching modes does not alter the underlying attribution data
+  - The mode in force is attached to each cost statement
+  - The mode change and its effective time are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: one attribution set read; mode flag toggled on the tenant
+  - domain: policy
+    interaction: showback vs chargeback policy modes decide whether cost binds to budget and quota
+  - domain: audit
+    interaction: mode change and each statement's governing mode recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- showback
+- chargeback
+- policy-mode
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Attribution data exists for the tenant
+  postconditions:
+  - Mode toggle changes enforcement without changing attribution
+  note: batch=framework-hammer-2026-07-16

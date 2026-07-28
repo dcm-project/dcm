@@ -1,0 +1,68 @@
+uuid: uc-hammer-sovereignty-001
+handle: sovereignty/cross-border-migration-denied
+scenario:
+  description: 'A platform engineer requests a live migration of a realized database service from an in-jurisdiction
+    provider to a lower-cost provider region located in a different country. The resource carries a residency
+    constraint pinning its data-at-rest to the original jurisdiction. The placement engine must re-evaluate
+    the sovereignty validation policy against the target provider, detect that the move would relocate
+    data-at-rest across a prohibited border, and deny the migration before any dispatch occurs. The denial
+    and its policy rationale must be recorded, and the resource must remain realized on its original compliant
+    provider.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Migrate a residency-pinned database to a cheaper cross-border region
+  success_criteria:
+  - Migration request is accepted into the pipeline and re-evaluated, not silently applied
+  - Sovereignty policy resolves the target provider's jurisdiction and compares it to the constraint
+  - The cross-border move is denied because data-at-rest would leave the mandated jurisdiction
+  - No provider dispatch or partial migration occurs on the target provider
+  - The original resource stays realized and unchanged on its compliant provider
+  - Denial decision, offending jurisdiction, and policy id are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: residency constraint on data-at-rest read from intent state
+  - domain: policy
+    interaction: sovereignty validation compares target provider jurisdiction to the constraint and denies
+  - domain: provider
+    interaction: no dispatch issued; target provider never contacted
+  - domain: audit
+    interaction: cross-border denial recorded with offending jurisdiction and policy id
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- cross-border
+- residency-enforcement
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Database service is realized on a provider inside the mandated jurisdiction
+  - Residency constraint pins data-at-rest to that jurisdiction
+  postconditions:
+  - Migration denied; no target dispatch occurred
+  - Resource remains realized on the original compliant provider
+  - Audit trail records the denial and rationale
+  note: batch=framework-hammer-2026-07-16

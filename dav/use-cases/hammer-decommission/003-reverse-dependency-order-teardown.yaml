@@ -1,0 +1,55 @@
+uuid: uc-hammer-decommission-003
+handle: decommission/reverse-dependency-order-teardown
+scenario:
+  description: 'A platform engineer decommissions a full three-tier stack — web tier, app tier, database,
+    and the network and storage they sit on. The system must derive the teardown order dynamically as
+    the reverse of the build dependency graph: dependents first, foundations last, so nothing is destroyed
+    while something still references it. This is the mirror of dynamic rehydration and proves the dependency
+    graph drives destroy ordering, not a recorded build log.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Tear down a full stack in correct reverse-dependency order
+  success_criteria:
+  - Teardown order is computed dynamically as the reverse of the build dependency graph
+  - No resource is destroyed while another resource still depends on it
+  - Each tier's destroy is dispatched to its owning provider and acknowledged in order
+  - Realized state is cleared tier by tier as each destroy confirms
+  - Foundational resources (network, storage) are destroyed only after all consumers are gone
+  - The ordered teardown arc is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph read and reversed to compute teardown order
+  - domain: provider
+    interaction: each tier destroyed by its owning provider in reverse order
+  - domain: audit
+    interaction: ordered teardown sequence recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- reverse-order
+- full-stack
+- orchestration
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

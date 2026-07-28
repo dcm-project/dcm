@@ -1,0 +1,54 @@
+uuid: uc-a275be9c-dcfa-4217-8102-3c4c3b13fd2a
+handle: change-control/staged-rollout-tiers
+version: 1.0.0
+scenario:
+  description: 'An organization runs three estates on one registry: development (continuous adoption),
+    staging (windowed), production (full ceremony). A breaking Compute Base change rolls out as a staged
+    chain the policies themselves compose: development adopts first and soaks; its clean soak evidence
+    is a precondition in staging''s policy; staging''s clean adoption is a precondition in production''s.
+    A failure at any stage halts every later stage automatically — the chain is policy topology, not a
+    runbook.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Roll a breaking change through dev, staging, and production estates as a policy-composed chain
+    where each stage's evidence gates the next
+  success_criteria:
+  - Each estate's adoption policy names its predecessor's clean evidence as a precondition — the chain
+    is declared, not scripted
+  - Development adopts first under its continuous policy and produces soak evidence
+  - Staging's window gate does not open for this change until development's soak evidence exists
+  - A failure recorded at staging halts production's chain automatically
+  - The cross-estate rollout is reconstructible from the three adoption trails end to end
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: stage preconditions compose the rollout chain across estates
+  - domain: data
+    interaction: soak and adoption evidence are typed records the next stage's policy reads
+  - domain: provider
+    interaction: each stage's orchestration runs under its own estate's controls
+  - domain: audit
+    interaction: three linked adoption trails reconstruct the full rollout
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- staged-rollout
+- multi-estate
+- breaking

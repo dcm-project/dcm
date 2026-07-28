@@ -1,0 +1,65 @@
+uuid: uc-hammer-policy-override-007
+handle: policy-override/shadow-mode-evaluation
+scenario:
+  description: 'A security-officer stages a new placement policy in shadow mode before enforcing it. For
+    every matched request the engine must evaluate the shadow policy alongside the active policy set,
+    record what verdict it WOULD have produced, and surface the would-block rate — all without affecting
+    the live decision or blocking any request. This lets the team measure blast radius before activation.
+    The mechanism under test is a policy lifecycle state (shadow) whose verdicts are observed and recorded
+    but never enforced, cleanly separated from the enforced verdict on the same request.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Evaluate a candidate policy in shadow mode without affecting live decisions
+  success_criteria:
+  - The shadow policy is evaluated on every matched request
+  - The shadow verdict is recorded as would-have without changing the live outcome
+  - No request is blocked or altered by the shadow policy
+  - The would-block rate is derivable from the recorded shadow verdicts
+  - Shadow verdicts are stored distinctly from enforced verdicts on the same request
+  - The policy's shadow lifecycle state is explicit and separate from active
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: shadow policy evaluated alongside active set, verdict not enforced
+  - domain: data
+    interaction: would-have verdicts stored separately from enforced verdicts
+  - domain: audit
+    interaction: shadow evaluation recorded to support blast-radius analysis
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- shadow-mode
+- pre-activation
+- blast-radius
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A candidate policy is staged in shadow (non-enforcing) mode
+  postconditions:
+  - Shadow verdicts recorded; live decisions unaffected
+  - Would-block rate is measurable before activation
+  note: batch=framework-hammer-2026-07-16

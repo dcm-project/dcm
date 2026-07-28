@@ -1,0 +1,61 @@
+uuid: uc-hammer-brownfield-019
+handle: brownfield-discovery/reject-adoption-unknown-udlm-type
+scenario:
+  description: 'Discovery finds a resource class UDLM has no type for — a specialized FPGA accelerator
+    card with no matching catalog type or schema. The system can note the raw observation, but there is
+    no UDLM type to model it as a first-class entity, so it cannot be adopted, governed, or realized.
+    The architecture must refuse adoption with a clear type-gap finding (naming the missing UDLM type)
+    rather than shoehorning it into a generic type and losing fidelity. This likely returns unsupported:
+    it exposes a catalog coverage gap that only a new UDLM type can close, and is exactly the kind of
+    finding the hammer round is meant to surface.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Refuse adoption of a discovered resource with no matching UDLM type and surface the type gap
+  success_criteria:
+  - The raw observation is noted but not modeled as a first-class typed entity
+  - Adoption is refused because no UDLM type matches the resource class
+  - The resource is not coerced into a generic type that would lose fidelity
+  - A type-gap finding names the missing UDLM type needed to model the resource
+  - The rest of the discovery scan proceeds unaffected by the unmodellable resource
+  - The type-gap and adoption refusal are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery reports a resource class with no UDLM type
+  - domain: data
+    interaction: no first-class entity can be modeled; observation held as untyped with a type-gap marker
+  - domain: policy
+    interaction: type-coverage check refuses adoption of an unmodellable resource
+  - domain: audit
+    interaction: type-gap finding and refusal recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- type-gap
+- unknown-type
+- catalog-coverage
+- unsupported-probe
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

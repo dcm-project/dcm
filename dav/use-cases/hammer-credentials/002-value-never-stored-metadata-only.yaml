@@ -1,0 +1,57 @@
+uuid: uc-hammer-credentials-002
+handle: credentials/value-never-stored-metadata-only
+scenario:
+  description: 'A security officer audits the DCM data model to prove that no credential secret material
+    (private keys, passwords, tokens, client secrets) is ever persisted in any of the four state stores.
+    The system must demonstrate that Credential records hold only metadata — reference/handle, scope,
+    issuer, fingerprint, validity — and that the actual value lives exclusively in an external secret
+    backend. This directly exercises the CPX-001 invariant that value is never stored in the model.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Prove no credential secret value is persisted anywhere in the model
+  success_criteria:
+  - Every Credential record is confirmed to contain metadata only
+  - A non-secret reference/handle points to the external secret backend
+  - A fingerprint or public half may be present; the secret half never is
+  - No intent, realized, dispatch, or drift store contains secret material
+  - The audit confirms the invariant holds across all credential records
+  - The report is reproducible without exposing any secret value
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: all four stores scanned; only metadata found for credentials
+  - domain: policy
+    interaction: metadata-only invariant enforced as a structural constraint
+  - domain: audit
+    interaction: invariant-proof report recorded without leaking secret values
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- cpx-001
+- metadata-only
+- audit
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

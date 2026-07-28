@@ -1,0 +1,59 @@
+uuid: uc-hammer-brownfield-010
+handle: brownfield-discovery/adopt-resource-violating-policy
+scenario:
+  description: 'An operator tries to adopt a discovered VM that violates current policy — it runs an end-of-life
+    OS and stores unencrypted data, both banned by the active compliance-gated profile. Adoption must
+    NOT be a blanket exception: the system evaluates the discovered attributes against current policy
+    at the moment of adoption and refuses to move the entity into fully-compliant managed state. The realistic
+    outcome is a governed middle ground — adopt into a quarantined/non-conformant managed state with a
+    remediation obligation, or refuse adoption entirely. This probes whether policy is enforced at the
+    adoption boundary and whether a non-conformant managed state exists at all.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Adopt a discovered resource that fails current policy without granting a blanket exception
+  success_criteria:
+  - Discovered attributes are evaluated against current policy at the point of adoption
+  - Adoption into fully-compliant managed state is refused for the violating entity
+  - The entity is either quarantined as non-conformant with a remediation obligation, or refused outright
+  - The specific violated policies (EOL OS, unencrypted data) are named in the finding
+  - No silent exception is granted; the non-conformance is visible to governance
+  - The adoption attempt and its policy verdict are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered attributes surfaced for policy evaluation at adoption
+  - domain: policy
+    interaction: current compliance policy evaluated; adoption refused or quarantined
+  - domain: audit
+    interaction: violated policies and the adoption verdict recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- adoption
+- policy-violation
+- quarantine
+- fsi
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

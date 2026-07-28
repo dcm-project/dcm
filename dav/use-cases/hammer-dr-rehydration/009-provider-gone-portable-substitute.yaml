@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-009
+handle: dr-rehydration/provider-gone-portable-substitute
+scenario:
+  description: 'A platform engineer rehydrates a realized service in provider-portable mode, but the provider
+    that originally realized it has been fully decommissioned and no longer exists in the provider registry.
+    The placement engine must recognize the missing original binding as acceptable in portable mode, evaluate
+    the remaining eligible providers for capability equivalence, and re-realize the resource on a substitute
+    that satisfies the same intent. The substitution must be capability-checked (not merely category-matched)
+    so the rehydrated resource is functionally equivalent. This is a core portability claim of the architecture
+    and may surface gaps where capability equivalence is under-specified.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Rehydrate onto a substitute provider after the original is decommissioned
+  success_criteria:
+  - System detects the original provider is absent from the registry
+  - Portable mode treats the missing original binding as acceptable, not fatal
+  - Remaining eligible providers are evaluated for capability equivalence to the intent
+  - A capability-equivalent substitute provider is selected (not merely category-matched)
+  - The resource is re-realized on the substitute and satisfies intent
+  - Substitution rationale and equivalence evidence are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent read; original provider binding found absent
+  - domain: policy
+    interaction: capability-equivalence and validation policies evaluated for candidates
+  - domain: provider
+    interaction: placement selects a substitute and re-realizes the resource
+  - domain: audit
+    interaction: substitution rationale and equivalence evidence recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- provider-portable
+- provider-gone
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource was realized on a provider that is now decommissioned
+  - Other eligible providers exist with overlapping capabilities
+  postconditions:
+  - Resource re-realized on a capability-equivalent substitute
+  - Substitution rationale recorded
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,49 @@
+uuid: uc-940118e4-4994-4be3-b5a3-37a436ca64c7
+handle: vocabulary-intake/proposed-promotes-through-curation
+version: 1.0.0
+scenario:
+  description: 'A proposed element minted from usage is adopted by further authors and then curated: promotion
+    to canonical status — and optionally up a scope tier — runs through the standard element-promotion
+    operation, with deduplication performed at promotion time (near-duplicate proposed elements merged,
+    references re-bound) rather than at mint time. Promotion up a scope tier is the portability-improvement
+    operation the class system already defines; a harvested string can end its life as a Base-tier element
+    every provider shares.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Promote a usage-harvested proposed element to canonical through the standard promotion operation,
+    deduplicating at promotion time
+  success_criteria:
+  - Promotion proposed-to-canonical is the standard element-promotion operation, not a special path
+  - 'Deduplication happens at promotion: near-duplicate proposed elements merge with references re-bound'
+  - Scope-tier promotion follows the class system's promotion rules and improves derived portability
+  - The promotion records the element's minted-from lineage end to end
+  - Un-promoted proposed elements remain valid at their scope — promotion is earned, never forced
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: promotion + dedup operate on the element store with re-binding
+  - domain: policy
+    interaction: curation policy governs who promotes and when
+  - domain: audit
+    interaction: minted-from lineage survives promotion
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: vocabulary-intake-2026-07-25
+  timestamp: '2026-07-26T05:00:00Z'
+tags:
+- hammer
+- vocabulary-intake
+- promotion
+- dedup
+- curation

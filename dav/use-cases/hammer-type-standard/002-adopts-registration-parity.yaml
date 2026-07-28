@@ -1,0 +1,49 @@
+uuid: uc-type-standard-002
+handle: type-standard/adopts-registration-parity
+version: 1.0.0
+scenario:
+  description: "A type's description claims it adopts an industry standard (an image spec, a vulnerability\
+    \ format, an identity schema) but its adopts[] list is empty \u2014 the claim carries no version,\
+    \ license verdict, or provenance, so the adoption is unverifiable and the licensing posture unknown.\
+    \ A fleet review found nine types with empty adopts[], three of which claim adoption in prose. This\
+    \ stresses that adoption claims and adoption records cannot diverge: prose that claims, registers."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Detect any type whose prose claims standard adoption without a corresponding adopts[] registration
+    carrying version and license disposition
+  success_criteria:
+  - A type claiming adoption in prose with empty adopts[] is flagged mechanically
+  - Every adopts[] entry carries source, version, and license compatibility verdict
+  - The standards-adoption register and adopts[] stay in parity both directions
+  - A reviewer can answer 'what standard backs this field' from the record, not the author
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: none_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: adopts[] is the machine-readable adoption record the prose must match
+  - domain: policy
+    interaction: governance can gate on license compatibility only if it is recorded
+  - domain: provider
+    interaction: provider-adopted standards follow the same parity rule
+  - domain: audit
+    interaction: adoption provenance is attestable from the registry alone
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: type-standard-2026-07-24
+  timestamp: '2026-07-24T18:00:00.000000+00:00'
+tags:
+- adopts-parity
+- standards
+- licensing
+- ci-ratchet

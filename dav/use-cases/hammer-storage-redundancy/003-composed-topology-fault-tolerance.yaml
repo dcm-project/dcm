@@ -1,0 +1,58 @@
+uuid: uc-storage-redundancy-003
+handle: storage-redundancy/composed-topology-fault-tolerance
+version: 1.0.0
+scenario:
+  description: "A pool's protection is a recursive tree \u2014 a stripe of mirrors, a mirror of stripes,\
+    \ an LVM pool whose member is an md mirror. Fault tolerance must compose through the tree honestly:\
+    \ a stripe-of-mirrors survives one failure per mirror leg but zero once any leg is degraded; the same\
+    \ physical layout expressed in a different persona (ZFS's top-level mirrors vs a controller's explicit\
+    \ tree) must report identical tolerance numbers. This stresses that the tree semantics, not the authoring\
+    \ idiom, determine the reported protection state."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Model composed redundancy topologies and verify fault tolerance composes through the vdev tree
+    identically for equivalent layouts in different personas
+  success_criteria:
+  - A nested topology (stripe of mirrors) reports tree-composed fault_tolerance_remaining
+  - Degrading one mirror leg drops the composed tolerance to reflect the striped parent
+  - The same layout expressed as ZFS top-level mirrors and as an explicit controller tree reports identical
+    numbers
+  - A mixed-depth tree (drives and child vdevs as siblings, where the backend allows) evaluates correctly
+  - Nested-backend layering (an lvm pool whose member vdev is an md mirror) models without special cases
+  - 'Spare semantics follow tree position: a top-level spare group serves any vdev, a nested one only
+    its parent; draid distributed spares report capacity without devices; spares_available never inflates
+    fault_tolerance_remaining'
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: component_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the recursive vdev tree is the evaluated structure
+  - domain: policy
+    interaction: tolerance thresholds gate maintenance regardless of authoring persona
+  - domain: provider
+    interaction: each backend reports member state; composition is model semantics
+  - domain: audit
+    interaction: tolerance transitions are recorded against the tree, not flat groups
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: storage-redundancy-2026-07-25
+  timestamp: '2026-07-25T03:00:00.000000+00:00'
+tags:
+- storage-pool
+- raid
+- recursive-vdevs
+- fault-tolerance
+- personas

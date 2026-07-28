@@ -1,0 +1,60 @@
+uuid: uc-f9e53913-8c90-4c81-907b-8c390dfabd55
+handle: change-control/stale-knowledge-fails-closed
+version: 1.0.0
+scenario:
+  description: 'The information provider feeding the change calendar has not refreshed since before its
+    declared validity horizon — the window knowledge is stale. A gate that authorizes disruptive work
+    against a possibly-outdated calendar is worse than one that refuses: the window gate fails CLOSED
+    on stale knowledge — typed (stale-knowledge), naming the source, its last refresh, and its validity
+    horizon — and the expedite path remains available for genuine emergencies. Staleness is decidable
+    because Knowledge-family records carry a freshness surface (as-of, valid-until, refresh cadence);
+    the same surface serves every knowledge domain (a stale vulnerability feed is the same failure class
+    as a stale calendar).'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - information-provider-owner
+  intent: Have gates fail closed on stale change-control knowledge, decidable from the Knowledge family's
+    declared freshness surface
+  success_criteria:
+  - Knowledge-family records carry a declared freshness surface (as-of, valid-until, refresh cadence)
+  - The window gate evaluates freshness before evaluating the window itself
+  - Stale knowledge produces a typed stale-knowledge refusal naming source, last refresh, and validity
+    horizon — never a decision on outdated data
+  - The expedite path (elevated approval, flagged audit) remains available during a staleness outage
+  - 'The freshness surface is family-level: the same elements govern every knowledge domain, not calendars
+    alone'
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: the Knowledge-family freshness surface makes staleness decidable
+  - domain: policy
+    interaction: the gate fails closed on staleness before evaluating content
+  - domain: provider
+    interaction: the information provider's refresh cadence is part of its declared contract
+  - domain: audit
+    interaction: staleness refusals record source, last refresh, and horizon
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T23:00:00Z'
+tags:
+- hammer
+- change-control
+- knowledge-source
+- freshness
+- fail-closed
+- must-reject
+- knowledge-family

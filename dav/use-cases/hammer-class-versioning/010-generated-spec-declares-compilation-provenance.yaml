@@ -1,0 +1,55 @@
+uuid: uc-95e9dce6-001b-4b56-9ec1-308ff10dbc3e
+handle: class-versioning/generated-spec-declares-compilation-provenance
+version: 1.1.0
+scenario:
+  description: 'A generated flat resource spec declares its complete compilation provenance in the artifact
+    itself: the exact revisions (handle, version, digest — the provenance block is a referrer, ADR-051)
+    of every Base, Type, and Provider class it was
+    compiled from, every shared-element layer and referenced common schema, and the generator version.
+    An auditor holding only the flat spec resolves the full chain without consulting anything but the
+    registry''s revision store — the pin guarantee (''the artifact contains its chain'') becomes verifiable
+    rather than asserted.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Have every generated flat spec declare its full compilation provenance — class chain, layers,
+    referenced schemas, generator — resolvable from the artifact alone
+  success_criteria:
+  - The flat spec carries a compilation-provenance block naming every input revision by handle, version,
+    and digest
+  - 'The block covers the full chain: Base, Type, and Provider classes, shared-element layers, and referenced
+    common schemas'
+  - A realized instance extends the chain with realization provenance — the provider definition/registration
+    revision and engine binding version that realized it
+  - The generator version that produced the artifact is part of the block
+  - An auditor resolves every named revision from the artifact alone against the revision store
+  - The provenance block changes exactly when a compilation input changes — never independently
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the provenance block is part of the generated artifact's declared surface
+  - domain: policy
+    interaction: generation is only accepted with a complete provenance block
+  - domain: audit
+    interaction: chain resolution from artifact to revision store is reconstructible
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T23:30:00Z'
+tags:
+- hammer
+- class-versioning
+- provenance
+- compiled-from
+- live-provenance

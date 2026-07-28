@@ -1,0 +1,69 @@
+uuid: uc-hammer-sovereignty-020
+handle: sovereignty/encryption-key-residency-sovereign-kms
+scenario:
+  description: 'A security officer provisions an encrypted data service where the sovereign mandate governs
+    not only the ciphertext''s data-at-rest location but the encryption key material itself: the keys
+    must be held in a sovereign KMS inside the mandated jurisdiction, and the data service depends on
+    that key material as a cross-resource payload. The architecture must treat the key-residency requirement
+    as a dependency of the data resource — placing the KMS in-jurisdiction, wiring the data service to
+    consume keys from it, and refusing a configuration where ciphertext is in-jurisdiction but the keys
+    that unlock it are held elsewhere. This probes whether sovereignty reasons about key material as a
+    distinct residency-bearing dependency, closing the "data local, keys foreign" loophole.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Keep both ciphertext and its key material in the mandated jurisdiction
+  success_criteria:
+  - The key-residency requirement is modeled as a dependency of the data resource
+  - The sovereign KMS holding the keys is placed in the mandated jurisdiction
+  - The data service is wired to consume key material from the in-jurisdiction KMS
+  - A configuration with in-jurisdiction ciphertext but foreign-held keys is refused
+  - Both the ciphertext location and the key location are recorded as satisfied constraints
+  - The key-residency dependency and its resolution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: key material modeled as a residency-bearing dependency of the data resource
+  - domain: policy
+    interaction: cross-domain sovereignty requires both ciphertext and key residency in-jurisdiction
+  - domain: provider
+    interaction: sovereign KMS placed in-jurisdiction; data service wired to consume its keys
+  - domain: audit
+    interaction: key-residency dependency resolution and satisfied constraints recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- key-residency
+- sovereign-kms
+- cross-dependency
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Mandate governs both ciphertext and encryption key residency
+  - Key material is a dependency of the data service
+  postconditions:
+  - Ciphertext and keys both in-jurisdiction
+  - Data-local-keys-foreign configuration refused
+  note: batch=framework-hammer-2026-07-16

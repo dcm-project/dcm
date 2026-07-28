@@ -1,0 +1,68 @@
+uuid: uc-hammer-sovereignty-019
+handle: sovereignty/brownfield-ingest-unknown-residency
+scenario:
+  description: 'A brownfield estate is ingested into the model, and one discovered resource has no reliable
+    residency information — the provider region is ambiguous and no jurisdiction can be confidently resolved.
+    The platform is under a sovereignty-enforced profile. The architecture must not silently assume the
+    resource is compliant, nor silently mark it non-compliant; it must ingest the resource, flag its residency
+    as unknown/unverified, and gate it as pending-attestation so it is neither trusted as sovereign nor
+    lost. This probes how the model handles the common brownfield reality of incomplete residency metadata
+    under a strict profile — and whether "unknown" is a first-class state distinct from compliant and
+    non-compliant.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Ingest a brownfield resource whose residency cannot be resolved
+  success_criteria:
+  - The resource is ingested into the model despite missing residency metadata
+  - Residency is recorded as unknown/unverified, not defaulted to compliant or non-compliant
+  - The resource is gated as pending-attestation rather than trusted as sovereign
+  - The resource is not dropped or lost from the estate
+  - Downstream operations on the resource are blocked until residency is attested
+  - The unknown-residency state and the gate are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: mixed
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: resource ingested with residency recorded as unknown/unverified
+  - domain: policy
+    interaction: sovereignty validation gates the resource as pending-attestation
+  - domain: provider
+    interaction: ambiguous provider region cannot resolve a jurisdiction
+  - domain: audit
+    interaction: unknown-residency state and gate recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- brownfield
+- unknown-residency
+- pending-attestation
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A discovered brownfield resource has ambiguous, unresolvable residency
+  - The platform is under a sovereignty-enforced profile
+  postconditions:
+  - Resource ingested and gated as pending-attestation
+  - Unknown-residency treated as a first-class state
+  note: batch=framework-hammer-2026-07-16

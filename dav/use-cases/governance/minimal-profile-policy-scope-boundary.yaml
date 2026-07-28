@@ -1,0 +1,87 @@
+uuid: uc-seed-009a
+handle: governance/minimal-profile-policy-scope-boundary
+scenario:
+  description: A developer in a minimal-profile sandbox provisions a VM with an
+    attached persistent volume and a cross-region network attachment. Under the
+    minimal profile, the FSI-scoped policies (data-residency, dual-approval for the
+    privileged cross-boundary operation, mandatory encryption-at-rest) are NOT part
+    of the request's RESOLVED PROFILE, so they must not evaluate; the request proceeds
+    under only the policies the minimal profile carries (effectively system defaults).
+    The architectural property this validates is DCM's policy-applicability model —
+    which policies fire is determined BY CONSTRUCTION from the request's resolved
+    profile (the profile selected from the platform's approved list, or the platform
+    default), and a policy not in that set is OUT OF SCOPE — neither evaluated nor
+    recorded as skipped-and-passed. The same request shape resolved under an
+    fsi profile WOULD fail (data-residency + dual-approval), which is what makes the
+    boundary real. (Per the approved-list model there is no floor/ceiling — the
+    platform governs applicability via its approved list + default, not a strictness
+    rank.)
+  actor:
+    persona: individual-developer
+    profile: homelab
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Provision a VM with attached volume and cross-region network attachment
+    under a minimal resolved profile, with FSI-scoped policies correctly out of scope
+  success_criteria:
+  - Request succeeds because no policy in the minimal resolved profile rejects it
+  - FSI-scoped policies (data-residency, dual-approval, encryption-at-rest-mandatory)
+    are NOT in the resolved profile and do not evaluate
+  - The audit record uses three distinct outcomes — evaluated-pass, evaluated-fail,
+    out-of-scope — and lists FSI-scoped policies as OUT OF SCOPE, not skipped-and-passed
+  - No silent fallback evaluates FSI policies with soft enforcement and records a pass
+  - The same request shape resolved under an fsi profile would fail on at least
+    data-residency and dual-approval (the boundary is real, not run-specific)
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: homelab
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the engine resolves the request's profile and selects that profile's
+      policies by construction — FSI-scoped policies are out of scope, not evaluated
+  - domain: policy
+    interaction: policies in the minimal resolved profile evaluate (system defaults
+      for this profile)
+  - domain: provider
+    interaction: service provider allocates the VM in the minimal sandbox
+  - domain: provider
+    interaction: storage provider allocates the volume without forced encryption-at-rest
+      (FSI-scoped, out of scope for minimal)
+  - domain: provider
+    interaction: network provider establishes the cross-region attachment without
+      residency rejection (FSI-scoped, out of scope for minimal)
+  - domain: data
+    interaction: request record stores the resolved profile + its policy set for audit
+  - domain: audit
+    interaction: audit record lists policies-evaluated with three-state outcomes; does
+      not record out-of-scope FSI policies as skipped-and-passed
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-04-23T04:45:00.000000+00:00'
+tags:
+- governance
+- policy
+- resolved-profile
+- minimal-profile
+- negative-policy-claim
+- out-of-scope-not-skipped-pass
+- three-state-audit
+- system-defaults-only
+version: 1.1.0
+metadata:
+  admitted_at: '2026-04-23T04:45:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  edited: '2026-06-29 — resolved-profile membership + three-state audit honesty; approved-list (no floor/ceiling) (Piotr PR-65 #7 / DR-E)'

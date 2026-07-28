@@ -1,0 +1,54 @@
+uuid: uc-7f2e48bc-f671-4363-aebf-60e52212abd7
+handle: change-control/breaking-full-ceremony
+version: 1.0.0
+scenario:
+  description: 'A breaking Compute Base change (properly declared upstream, blast radius enumerated) reaches
+    a production estate. Its policy requires the full ceremony for breaking classes: blue/green dry-run
+    evidence first, a named approver''s sign-off on the diff, then execution only inside the maintenance
+    window, then post-adoption verification before the debt entry closes. Each gate is a policy clause;
+    the orchestration runs them in order and stops at the first unmet gate.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Adopt a breaking class change through the estate's full ceremony — evidence, approval, window,
+    verification — with each gate policy-declared and order-enforced
+  success_criteria:
+  - The ceremony's gates (evidence, approval, window, verification) are clauses of the estate's change
+    policy, not tribal process
+  - Blue/green diff evidence exists and is approved before the window gate is even evaluated
+  - Execution occurs only inside the window and only after approval
+  - Post-adoption verification runs before the debt entry closes; a verification failure halts closure
+  - The complete gate sequence and each gate's outcome are recorded as one adoption trail
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: ordered policy gates control the adoption sequence
+  - domain: data
+    interaction: the blue/green diff and blast radius are the evidence inputs
+  - domain: provider
+    interaction: orchestration executes gates in order and halts on the first unmet gate
+  - domain: audit
+    interaction: one adoption trail records every gate outcome
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- change-window
+- breaking
+- blue-green
+- approval

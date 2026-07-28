@@ -1,0 +1,62 @@
+uuid: uc-hammer-audit-011
+handle: audit/cross-site-audit-replication-hashchain
+scenario:
+  description: 'A sovereign deployment replicates its audit log from a primary site to a DR site in a
+    second jurisdiction. The replica must be verifiably faithful: the hash chain (or Merkle head) computed
+    at the DR site must match the primary''s signed head, so a regulator can confirm the replica was neither
+    truncated nor altered in transit. During replication a single record is silently corrupted; the architecture
+    must detect the hash-chain break at the replica and refuse to certify the replica as consistent. This
+    probes whether audit replication carries integrity end-to-end or merely copies rows.
+
+    '
+  actor:
+    persona: sovereign-tenant-admin
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Replicate the audit log cross-site with verifiable hash-chain integrity
+  success_criteria:
+  - The DR replica recomputes the hash chain over the received records
+  - The replica's computed head is compared to the primary's signed head
+  - A matching head certifies the replica as a faithful copy
+  - A corrupted record breaks the chain and is detected at the replica
+  - The replica is not certified consistent when the chain fails to verify
+  - The integrity failure is recorded and the divergent record range is identified
+  - Cross-jurisdiction replication respects residency of the audit data itself
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: hash chain recomputed at the replica and matched to the primary head
+  - domain: data
+    interaction: divergent record range identified when integrity verification fails
+  - domain: policy
+    interaction: residency constraint applied to the replicated audit data
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- replication
+- hash-chain
+- cross-site
+- sovereign
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

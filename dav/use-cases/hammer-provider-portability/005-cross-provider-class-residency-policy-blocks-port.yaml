@@ -1,0 +1,59 @@
+uuid: uc-hammer-provider-portability-005
+handle: provider-portability/cross-provider-class-residency-policy-blocks-port
+scenario:
+  description: A sovereign-profile workload is re-ported toward a provider whose region violates the current residency
+    policy. The sovereignty gate — evaluated under current policy — rejects the placement before any realization.
+    The port is denied as a policy violation, and the source workload is unaffected.
+  actor:
+    persona: compliance-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Cross-provider re-port is blocked by a residency policy on the target region
+  success_criteria:
+  - The target provider's region is evaluated against current residency policy
+  - The sovereignty gate rejects the non-compliant placement
+  - No realization occurs on the target
+  - The port is denied as a policy violation
+  - The source workload continues unaffected
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: policy_violation
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: current residency policy rejects the target region
+  - domain: provider
+    interaction: no eligible compliant provider accepts the port
+  - domain: audit
+    interaction: the policy-violation denial is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- policy-violation
+- sovereignty
+- residency
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - Sovereign profile; the candidate target region is non-compliant
+  postconditions:
+  - Port denied; source unaffected; denial recorded
+  note: batch=portability-enrich-2026-07-22

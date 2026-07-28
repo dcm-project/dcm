@@ -1,0 +1,65 @@
+uuid: uc-hammer-drift-recovery-006
+handle: drift-recovery/significant-drift-remediated
+scenario:
+  description: 'An SRE reconciles a production API service whose discovered instance count has fallen
+    below the intended replica count after a provider-side autoscaler misfire. The engine must classify
+    this as significant drift — an intent-governed field materially off target but not a compliance violation
+    — and route it to automatic remediation that scales the service back to intent. This validates the
+    middle severity band: significant drift is neither ignored like minor nor frozen like critical, but
+    remediated on the normal path.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Classify an intent-governed drift as significant and remediate it back to target
+  success_criteria:
+  - Discovery reports the instance count below the intended replica count
+  - The drift is classified as significant severity under the model
+  - The classification distinguishes it from both minor and critical bands
+  - Automatic remediation is selected on the normal path (no freeze, no mandatory escalation)
+  - A scale-up dispatch restores the intended replica count
+  - Severity classification and remediation outcome are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered replica count diverges below intended count in Realized snapshot
+  - domain: policy
+    interaction: severity model classifies drift as significant; recovery policy selects remediation
+  - domain: provider
+    interaction: scale-up dispatch restores intended replica count
+  - domain: audit
+    interaction: significant classification and remediation outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- severity-classification
+- significant
+- remediation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Production API service is realized with an intended replica count
+  - Discovered replica count has fallen below intent
+  postconditions:
+  - Drift classified significant and remediated
+  - Replica count restored to intent
+  - Classification and outcome recorded
+  note: batch=framework-hammer-2026-07-16

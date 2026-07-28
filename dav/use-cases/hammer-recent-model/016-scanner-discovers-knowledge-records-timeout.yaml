@@ -1,0 +1,64 @@
+uuid: uc-hammer-recent-model-016
+handle: recent-model/scanner-discovers-knowledge-records-timeout
+scenario:
+  description: "A platform engineer runs an SBOM scanner as a discovery avenue over the fleet. The scanner\n\
+    \    populates Discovered SoftwareImage, SoftwarePackage, and Vulnerability Knowledge records and\
+    \ the\n    reference edges between them, exactly as any discovery provider populates Discovered state.\
+    \ Partway\n    through the sweep the scanner times out before covering the last rack, so the Knowledge\
+    \ graph is\n    populated for the scanned hosts only and the un-scanned hosts remain without SBOM\
+    \ records. The\n    partial graph must be persisted as valid Discovered Knowledge rather than discarded.\
+    \ This stresses\n    the scanner-as-discovery-avenue path and a timeout that yields a partial Knowledge\
+    \ sweep."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Populate Discovered SBOM Knowledge records via a scanner that times out mid-sweep, keeping the
+    partial graph
+  success_criteria:
+  - The scanner is treated as a discovery avenue populating Discovered Knowledge records
+  - SoftwareImage, SoftwarePackage, and Vulnerability records are created in Discovered state
+  - Reference edges between the Knowledge records are populated
+  - The scanner times out before the last rack and the sweep ends partial
+  - The partial Knowledge graph for scanned hosts is persisted as valid Discovered state
+  - The timeout and the un-scanned host set are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: timeout
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the scanner discovery avenue emits Discovered SoftwareImage/Package/Vulnerability records
+  - domain: data
+    interaction: the partial Knowledge graph and its edges are persisted as valid Discovered state
+  - domain: audit
+    interaction: the scan timeout and the un-scanned host set are recorded
+  - domain: policy
+    interaction: system defaults admit the Discovered Knowledge records without extra gating
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- knowledge-sbom
+- scanner-discovery
+- knowledge-records
+- partial-sweep
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - An SBOM scanner is registered as a discovery avenue
+  - The scanner has a bounded sweep window
+  postconditions:
+  - Discovered Knowledge records exist for scanned hosts
+  - Un-scanned hosts are flagged as lacking SBOM records
+  note: batch=recent-model-2026-07-22

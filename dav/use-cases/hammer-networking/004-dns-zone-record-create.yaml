@@ -1,0 +1,53 @@
+uuid: uc-hammer-networking-004
+handle: networking/dns-zone-record-create
+scenario:
+  description: 'An application-team member requests an A record for a new service under an existing Network.DNSZone
+    served by a Network.AddressService with services including dns. The system must create the record
+    as intent, validate it belongs to a zone the actor is entitled to write, and realize it through the
+    DNS AddressService. This is a simple day-to-day request that establishes DNS as a managed AddressService
+    function rather than out-of-band tribal knowledge.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives: []
+  intent: Add a DNS A record to an existing managed zone
+  success_criteria:
+  - The record intent is created and associated with the target Network.DNSZone
+  - Policy confirms the actor may write to the requested zone
+  - DNS AddressService (services includes dns) realizes the record
+  - Realized state confirms the record resolves as declared
+  - Record creation is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: zone-write entitlement validated for the actor
+  - domain: data
+    interaction: DNS record intent recorded against the zone
+  - domain: provider
+    interaction: DNS AddressService realizes the record
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- dns
+- address-service
+- zone
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

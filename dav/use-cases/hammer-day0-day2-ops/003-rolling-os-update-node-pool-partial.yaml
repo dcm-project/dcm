@@ -1,0 +1,64 @@
+uuid: uc-hammer-day0-day2-ops-003
+handle: day0-day2-ops/rolling-os-update-node-pool-partial
+scenario:
+  description: 'A platform operator rolls an OS security-package update across a 12-node pool one node
+    at a time. An Automation.Job is fired per node, bound to that node resource; three nodes fail the
+    update (package conflict) while nine succeed. The system must not treat the batch as all-or-nothing:
+    the nine successful nodes stay updated and recorded, the three failures are surfaced with their per-node
+    terminal FAILED outcome, and the pool is left in a known partially-updated state rather than rolled
+    fully back.'
+  actor:
+    persona: platform-operator
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Roll an OS-package update across a node pool and correctly record a partial outcome
+  success_criteria:
+  - A per-node update job is bound to each node and runs independently
+  - Nine successful node updates are retained, not reverted because siblings failed
+  - Three failed node updates record a per-node FAILED terminal outcome
+  - The pool is reported in a partially-fulfilled state with the exact success/failure split
+  - No successful node is rolled back solely because a sibling node failed
+  - The remaining un-updated nodes are identifiable for a follow-up remediation run
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: executes the per-node update job and returns per-node outcomes
+  - domain: data
+    interaction: records per-node update state and the resulting partial pool state
+  - domain: policy
+    interaction: applies the rolling-update chain (max-unavailable, health gate) per node
+  - domain: audit
+    interaction: records the partial outcome with the per-node success/failure split
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- rolling-update
+- partial
+- node-pool
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A 12-node pool is realized and under management
+  - A per-node OS update job is registered
+  postconditions:
+  - Nine nodes updated, three flagged failed
+  - The pool is recorded partially fulfilled with a remediation set
+  note: batch=day0-day2-ops-2026-07-22

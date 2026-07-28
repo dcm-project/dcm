@@ -1,0 +1,59 @@
+uuid: uc-71109224-8270-4bbe-ae62-937382d54b9a
+handle: change-control/mid-maintenance-failure-dr-hold
+version: 1.0.0
+scenario:
+  description: 'The same storage-array maintenance, but post-maintenance verification fails: the adopted
+    array does not publish its expected declared outputs. The flow halts in a recorded, resumable state
+    — the three continuity clients keep running on the DR replica untouched, the seven quiesced clients
+    stay down rather than restarting onto an unverified array, and the partial-adoption record states
+    exactly which steps completed. The operator''s decision point (repair and re-verify, or roll the maintenance
+    back) is reached with no user-facing outage having occurred and no unordered state anywhere. Recovery
+    resumes from the halt point; the trail records the failure, the hold, and the resolution as one history.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Have a failed post-maintenance verification halt the flow resumably with DR carrying continuity
+    clients and nothing restarted onto an unverified array
+  success_criteria:
+  - Post-maintenance verification failure halts the flow before any client restarts onto the unverified
+    array
+  - The continuity clients continue on the DR replica through the halt, untouched by the failure
+  - 'The halt state is recorded and resumable: completed steps, pending steps, and the failed verification
+    are all stated'
+  - The operator decision point (repair-and-reverify vs roll back) is explicit in the trail, not improvised
+  - Recovery resumes from the halt point in derived order; the trail reads failure, hold, and resolution
+    as one history
+  dimensions:
+    lifecycle_phase: recovery
+    resource_complexity: cross_dependency_payload
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: component_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: the halt state and completed/pending step sets are typed records
+  - domain: policy
+    interaction: restart onto an unverified array is refused by the verification gate
+  - domain: provider
+    interaction: DR replica continues serving; recovery orchestration resumes from the recorded point
+  - domain: audit
+    interaction: failure, hold, decision, and resolution form one continuous trail
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T21:00:00Z'
+tags:
+- hammer
+- change-control
+- storage-array
+- dr-hold
+- failure-recovery
+- resumable

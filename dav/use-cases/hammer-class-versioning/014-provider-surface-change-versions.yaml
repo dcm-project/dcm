@@ -1,0 +1,59 @@
+uuid: uc-2462fef2-d704-433b-abdb-f702133779b2
+handle: class-versioning/provider-surface-change-versions
+version: 1.1.0
+scenario:
+  description: 'A provider extends its declared surface: it begins populating an additional declared output
+    for a type it serves and registers one new capability. The surface change classifies additive, so
+    the provider definition takes a minor bump under the publish law — its identity uuid frozen, its new
+    revision''s digest recorded (ADR-051) — exactly as a type spec would. Later
+    it stops supporting a capability: that classifies breaking, takes the major-class bump under the standard
+    floors, and downstream estates see it exactly as they see an upstream class change — a visible debt/impact
+    entry, adopted under their own change policies, with blue/green available for the migration off the
+    dropped capability.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Version provider surface changes under the standard classification rules — additive minor, breaking
+    major, a bump always (identity frozen), downstream visibility always
+  success_criteria:
+  - Adding a populated output or capability classifies additive and takes a minor bump with the identity
+    uuid unchanged
+  - Dropping a capability or changing a populated output's shape classifies breaking under the standard
+    floors
+  - The provider-surface classification uses the same rule set as type/class compat — one classifier discipline,
+    two subjects
+  - Downstream estates see a provider surface change as visible impact under their change policies, never
+    as silent drift
+  - Blue/green (provider-swap or engine-regression form) is the migration instrument off a dropped capability
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the declared surface is the versioned contract
+  - domain: policy
+    interaction: the standard classification and floors apply unchanged
+  - domain: data
+    interaction: surface diffs are computed over declared capabilities/standards/outputs
+  - domain: audit
+    interaction: surface changes carry a version bump + recorded digest and appear in downstream impact
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T00:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- surface-versioning
+- capabilities

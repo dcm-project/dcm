@@ -1,0 +1,65 @@
+uuid: uc-hammer-dr-rehydration-011
+handle: dr-rehydration/partial-dr-some-resources-fail
+scenario:
+  description: 'An SRE runs a full-stack faithful rehydration during a real regional outage. Most resources
+    re-realize successfully, but one leaf provider is still down, so a subset of resources cannot be rebuilt.
+    The system must complete every resource it can, halt cleanly at the ones it cannot, and leave the
+    environment in a legible partially-rehydrated state — not a corrupt half-applied one. Dependents of
+    the failed resources must not be force-realized on top of missing prerequisites. This tests whether
+    rehydration degrades gracefully and produces an actionable manifest of what succeeded, what failed,
+    and what remains blocked pending the provider''s recovery.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Rehydrate a full stack when one provider is still unavailable
+  success_criteria:
+  - All resources whose providers are available are successfully re-realized
+  - Resources on the down provider fail cleanly without corrupting shared state
+  - Dependents of failed resources are held back, not realized on missing prerequisites
+  - The environment ends in a legible partially-rehydrated state, not half-applied corruption
+  - A manifest of succeeded, failed, and blocked resources is produced
+  - Partial completion is recorded so a later retry resumes only the outstanding resources
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph read; per-resource rehydration status tracked
+  - domain: policy
+    interaction: dependency-order policy holds back dependents of failed resources
+  - domain: provider
+    interaction: available providers re-realize; the down provider fails its resources
+  - domain: audit
+    interaction: succeeded/failed/blocked manifest recorded for resumable retry
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- partial-failure
+- graceful-degradation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A full stack was realized and is now destroyed
+  - One leaf provider remains unavailable during rehydration
+  postconditions:
+  - Available resources rehydrated; failed ones cleanly blocked
+  - Partial-state manifest recorded for resumable retry
+  note: batch=framework-hammer-2026-07-16

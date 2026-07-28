@@ -1,0 +1,59 @@
+uuid: uc-hammer-provider-portability-014
+handle: provider-portability/cross-provider-class-peer-dcm-disconnect-mid-port
+scenario:
+  description: A workload is re-ported across a federation boundary to a provider in a peer DCM's estate. Mid-port
+    the peer DCM becomes unreachable. The local DCM records the disconnect, does not mark the port complete, and
+    preserves the source; the port can be retried when the peer returns.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - federation-peer-operator
+  intent: A federated re-port to a peer DCM's provider fails when the peer disconnects
+  success_criteria:
+  - The re-port dispatches across the federation boundary to the peer
+  - The peer DCM becomes unreachable mid-port
+  - The local DCM records the peer disconnect
+  - The port is not marked complete and the source is preserved
+  - The port is retryable when the peer returns
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the peer DCM's provider becomes unreachable
+  - domain: policy
+    interaction: recovery policy holds the port pending the peer
+  - domain: audit
+    interaction: the disconnect and hold are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- federation
+- peer-dcm-disconnect
+- cross-boundary
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The target provider is in a peer DCM's estate
+  postconditions:
+  - Source preserved; port held; disconnect recorded
+  note: batch=portability-enrich-2026-07-22

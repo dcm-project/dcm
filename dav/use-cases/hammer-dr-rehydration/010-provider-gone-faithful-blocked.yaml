@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-010
+handle: dr-rehydration/provider-gone-faithful-blocked
+scenario:
+  description: 'A platform engineer attempts a strictly faithful rehydration of a resource whose original
+    provider has been decommissioned. Faithful mode, by contract, pins the resource to the exact provider
+    it originally occupied and forbids substitution. With that provider gone, the faithful rebuild cannot
+    proceed. The system must fail this cleanly and legibly: detect the missing provider, refuse to silently
+    fall back to a substitute (which would violate the faithful contract), and surface the conflict with
+    a recommended remediation (switch to provider-portable mode or restore the provider). This case should
+    very likely return unsupported, exposing the tension between faithful fidelity and provider mortality.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Faithfully rebuild a resource onto its original, now-missing provider
+  success_criteria:
+  - System detects the original provider is absent and required by faithful mode
+  - It refuses to substitute a different provider under the faithful contract
+  - The rehydration is blocked cleanly with no partial dispatch
+  - The conflict (faithful pin versus missing provider) is stated explicitly
+  - A remediation path (portable mode or provider restoration) is recommended
+  - The blocked outcome and rationale are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent pins original provider; provider found absent from registry
+  - domain: policy
+    interaction: faithful-mode recovery policy forbids substitution and blocks the rebuild
+  - domain: provider
+    interaction: no dispatch issued; no substitute provider contacted
+  - domain: audit
+    interaction: blocked outcome, conflict, and recommended remediation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- faithful
+- provider-gone
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource's original provider is decommissioned
+  - Faithful mode is required, forbidding substitution
+  postconditions:
+  - Rehydration blocked with no partial dispatch
+  - Conflict and remediation recorded
+  note: batch=framework-hammer-2026-07-16

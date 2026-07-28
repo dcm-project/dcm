@@ -1,0 +1,59 @@
+uuid: uc-hammer-capacity-018
+handle: capacity/peer-dcm-capacity-spillover
+scenario:
+  description: 'Local providers are exhausted, so a request must spill over to a federated peer DCM that
+    advertises capacity. The engine must query the peer for eligible capacity, honor local policy (residency,
+    attestation) against the peer''s offered nodes, reserve across the DCM boundary, and realize on the
+    peer while keeping the resource governed by the originating DCM. This tests cross-DCM capacity borrowing
+    as a placement option with policy preserved over federation.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Spill placement to a peer DCM when local capacity is exhausted
+  success_criteria:
+  - Local providers are confirmed exhausted before considering the peer
+  - The peer DCM is queried for eligible capacity across the federation boundary
+  - Local policy (residency, attestation) is enforced against peer-offered nodes
+  - Capacity is reserved on the peer and the resource realized there
+  - Governance of the resource remains with the originating DCM
+  - The spillover decision and cross-DCM reservation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer DCM queried and capacity reserved across the boundary
+  - domain: policy
+    interaction: originating policy enforced on peer-offered nodes
+  - domain: audit
+    interaction: spillover decision and cross-DCM reservation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:18.000000+00:00'
+tags:
+- capacity
+- placement
+- peer-dcm
+- federation
+- spillover
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

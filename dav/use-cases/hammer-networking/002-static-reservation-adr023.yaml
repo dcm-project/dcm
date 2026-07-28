@@ -1,0 +1,56 @@
+uuid: uc-hammer-networking-002
+handle: networking/static-reservation-adr023
+scenario:
+  description: 'An SRE needs host "app-web-01" to always come up on 192.0.2.10. Rather than hand-maintain a
+    DHCP server''s reservation list, they declare a Network.IPAddress with allocation: static, address
+    192.0.2.10/24, bound to the host''s Hardware.NetworkInterface. Per ADR-023, a static DHCP reservation
+    is not a special object — it is exactly this record with allocation: static, and the DHCP AddressService
+    realizes it as a reservation. The system must treat the reservation as an addressable, ownable record
+    (a projection of intent) rather than an opaque line in a provider''s config file.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives: []
+  intent: Declare a static DHCP reservation as a first-class IPAddress record bound to an interface
+  success_criteria:
+  - Network.IPAddress record is created with allocation set to static
+  - address carries a valid CIDR (192.0.2.10/24) and ip_family ipv4
+  - Record is bound to the target Hardware.NetworkInterface by reference (MAC/interface identity)
+  - DHCP AddressService realizes the record as a host reservation, not a dynamic lease
+  - The reservation is queryable as an owned record, not only visible in provider config
+  - Re-applying the unchanged reservation is a no-op (idempotent)
+  - Reservation creation and its binding are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: Network.IPAddress(allocation=static) recorded and bound to the interface record
+  - domain: provider
+    interaction: DHCP AddressService realizes the address as a static reservation
+  - domain: audit
+    interaction: reservation and interface binding recorded per ADR-023 projection
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- ip-address
+- static-reservation
+- adr-023
+- dhcp
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

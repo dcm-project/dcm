@@ -1,0 +1,66 @@
+uuid: uc-hammer-dr-rehydration-017
+handle: dr-rehydration/composite-per-constituent-migration
+scenario:
+  description: 'An application-team member rehydrates a composite service — a single logical unit that
+    bundles a message broker, a relational database, and a cache — where each constituent carries its
+    own data payload and its own restore source (broker journal, database snapshot, cache warm-set). Faithful
+    rehydration must rebuild the composite as one governed unit while driving a distinct data-migration
+    path per constituent, honoring the internal dependency order (the database restores before the services
+    that read it) and only marking the composite realized when every constituent''s data is in place.
+    This tests whether the architecture models a composite''s data restoration at constituent granularity
+    rather than as a single opaque blob.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Rehydrate a composite service with per-constituent data restores
+  success_criteria:
+  - The composite is rehydrated as one governed unit, not three unrelated resources
+  - Each constituent is restored from its own distinct data source and migration path
+  - The composite's internal dependency order is honored during restore (database before readers)
+  - The composite is marked realized only when every constituent's data is in place
+  - Per-constituent UUIDs and the composite's own identity are all preserved
+  - Each constituent's data restore and the composite roll-up are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: each constituent restored from its own payload source in dependency order
+  - domain: policy
+    interaction: composite and per-constituent validation policies re-evaluated
+  - domain: provider
+    interaction: providers re-realize each constituent and the composite roll-up
+  - domain: audit
+    interaction: per-constituent restores and composite completion recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- composite
+- data-migration
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A composite service with three data-bearing constituents was realized and destroyed
+  - Each constituent has its own restore source
+  postconditions:
+  - Composite rehydrated with all constituents' data restored in order
+  - All identities preserved; per-constituent restores recorded
+  note: batch=framework-hammer-2026-07-16

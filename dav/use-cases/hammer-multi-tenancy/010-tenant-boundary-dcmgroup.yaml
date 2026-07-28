@@ -1,0 +1,55 @@
+uuid: uc-hammer-tenancy-010
+handle: tenancy/tenant-boundary-dcmgroup
+scenario:
+  description: 'A platform engineer models a tenant boundary as a DCMGroup that encloses the tenant''s
+    resources and carries the tenant-scoped governance matrix. A new resource request must be validated
+    for membership in the correct DCMGroup and evaluated against that group''s governance matrix. This
+    tests whether the DCMGroup construct is a coherent carrier of a tenant boundary — grouping ownership,
+    scoping policy, and gating membership — as opposed to tenancy being an ad-hoc attribute smeared across
+    records.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Validate a request against a tenant boundary expressed as a DCMGroup
+  success_criteria:
+  - The tenant is represented as a DCMGroup enclosing its resources
+  - New resource is validated for membership in the correct DCMGroup
+  - The group's governance matrix is applied during validation
+  - A resource cannot belong to two tenant DCMGroups simultaneously
+  - Group membership and matrix outcome are bound to the resource record
+  - The membership decision is recorded in the tenant-scoped audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resource bound to a single tenant DCMGroup with membership recorded
+  - domain: policy
+    interaction: the DCMGroup's governance matrix is enforced for the request
+  - domain: audit
+    interaction: group membership and matrix decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- dcmgroup
+- boundary
+- governance-matrix
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

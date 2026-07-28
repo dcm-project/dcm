@@ -1,0 +1,59 @@
+uuid: uc-hammer-decommission-018
+handle: decommission/cross-tenant-shared-pool-cascade
+scenario:
+  description: 'A tenant-admin for tenant A requests decommission of a shared network segment, and the
+    cascade the system computes would tear down resources that belong to tenant B, which also attaches
+    to that segment. The system must NOT let one tenant''s decommission cascade across the tenancy boundary
+    and destroy another tenant''s resources. It must scope the cascade to the requester''s tenant, block
+    or refuse where the cascade would cross into tenant B, and surface the cross-tenant stakeholders.
+    This probes multi-tenant isolation on teardown, a likely gap.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Prevent a decommission cascade from crossing into another tenant's resources
+  success_criteria:
+  - System computes the cascade and detects it would reach tenant B's resources
+  - The cascade is scoped to the requesting tenant; it does not destroy tenant B's resources
+  - Where teardown depends on a cross-tenant resource, the request is blocked or refused
+  - Tenant B's cross-tenant stakes on the shared segment are surfaced to the requester
+  - No cross-tenant resource is destroyed without that tenant's own authorization
+  - The tenancy-boundary enforcement decision is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: shared segment's cross-tenant attachments resolved
+  - domain: policy
+    interaction: tenancy-isolation matrix blocks cascade across the tenant boundary
+  - domain: audit
+    interaction: cross-tenant enforcement decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- multi-tenancy
+- isolation
+- cascade
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

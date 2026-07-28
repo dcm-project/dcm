@@ -1,0 +1,58 @@
+uuid: uc-hammer-tenancy-018
+handle: tenancy/tenant-scoped-drift-detection
+scenario:
+  description: 'An SRE runs drift detection for tenant A. A shared provider has drifted in a way that
+    affects both tenant A and tenant B resources. The drift report for tenant A must include only tenant
+    A''s drifted resources and must not disclose tenant B''s affected resources, even though the root
+    cause is shared. This tests whether drift detection respects tenant scope in both the query surface
+    and the reported findings, so a shared-substrate drift does not become a cross-tenant information
+    leak.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - security-officer
+    - tenancy-authority
+  intent: Detect drift scoped to one tenant without disclosing another tenant's drift
+  success_criteria:
+  - Drift scan for tenant A reports only tenant A's drifted resources
+  - Tenant B's affected resources are not disclosed in tenant A's report
+  - The shared root cause is described without naming foreign-tenant resources
+  - Per-tenant remediation intent is generated only for the scanning tenant
+  - Drift findings are attributed to the correct owning tenant
+  - The scoped drift scan is recorded in the tenant's audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: drift comparison scoped to the tenant's resources despite a shared root cause
+  - domain: policy
+    interaction: reporting rule suppresses foreign-tenant resources from the drift report
+  - domain: audit
+    interaction: scoped drift scan recorded for the tenant
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- drift
+- isolation
+- scoped-reporting
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

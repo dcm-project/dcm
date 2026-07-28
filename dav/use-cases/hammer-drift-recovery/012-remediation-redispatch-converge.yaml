@@ -1,0 +1,66 @@
+uuid: uc-hammer-drift-recovery-012
+handle: drift-recovery/remediation-redispatch-converge
+scenario:
+  description: 'A platform engineer remediates a drifted DNS record whose discovered target IP no longer
+    matches intent. Remediation must not patch the Realized snapshot directly; instead the engine re-dispatches
+    the original intent through the normal provider path to overwrite the live value, then re-discovers
+    to confirm the live state now matches intent before writing a fresh Realized snapshot. This validates
+    that remediation is a real re-dispatch that converges live state to intent — reusing the standard
+    provision path — not a bookkeeping edit of the data model.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Remediate drift by re-dispatching intent through the provider and confirming convergence
+  success_criteria:
+  - Drift detected on the DNS target IP against the Realized snapshot
+  - Remediation re-dispatches the original intent through the normal provider path
+  - The Realized snapshot is NOT hand-patched to fake convergence
+  - A post-remediation Discovery confirms live state now matches intent
+  - A fresh Realized snapshot is written only after confirmed convergence
+  - Re-dispatch, confirmation, and snapshot write are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: drift detected; fresh Realized snapshot written only after confirmed convergence
+  - domain: policy
+    interaction: recovery policy selects re-dispatch of original intent as the remediation
+  - domain: provider
+    interaction: intent re-dispatched via the standard provision path; live value overwritten
+  - domain: audit
+    interaction: re-dispatch, post-remediation confirmation, and snapshot write recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- remediation
+- re-dispatch
+- convergence
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - DNS record realized with an intended target IP
+  - Discovered target IP has drifted
+  postconditions:
+  - Intent re-dispatched; live state converged to intent
+  - Fresh Realized snapshot written post-confirmation
+  - Remediation arc recorded
+  note: batch=framework-hammer-2026-07-16

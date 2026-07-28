@@ -1,0 +1,65 @@
+uuid: uc-hammer-recent-model-013
+handle: recent-model/rehydration-restore-in-place-preserves-uuid
+scenario:
+  description: "After a recoverable outage the original provider is back online. An SRE rehydrates a composite\n\
+    \    service by restoring in place from its Realized record. Because the original provider is available,\n\
+    \    restore-in-place reuses the Realized state and PRESERVES the same entity UUID, so external references\n\
+    \    keyed on that UUID survive. Sovereignty and tenancy are still re-evaluated under CURRENT policy\
+    \ on\n    rehydration, and here they still pass, so the restore completes cleanly. This probes the\n\
+    \    restore-in-place branch of RHY-005: same provider, same UUID, policy re-checked."
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Restore a service in place from its Realized record, preserving the entity UUID under a current-policy
+    re-check
+  success_criteria:
+  - The original provider is confirmed available before choosing restore-in-place
+  - Restore reuses the Realized record rather than replaying intent from scratch
+  - The restored entity keeps its original UUID
+  - External references keyed on the UUID remain valid after restore
+  - Sovereignty and tenancy are re-evaluated under current policy and pass
+  - The restore path and UUID preservation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the original provider is available and restores from Realized state
+  - domain: data
+    interaction: the Realized record is reused and the original UUID is preserved
+  - domain: policy
+    interaction: recovery policy re-evaluates sovereignty and tenancy under current rules and passes
+  - domain: audit
+    interaction: the restore-in-place path and UUID preservation are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- rehydration-restore-rebuild
+- rhy-005
+- restore-in-place
+- uuid-preserved
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - A Realized record exists for the service
+  - The original provider is back online
+  postconditions:
+  - The service is restored with its original UUID
+  - Current-policy sovereignty and tenancy checks passed
+  note: batch=recent-model-2026-07-22

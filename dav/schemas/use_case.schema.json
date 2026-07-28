@@ -1,0 +1,210 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DCM Use Case",
+  "description": "A DCM validation use case: an architecture scenario DAV evaluates against the DCM/UDLM spec. The scenario describes intent, actor, and expected behavior; dimensions classify it along the controlled vocabularies so coverage can be measured; generated_by + metadata carry provenance.",
+  "type": "object",
+  "required": [
+    "uuid",
+    "handle",
+    "version",
+    "scenario",
+    "generated_by"
+  ],
+  "properties": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^uc-",
+      "description": "Stable unique id, server-owned. Form: 'uc-<uuid4>' for generated UCs, or a 'uc-<handle-slug>' for intentional seed handles. Never reused."
+    },
+    "handle": {
+      "type": "string",
+      "pattern": ".*/.*",
+      "description": "Human-readable '<domain>/<name>' path (e.g. 'compute/vm-standard-provision'). The leading segment groups the UC by domain; must match the file's location."
+    },
+    "version": {
+      "type": "string",
+      "description": "Semantic version of this UC's content (e.g. '1.0.0'). Bumped when the scenario materially changes."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Free-form labels for search/grouping (domain, profile, failure-mode, foundational, etc.). Not validated against a vocabulary."
+    },
+    "scenario": {
+      "type": "object",
+      "description": "The use case itself — what is being validated.",
+      "required": [
+        "description",
+        "actor",
+        "intent",
+        "success_criteria",
+        "dimensions",
+        "profile"
+      ],
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Prose statement of the scenario: the situation, what the platform must do, and why. The primary text the evaluator reasons over."
+        },
+        "actor": {
+          "type": "object",
+          "description": "Who initiates the scenario.",
+          "required": [
+            "persona",
+            "profile"
+          ],
+          "properties": {
+            "persona": {
+              "type": "string",
+              "description": "The role driving the request (e.g. 'application-team-member', 'platform-operator', 'compliance-auditor')."
+            },
+            "profile": {
+              "description": "The actor's operating profile (capability-set preset). See scenario.profile.",
+              "enum": [
+                "homelab",
+                "dev",
+                "standard",
+                "prod",
+                "fsi",
+                "sovereign"
+              ]
+            }
+          }
+        },
+        "intent": {
+          "type": "string",
+          "description": "The outcome the actor wants, stated as intent (the 'what', not the 'how'). DCM is intent-based; this is the consumer's declared goal."
+        },
+        "success_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Observable, checkable conditions that must all hold for the scenario to pass. Each is a discrete assertion the evaluation tests against the spec."
+        },
+        "dimensions": {
+          "type": "object",
+          "description": "Classifies the UC along DCM's controlled vocabularies so corpus coverage is measurable. Values are drawn from the consumer-profile vocabulary — SOURCE OF TRUTH: examples/dcm-reference-profile.yaml (mirrored into engine consumer_profile). Kept as described strings here (not hard enums) deliberately, so the schema does not become a second, drift-prone copy of that vocabulary; the engine enum-constrains at eval time.",
+          "required": [
+            "lifecycle_phase",
+            "resource_complexity",
+            "policy_complexity",
+            "provider_landscape",
+            "governance_context",
+            "failure_mode"
+          ],
+          "properties": {
+            "lifecycle_phase": {
+              "type": "string",
+              "description": "Where in the resource lifecycle the scenario sits. Vocabulary (dcm-reference-profile.yaml): new_request, modification, decommission, drift_detection, brownfield_ingestion, rehydration_{faithful,provider_portable,historical_exact,historical_portable}, expiry_enforcement."
+            },
+            "resource_complexity": {
+              "type": "string",
+              "description": "Shape/dependency complexity of the requested resource(s). Vocabulary (engine consumer_profile default): single_no_deps, hard_dependencies, composite_service, conditional_soft_deps, process_resource, cross_dependency_payload."
+            },
+            "policy_complexity": {
+              "type": "string",
+              "description": "The policy-evaluation complexity the scenario exercises. Vocabulary (engine consumer_profile default): system_defaults_only, single_validation, multi_policy_chain, conflicting_policies, orchestration_flow_static, dynamic_conditional_flow, cross_domain_constraint, human_escalation_required, governance_matrix_enforcement, recovery_policy."
+            },
+            "provider_landscape": {
+              "type": "string",
+              "description": "The provider landscape the scenario runs against. Vocabulary (engine consumer_profile default): single_eligible, multiple_eligible, none_eligible, peer_dcm_required, process_provider, mixed."
+            },
+            "governance_context": {
+              "type": "string",
+              "description": "The governance/compliance posture in force. Vocabulary: no_governance, standard_governance, audit_heavy, compliance_gated, sovereignty_enforced."
+            },
+            "failure_mode": {
+              "type": "string",
+              "description": "The failure (or happy_path) the scenario exercises. Vocabulary: happy_path, provider_failure, policy_violation, peer_dcm_disconnect, data_inconsistency, rollback_required, partial_fulfillment, timeout, resource_exhaustion."
+            }
+          }
+        },
+        "profile": {
+          "description": "The deployment/operating profile (a platform capability-set preset) the scenario runs under. Profiles are capability sets, not a strict hierarchy; named values are presets. minimal=least overhead (not least security), sovereign=in-boundary/air-gap-capable.",
+          "enum": [
+            "homelab",
+            "dev",
+            "standard",
+            "prod",
+            "fsi",
+            "sovereign"
+          ]
+        },
+        "expected_domain_interactions": {
+          "type": "array",
+          "description": "The cross-domain interactions the scenario should drive, one entry per (domain, interaction). Used to check the UC touches the right Data/Policy/Provider/Audit surfaces.",
+          "items": {
+            "type": "object",
+            "required": [
+              "domain",
+              "interaction"
+            ],
+            "properties": {
+              "domain": {
+                "type": "string",
+                "description": "The DCM domain touched: typically data, policy, provider, or audit."
+              },
+              "interaction": {
+                "type": "string",
+                "description": "What happens in that domain during the scenario."
+              }
+            }
+          }
+        }
+      }
+    },
+    "generated_by": {
+      "type": "object",
+      "description": "Provenance of how this UC was authored/generated.",
+      "required": [
+        "mode",
+        "source"
+      ],
+      "properties": {
+        "mode": {
+          "description": "Why the UC was produced: 'authoring' (deliberately written), 'regression' (captured from a run), 'pr-targeted' (written to exercise a specific PR/change).",
+          "enum": [
+            "regression",
+            "pr-targeted",
+            "authoring"
+          ]
+        },
+        "source": {
+          "description": "Origin of the content: human-authored, AI-assisted (human+model), drawn from the corpus, or LLM-produced (guided/unguided).",
+          "enum": [
+            "corpus",
+            "llm-unguided",
+            "llm-guided",
+            "human-authored"
+          ]
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The model that produced the UC, if LLM-sourced; null for human-authored."
+        },
+        "prompt_version": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Version of the authoring prompt used, if LLM-sourced; null otherwise."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO-8601 time the UC was generated/authored."
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Admission/lifecycle bookkeeping (when admitted, under which DCM version, author, baseline lineage). Not part of the scenario semantics."
+    }
+  }
+}

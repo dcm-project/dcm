@@ -1,0 +1,56 @@
+uuid: uc-hammer-peer-dcm-007
+handle: peer-dcm/disconnected-peer-disconnect-mid-realization
+scenario:
+  description: A realization dispatched to a peer DCM is in progress when the peer becomes unreachable. The local
+    DCM records the disconnect, holds the operation in a non-complete state, preserves the pre-dispatch local state,
+    and retries when the peer returns. Nothing is marked realized while the peer is unreachable.
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - federation-peer-operator
+  intent: Hold and retry a cross-DCM realization when the peer disconnects mid-operation
+  success_criteria:
+  - The cross-DCM realization is in flight to the peer
+  - The peer becomes unreachable mid-operation
+  - The local DCM records the peer disconnect
+  - The operation is held non-complete; pre-dispatch state preserved
+  - The operation is retried when the peer returns
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the peer DCM becomes unreachable mid-realization
+  - domain: policy
+    interaction: recovery policy holds the operation pending the peer
+  - domain: audit
+    interaction: the disconnect and hold are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- disconnected
+- peer-dcm-disconnect
+- recovery
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - A realization is dispatched to a peer that then disconnects
+  postconditions:
+  - The operation is held and retryable; local state intact
+  note: batch=peer-dcm-2026-07-23

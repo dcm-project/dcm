@@ -1,0 +1,64 @@
+uuid: uc-hammer-cost-quota-020
+handle: cost-quota/unallocated-cost-tag-bucket
+scenario:
+  description: 'A finance-analyst runs tag-based cost allocation across the estate, but a subset of resources
+    carry no owning tag — no tenant, cost center, or stake. The system must route the cost of untagged
+    resources into an explicit unallocated bucket rather than dropping it or spreading it silently, so
+    the unallocated total is visible and can be driven to zero. It must also surface which resources are
+    untagged so they can be remediated. The mechanism under test is allocation completeness: does the
+    architecture guarantee every cost lands somewhere, with an auditable unallocated remainder?
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Allocate estate cost by tag and expose the untagged remainder
+  success_criteria:
+  - Every resource is checked for an owning allocation tag
+  - Tagged-resource cost is allocated to its owner
+  - Untagged-resource cost is routed to an explicit unallocated bucket
+  - The unallocated total is reported, never silently dropped or spread
+  - The specific untagged resources are listed for remediation
+  - Allocated plus unallocated cost reconciles to the estate total
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resources scanned for allocation tags; untagged set identified
+  - domain: policy
+    interaction: allocation-completeness validation routes untagged cost to the unallocated bucket
+  - domain: audit
+    interaction: unallocated total, untagged resource list, and reconciliation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- tag-allocation
+- unallocated
+- completeness
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Some estate resources lack an owning allocation tag
+  postconditions:
+  - Untagged cost lands in a visible unallocated bucket
+  - Allocated plus unallocated reconciles to the total
+  note: batch=framework-hammer-2026-07-16

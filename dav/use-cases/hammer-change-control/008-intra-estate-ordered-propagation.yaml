@@ -1,0 +1,55 @@
+uuid: uc-5dff5cce-219d-4b7f-826b-5b328f21d44c
+handle: change-control/intra-estate-ordered-propagation
+version: 1.0.0
+scenario:
+  description: Inside one estate, adopting a Compute Base change touches many downstream Compute.* records
+    whose workloads depend on each other. The adoption job derives its update order from the estate's
+    own dependency graph (the same edges that derive shutdown order), updates in batches with per-batch
+    verification, and halts leaving a recorded partial-adoption state if a batch fails verification —
+    never an unordered fleet-wide rewrite.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Have an adoption propagate through downstream records in dependency-derived order with per-batch
+    verification and a recorded halt state on failure
+  success_criteria:
+  - The update order is derived from the estate's dependency edges, not hand-listed
+  - Updates execute in batches; each batch's verification must pass before the next begins
+  - A failed batch halts propagation with the partial-adoption state recorded (which records updated,
+    which pending)
+  - 'The halt state is resumable: a corrected batch re-verifies and propagation continues from where it
+    stopped'
+  - The completed adoption record includes the derived order and every batch verdict
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: hard_dependencies
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency edges derive the propagation order
+  - domain: provider
+    interaction: batched orchestration with per-batch verification executes the order
+  - domain: policy
+    interaction: batch-verification gates control progression
+  - domain: audit
+    interaction: derived order, batch verdicts, and any halt state are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- orchestration
+- dependency-order
+- batched

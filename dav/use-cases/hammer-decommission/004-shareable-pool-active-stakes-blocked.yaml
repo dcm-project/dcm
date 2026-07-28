@@ -1,0 +1,55 @@
+uuid: uc-hammer-decommission-004
+handle: decommission/shareable-pool-active-stakes-blocked
+scenario:
+  description: 'A storage admin tries to decommission a shared ZFS pool that three tenants still hold
+    active allocations against. Because the pool is a shareable resource with outstanding stakes, the
+    system must refuse the teardown while any stake is live and surface which stakeholders block it. This
+    probes whether the architecture models allocations as first-class stakes on a shared pool, so a pool
+    cannot be destroyed out from under its consumers.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - tenancy-authority
+  intent: Decommission a shared pool that still has active allocations against it
+  success_criteria:
+  - System enumerates all active stakes/allocations held against the pool
+  - Teardown is refused while any stake remains live
+  - The blocking stakeholders are named in the refusal
+  - No allocation is silently invalidated or orphaned
+  - The refusal and the list of live stakes are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: active allocations against the shared pool enumerated as stakes
+  - domain: policy
+    interaction: shared-resource-with-live-stakes constraint blocks the teardown
+  - domain: audit
+    interaction: refusal recorded with blocking stakeholders named
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- shared-pool
+- stakes
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

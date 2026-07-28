@@ -1,0 +1,60 @@
+uuid: uc-hammer-federation-004
+handle: federation/cross-dcm-causal-ordering-no-clock
+scenario:
+  description: 'Two peer DCMs each emit operations that reference each other''s resources — peer A creates
+    a network segment, peer B attaches a workload that causally depends on A''s segment, and A later modifies
+    the segment. There is no shared clock across the federation, so wall-clock timestamps cannot establish
+    the true order of these cross-DCM operations. The system must reconstruct a correct causal ordering
+    from explicit causal references (which operation observed which), not from timestamps. This likely
+    probes a gap: DCM ordering is structural per-estate, and cross-DCM causal ordering without a shared
+    clock may be unsupported.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Establish a correct cross-DCM operation order using causal references, not clocks
+  success_criteria:
+  - Operations from both peers carry explicit causal references to observed resources
+  - The system reconstructs an ordering consistent with all causal references
+  - Wall-clock timestamps are NOT used to break cross-DCM ordering
+  - Concurrent operations with no causal link are flagged as unordered, not falsely serialized
+  - If the model cannot represent cross-DCM causal references, the gap is reported explicitly
+  - The resulting order (or the inability to derive one) is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: cross-DCM operations carry causal references; ordering derived from them
+  - domain: policy
+    interaction: policy requires causal consistency, forbidding clock-based tie-breaking
+  - domain: audit
+    interaction: derived order or the unsupported-gap finding recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- causal-ordering
+- no-shared-clock
+- likely-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

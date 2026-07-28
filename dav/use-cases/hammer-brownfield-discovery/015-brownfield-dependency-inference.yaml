@@ -1,0 +1,62 @@
+uuid: uc-hammer-brownfield-015
+handle: brownfield-discovery/brownfield-dependency-inference
+scenario:
+  description: 'Discovery yields a set of independent entities — VMs, a database, a load balancer — but
+    the dependencies between them (the app tier talks to the DB; the LB fronts the app tier) are not declared
+    anywhere; they must be INFERRED from observed network flows and config. The system is asked to derive
+    candidate dependency edges from discovery signals and present them for confirmation, rather than assuming
+    a flat, dependency-free estate. Inferred edges must be marked as low-confidence until confirmed, and
+    must never be treated as authoritative hard_dependencies without human sign-off. This likely returns
+    partially_supported or unsupported: discovery observes resources, but flow-based dependency inference
+    may be beyond the model.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Infer candidate dependencies among discovered resources from observed signals
+  success_criteria:
+  - Candidate dependency edges are derived from observed network flows and configuration
+  - Inferred edges are marked low-confidence and distinct from declared dependencies
+  - No inferred edge is promoted to an authoritative hard dependency without confirmation
+  - Confirmed edges become part of the entity dependency graph; rejected ones are discarded
+  - The evidence behind each inferred edge (which flow/config) is retained
+  - Inference, confirmation, and rejection decisions are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: flow and config information providers supply dependency signals
+  - domain: data
+    interaction: low-confidence candidate edges derived and held distinct from declared edges
+  - domain: policy
+    interaction: confirmation policy governs promotion of inferred edges to the dependency graph
+  - domain: audit
+    interaction: inference evidence and confirm/reject decisions recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- dependency-inference
+- low-confidence
+- multi-dependent
+- unsupported-probe
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

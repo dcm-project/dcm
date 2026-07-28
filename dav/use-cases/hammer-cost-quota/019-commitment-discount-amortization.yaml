@@ -1,0 +1,65 @@
+uuid: uc-hammer-cost-quota-019
+handle: cost-quota/commitment-discount-amortization
+scenario:
+  description: 'A tenant holds a one-year committed-use discount that must be amortized across the workloads
+    that consume the committed capacity, so each tenant''s chargeback reflects the discounted effective
+    rate rather than list price. A finance-analyst validates that consumers under the commitment are billed
+    at the effective rate and that unused commitment is accounted as waste against the tenant, not hidden.
+    The mechanism under test is commitment/discount amortization — reserved-instance economics require
+    an effective-vs-list rate model UDLM almost certainly lacks, so expect partial or unsupported.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+    - tenancy-authority
+  intent: Amortize a committed-use discount across its consumers at the effective rate
+  success_criteria:
+  - The commitment, its term, and its committed capacity are identified
+  - Consumers drawing on the committed capacity are enumerated
+  - Each consumer is charged the effective (discounted) rate, not list
+  - Unused commitment is accounted as waste against the committing tenant
+  - Effective and list rates are reported distinctly, not collapsed
+  - Absence of an effective-rate model is reported rather than assumed
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: commitment terms, committed capacity, and consumers resolved from the model
+  - domain: policy
+    interaction: amortization rule applies the effective rate and books unused commitment as waste
+  - domain: audit
+    interaction: effective-vs-list rates and commitment waste recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- commitment
+- discount
+- amortization
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A tenant holds a committed-use discount with consumers
+  postconditions:
+  - Consumers are billed at the effective rate or the gap is reported
+  - Unused commitment is booked as waste
+  note: batch=framework-hammer-2026-07-16

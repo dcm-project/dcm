@@ -1,0 +1,63 @@
+uuid: uc-hammer-brownfield-006
+handle: brownfield-discovery/brownfield-estate-full-ingestion
+scenario:
+  description: 'An operations team onboards an entire running datacenter estate at once — bare-metal hosts,
+    hypervisors, VMs, storage pools, network gear, and the dependency edges between them — by ingesting
+    several discovery sources in a single brownfield pass. Every resource becomes a Discovered/adopted
+    entity in place with brownfield provenance; groups become DCMGroups; and the derived dependency graph
+    must be internally consistent (no dangling edges, no cycles) before cutover. Nothing is recreated
+    or restarted. This is the full-stack stress of brownfield ingestion — many resource classes, many
+    dependencies, one coexistence window that remains reversible until cutover.
+
+    '
+  actor:
+    persona: platform-operator
+    profile: standard
+  perspectives:
+    - sre
+    - compliance-auditor
+  intent: Ingest a complete running estate as brownfield entities in place, with a consistent dependency
+    graph
+  success_criteria:
+  - Every discovered resource across all classes is ingested as an entity with brownfield provenance
+  - The derived dependency graph is acyclic and free of dangling edges before cutover
+  - Groups from the source inventories map to DCMGroups with membership preserved
+  - No resource is recreated, restarted, or migrated as a side effect of ingestion
+  - management_authority is legacy for all entities until an explicit per-scope cutover
+  - Ingestion is reversible before cutover — removing DCM management leaves the estate as found
+  - The full ingestion arc is recorded with per-entity provenance in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: multiple information providers supply hosts, VMs, storage, and network observations
+  - domain: data
+    interaction: all classes ingested as entities and DCMGroups with a validated dependency graph
+  - domain: policy
+    interaction: ingestion-scope, coexistence, and graph-consistency policies evaluated
+  - domain: audit
+    interaction: per-entity brownfield provenance and the ingestion arc recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- ingestion
+- full-stack
+- estate
+- dependency-graph
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

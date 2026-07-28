@@ -1,0 +1,64 @@
+uuid: uc-hammer-drift-recovery-003
+handle: drift-recovery/recovery-policy-fires-on-drift
+scenario:
+  description: 'A realized load balancer carries a recovery policy declaring that any drift in its health-check
+    configuration must be auto-remediated back to intent. A reconciliation pass detects that the discovered
+    health-check interval no longer matches the Realized snapshot. The engine must match the drifted field
+    against the resource''s recovery policy, find the auto-remediate rule, and fire it — generating a
+    remediation action that restores intent without human approval. This validates that a recovery_policy
+    can be evaluated against a concrete drift and dispatch corrective action.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Have a recovery policy automatically fire and remediate a detected drift
+  success_criteria:
+  - Drift is detected on the health-check interval field
+  - The resource's recovery policy is resolved and evaluated against the drifted field
+  - The auto-remediate rule matches and fires without requiring human approval
+  - A remediation action is generated to restore the intended value
+  - The remediation dispatch is issued to the provider
+  - Policy match, rule id, and remediation action are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: drifted health-check field identified against Realized snapshot
+  - domain: policy
+    interaction: recovery policy resolved; auto-remediate rule matches and fires
+  - domain: provider
+    interaction: remediation dispatch issued to restore intended configuration
+  - domain: audit
+    interaction: policy match, rule id, and remediation action recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- recovery-policy
+- auto-remediation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource is realized and carries a recovery policy with an auto-remediate rule
+  - Drift exists on a field the recovery policy governs
+  postconditions:
+  - Recovery policy fired and produced a remediation action
+  - Remediation dispatched to the provider
+  - Policy decision recorded
+  note: batch=framework-hammer-2026-07-16

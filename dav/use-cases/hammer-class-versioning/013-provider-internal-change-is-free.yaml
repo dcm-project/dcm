@@ -1,0 +1,54 @@
+uuid: uc-defc9e70-2930-47fe-9ff7-8ced1016d389
+handle: class-versioning/provider-internal-change-is-free
+version: 1.0.0
+scenario:
+  description: 'A provider re-platforms its engine internals — new runtime, new dependencies, refactored
+    implementation — entirely past its naturalization boundary. Its declared surface (capabilities, adopted
+    standards, defaults, populated outputs) is unchanged, so the provider definition carries no consumer-facing
+    versioning obligation: consumers'' bindings, pins, and realizations are untouched, and the engine
+    binding version that realizations record in provenance is the only visible trace. The optional safety
+    net is the engine-upgrade regression: the same corpus dry-run under old and new engines diffs to empty
+    on declared outputs, proving the boundary held.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Change provider internals freely past the naturalization boundary with no consumer-facing version
+    obligation, provable by an empty output diff
+  success_criteria:
+  - The provider's declared surface is byte-identical before and after the internal change
+  - No consumer binding, pin, or realized contract changes; no consumer action is required
+  - Realization provenance records the new engine binding version — the only visible trace
+  - An optional engine-upgrade regression (same corpus, old vs new engine, declared-output diff) verifies
+    the boundary held with an empty diff
+  - A non-empty diff reclassifies the change as a surface change and routes it to the versioned path
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: internal freedom past the naturalization boundary; engine version in provenance
+  - domain: data
+    interaction: the declared surface is the comparison baseline; the output diff is the proof
+  - domain: audit
+    interaction: provenance carries the engine version; regression evidence recorded when run
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T00:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- naturalization-boundary
+- internal-freedom

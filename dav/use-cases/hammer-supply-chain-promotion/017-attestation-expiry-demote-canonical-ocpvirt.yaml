@@ -1,0 +1,65 @@
+uuid: uc-hammer-supply-chain-promotion-017
+handle: supply-chain-promotion/attestation-expiry-demote-canonical-ocpvirt
+scenario:
+  description: 'A canonical golden VM image backing Compute.VM.OCPVirt was promoted with a time-bounded
+    security attestation. A compliance auditor drives expiry enforcement: the attestation reaches its
+    expiry date without renewal, so the image can no longer claim a valid, current provenance. The
+    controlled repo must auto-demote the image from canonical, block it from backing new provisioning,
+    and flag any resource still realized on it for revalidation, without disturbing running workloads
+    until they are reconciled.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - security-officer
+  intent: Enforce attestation expiry by demoting a golden VM image that is no longer attested
+  success_criteria:
+  - The canonical image's security attestation reaches expiry without renewal
+  - Expiry enforcement recognizes the image can no longer claim valid current provenance
+  - The controlled repo auto-demotes the image from canonical on expiry
+  - New Compute.VM.OCPVirt provisioning from the expired image is blocked
+  - Resources still realized on the image are flagged for revalidation, not abruptly killed
+  - 'Expiry event, image digest, and affected resources are recorded'
+  dimensions:
+    lifecycle_phase: expiry_enforcement
+    resource_complexity: single_no_deps
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: expiry enforcement demotes the image once its attestation lapses
+  - domain: data
+    interaction: SoftwareImage moved out of canonical; attestation marked expired
+  - domain: provider
+    interaction: Compute.VM.OCPVirt blocked from new provisioning on the expired image
+  - domain: audit
+    interaction: expiry event, digest, and affected realized resources recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-vm
+- attestation-expiry
+- expiry-enforcement
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - The image was promoted with a time-bounded attestation that is not renewed
+  - Expiry enforcement is active on the controlled repo
+  postconditions:
+  - Expired image demoted from canonical; new provisioning blocked
+  - Running resources flagged for revalidation; expiry is auditable
+  note: batch=supply-chain-promotion-2026-07-22

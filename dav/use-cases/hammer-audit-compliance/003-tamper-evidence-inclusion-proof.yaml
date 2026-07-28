@@ -1,0 +1,58 @@
+uuid: uc-hammer-audit-003
+handle: audit/tamper-evidence-inclusion-proof
+scenario:
+  description: 'An external regulator holds a signed receipt for a single audit event and demands cryptographic
+    proof that the event is committed in the tamper-evident log the operator claims to keep. The system
+    must return an RFC-9162-style Merkle inclusion proof: the audit path from the event''s leaf hash to
+    a signed tree head the regulator already trusts, verifiable offline without re-reading the whole log.
+    This probes whether the audit substrate is a verifiable append-only Merkle structure or merely a database
+    table asserted to be immutable.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - regulator
+  intent: Obtain a verifiable inclusion proof that one audit event is committed in the log
+  success_criteria:
+  - The audit event resolves to a stable leaf hash
+  - An inclusion proof (audit path to a signed tree head) is returned
+  - The proof verifies offline against a previously published tree head
+  - Verification fails if any node on the path is altered
+  - The tree head is signed by the operator's audit-log key
+  - No full re-scan of the log is required to verify inclusion
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: Merkle inclusion proof generated from leaf hash to signed tree head
+  - domain: data
+    interaction: the audit event record is resolved to its canonical leaf hash from the log store
+  - domain: policy
+    interaction: retention/verifiability policy confirms the event is within a period whose tree head
+      is still published
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- tamper-evidence
+- merkle
+- rfc-9162
+- inclusion-proof
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

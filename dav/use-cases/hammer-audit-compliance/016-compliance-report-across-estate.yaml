@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-016
+handle: audit/compliance-report-across-estate
+scenario:
+  description: 'Ahead of an annual audit, a compliance auditor requests a point-in-time conformance report
+    across the entire estate for one control: encryption-at-rest on all data stores. The architecture
+    must evaluate every in-scope resource against the control and return a per-resource conformant/non-conformant/ungoverned
+    breakdown — explicitly separating resources that passed evaluation from those no policy covered. The
+    report must be reproducible from the audit and state data for the stated as-of time. This tests estate-wide
+    compliance reporting that preserves the governed-versus-ungoverned honesty distinction at scale.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - executive
+  intent: Produce an estate-wide as-of conformance report for one control
+  success_criteria:
+  - Every in-scope resource is evaluated against the named control
+  - Each resource is classified conformant, non-conformant, or ungoverned
+  - Ungoverned resources are reported distinctly from conformant ones
+  - The report is scoped to a stated as-of point in time
+  - The report is reproducible from the audit and state data
+  - Non-conformant findings link to the specific resource and violated control
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: control evaluated across every in-scope resource
+  - domain: data
+    interaction: as-of resource states gathered for reproducible reporting
+  - domain: audit
+    interaction: per-resource conformance breakdown recorded with ungoverned distinct
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- compliance-report
+- estate-wide
+- as-of
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

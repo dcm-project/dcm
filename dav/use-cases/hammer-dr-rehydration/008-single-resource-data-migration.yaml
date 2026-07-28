@@ -1,0 +1,65 @@
+uuid: uc-hammer-dr-rehydration-008
+handle: dr-rehydration/single-resource-data-migration
+scenario:
+  description: 'An SRE faithfully rehydrates a single stateful database service whose data lives on an
+    attached persistent volume backed by an off-site snapshot. Rehydration must not only re-realize the
+    compute resource but also drive the data-plane restore: provisioning the volume, attaching it, and
+    restoring the snapshot before the service is marked realized. The compute and its data payload form
+    a cross-dependency — the service is not truly rehydrated until its data is in place. This tests whether
+    rehydration coordinates the provider (compute) and data (payload restore) domains as a single unit
+    rather than treating data restoration as an out-of-band manual step.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Rehydrate one stateful service including its data-volume restore
+  success_criteria:
+  - The compute resource and its attached volume are both re-realized
+  - The data-plane restore (snapshot into the volume) is driven as part of rehydration
+  - The service is not marked realized until its data payload is restored and attached
+  - Validation policies covering the data payload are re-evaluated
+  - The resource UUID and its volume binding are preserved
+  - Compute realization and data restore are both recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: volume snapshot restored and attached as the service's data payload
+  - domain: policy
+    interaction: data-payload validation policies re-evaluated
+  - domain: provider
+    interaction: provider re-realizes compute and provisions/attaches the volume
+  - domain: audit
+    interaction: compute realization and data restore both recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- data-migration
+- stateful
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A stateful service with an attached volume was realized and destroyed
+  - An off-site snapshot of the volume exists
+  postconditions:
+  - Service rehydrated with its data restored and attached
+  - UUID and volume binding preserved
+  - Audit trail records compute and data restore
+  note: batch=framework-hammer-2026-07-16

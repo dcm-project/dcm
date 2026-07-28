@@ -1,0 +1,57 @@
+uuid: uc-hammer-networking-016
+handle: networking/vlan-decommission-dangling-interfaces
+scenario:
+  description: 'An operator requests decommission of VLAN 90, but two VirtualMachines still have Hardware.NetworkInterface
+    records attached to it and a static Network.IPAddress reservation is bound within it. The system must
+    detect the dangling dependents, refuse to strand them by deleting the segment out from under live
+    interfaces, and require the dependents be detached or decommissioned first. This tests referential
+    integrity on teardown — that a segment cannot vanish while interfaces and addresses still point at
+    it.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Decommission a VLAN that still has interfaces and a reservation depending on it
+  success_criteria:
+  - Dependent Hardware.NetworkInterface and Network.IPAddress records are discovered
+  - The decommission is blocked while live dependents still reference the VLAN
+  - The system reports which dependents must be detached/decommissioned first
+  - No interface or address record is left dangling to a deleted segment
+  - Once dependents are cleared, the VLAN decommission proceeds cleanly
+  - The blocked and eventual decommission are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependents on the VLAN enumerated; referential integrity checked
+  - domain: policy
+    interaction: decommission policy blocks deletion while dependents remain
+  - domain: audit
+    interaction: blocked-then-completed decommission recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- vlan
+- decommission
+- dangling-dependents
+- referential-integrity
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

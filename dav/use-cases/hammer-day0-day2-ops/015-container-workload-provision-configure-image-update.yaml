@@ -1,0 +1,62 @@
+uuid: uc-hammer-day0-day2-ops-015
+handle: day0-day2-ops/container-workload-provision-configure-image-update
+scenario:
+  description: 'A tenant admin deploys a containerized workload: Day 0 realizes the workload resource
+    on a Kubernetes provider; Day 1 an Automation.Job bound to it applies config (secrets, env, connection
+    strings); Day 2 an image-update process rolls the workload to a new container image tag. All three
+    touch the same workload identity — the image-update process operates on the running workload, it does
+    not re-provision it — and each step records a terminal outcome against the resource.'
+  actor:
+    persona: tenant-admin
+    profile: dev
+  perspectives:
+    - security-officer
+    - tenancy-authority
+  intent: Provision, configure, then image-update a container workload as one bound lifecycle
+  success_criteria:
+  - Day 0 realizes the container workload on the Kubernetes provider
+  - Day 1 configure job is bound to the workload and reaches a COMPLETED outcome
+  - Day 2 image-update process rolls the same workload identity to the new image tag
+  - The image update operates on the running workload; it does not re-provision it
+  - Each of the three steps records a terminal outcome against the workload
+  - The provision -> configure -> image-update arc is one auditable lineage
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: provider
+    interaction: realizes the workload, runs the configure job, then the image-update roll
+  - domain: data
+    interaction: records the workload identity and its bound configure/update process runs
+  - domain: policy
+    interaction: admits each step under the static day-0/1/2 orchestration flow
+  - domain: audit
+    interaction: records the three steps as one workload lineage
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- new_request
+- container
+- image-update
+- lifecycle
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A Kubernetes provider is eligible
+  - Configure and image-update jobs are registered
+  postconditions:
+  - The workload is realized, configured, and on the new image
+  - All three steps are terminal and auditable
+  note: batch=day0-day2-ops-2026-07-22

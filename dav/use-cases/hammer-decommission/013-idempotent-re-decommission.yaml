@@ -1,0 +1,54 @@
+uuid: uc-hammer-decommission-013
+handle: decommission/idempotent-re-decommission
+scenario:
+  description: 'An automation retries a decommission for a resource that was already torn down — a duplicate
+    request from a flaky pipeline. The system must recognize the resource is already gone and produce
+    a no-op: no second destroy, no error that looks like a failure, no resurrection. This is the decommission
+    mirror of idempotent reconvergence and proves teardown is safe to retry, which matters for any at-least-once
+    orchestration driving destroys.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Re-issue a decommission for an already-decommissioned resource and get a safe no-op
+  success_criteria:
+  - System detects the resource is already retired with no realized state
+  - No second destroy is dispatched to any provider
+  - The re-decommission returns a clean no-op, not a failure and not a resurrection
+  - The retired intent and its UUID remain unchanged
+  - The no-op decision and rationale are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resource confirmed already retired, no state change
+  - domain: policy
+    interaction: idempotency check recognizes the destroy as already satisfied
+  - domain: audit
+    interaction: no-op re-decommission recorded with rationale
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- idempotent
+- no-op
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

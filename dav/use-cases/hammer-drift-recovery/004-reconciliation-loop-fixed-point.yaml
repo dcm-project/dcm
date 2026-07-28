@@ -1,0 +1,66 @@
+uuid: uc-hammer-drift-recovery-004
+handle: drift-recovery/reconciliation-loop-fixed-point
+scenario:
+  description: 'A platform engineer initiates reconciliation on a multi-resource application after a drift
+    is detected on a shared config value. The engine remediates, re-discovers, and re-diffs in a loop.
+    Each iteration must reduce the outstanding drift set, and the loop must terminate when a pass detects
+    zero drift — a fixed point — rather than looping indefinitely. The engine must prove convergence by
+    showing the drift set is empty and stable across a confirming pass. This validates that the reconciliation
+    loop is convergent and has a defined termination condition.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Drive a reconciliation loop to a stable zero-drift fixed point
+  success_criteria:
+  - Initial pass detects a non-empty drift set on the shared config
+  - Each iteration remediates, re-discovers, and re-diffs
+  - The outstanding drift set strictly shrinks or holds across iterations, never grows
+  - The loop terminates when a pass reports zero drift
+  - A confirming pass shows the drift set remains empty (fixed point reached)
+  - Iteration count and convergence result are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: drift set recomputed each iteration from Realized vs Discovered
+  - domain: policy
+    interaction: recovery policy drives remediation each pass until drift set empties
+  - domain: provider
+    interaction: corrective dispatches issued and re-discovered per iteration
+  - domain: audit
+    interaction: iteration count and convergence-to-fixed-point recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- reconciliation-loop
+- convergence
+- fixed-point
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A multi-resource application is realized with a detectable drift on a shared field
+  - A recovery policy governs the drifted field
+  postconditions:
+  - Reconciliation loop converged to a zero-drift fixed point
+  - Convergence confirmed by a stable follow-up pass
+  - Iteration history recorded
+  note: batch=framework-hammer-2026-07-16

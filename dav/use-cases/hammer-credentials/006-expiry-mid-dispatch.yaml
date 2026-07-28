@@ -1,0 +1,59 @@
+uuid: uc-hammer-credentials-006
+handle: credentials/expiry-mid-dispatch
+scenario:
+  description: 'A multi-step dispatch is in flight when the credential it is using crosses its not_after
+    boundary between two provider interactions. The system must detect the mid-dispatch expiry, stop using
+    the now-invalid credential, and either fail the dispatch cleanly with a resumable checkpoint or re-acquire
+    a fresh credential and continue — without leaving a half-realized resource. This probes whether credential
+    validity is re-checked per interaction rather than only at dispatch start, and is a strong candidate
+    for partially_supported.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - security-officer
+  intent: Handle a credential that expires between steps of an active dispatch
+  success_criteria:
+  - Credential expiry is detected before the next interaction uses it
+  - The dispatch does not proceed with an expired credential
+  - Either a clean resumable failure or a fresh-credential continuation occurs
+  - No resource is left in a half-realized, inconsistent state
+  - Dispatch and realized states remain reconcilable afterward
+  - The mid-dispatch expiry and chosen recovery are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: per-interaction validity check gates the next step
+  - domain: provider
+    interaction: provider call is blocked once the credential is expired
+  - domain: data
+    interaction: dispatch checkpoint preserved to avoid a half-realized resource
+  - domain: audit
+    interaction: mid-dispatch expiry and recovery path recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- expiry
+- dispatch
+- likely-partial
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

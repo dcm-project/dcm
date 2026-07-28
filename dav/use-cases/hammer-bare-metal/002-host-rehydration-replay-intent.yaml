@@ -1,0 +1,58 @@
+uuid: uc-bare-metal-002
+handle: bare-metal/host-rehydration-replay-intent
+version: 1.0.0
+scenario:
+  description: "A physical host dies (board failure) and is replaced with different hardware in the same\
+    \ role. Rehydration replays the host's stored intent \u2014 same image and checksum, same root-device\
+    \ policy, new boot MAC discovered and updated \u2014 producing a functionally identical host under\
+    \ a new correlation identity, with lineage to the original. This is the bare-metal leg of the rehydration\
+    \ demo: the estate's intent, not any backup of the dead machine, is the recovery source; drift between\
+    \ the record's expectations and the replacement's discovered facts is surfaced, not silently absorbed."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Rebuild a failed physical host by replaying its stored provisioning intent onto replacement
+    hardware with lineage and honest drift
+  success_criteria:
+  - The replacement provisions from the record's image/hints with no reference to the dead host's runtime
+    state
+  - New hardware identity (smbios, serials, MACs) is discovered and the record's correlations update through
+    review
+  - Lineage from the replacement to the original is recorded (rebuild-from-intent semantics, new correlation
+    identity)
+  - Deltas between declared intent and replacement reality (e.g. smaller root device) fail loudly at provision,
+    not later
+  dimensions:
+    lifecycle_phase: recovery
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: infrastructure_loss
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: stored intent is the single recovery source; correlations update via review
+  - domain: policy
+    interaction: rehydration re-evaluates under current policy (RHY semantics)
+  - domain: provider
+    interaction: the provider provisions replacement hardware from replayed intent
+  - domain: audit
+    interaction: the rebuild, lineage, and discovered deltas are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: bare-metal-2026-07-24
+  timestamp: '2026-07-24T23:00:00.000000+00:00'
+tags:
+- bare-metal
+- rehydration
+- replay-intent
+- lineage

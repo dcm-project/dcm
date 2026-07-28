@@ -1,0 +1,61 @@
+uuid: uc-f7c7bad1-36d2-4c55-8df2-933c4e9cd148
+handle: change-control/whole-provider-retirement-wind-down
+version: 1.0.0
+scenario:
+  description: 'A provider is leaving an estate entirely — every capability, not just one revision. Retirement
+    is a governed wind-down, not an event: the provider definition enters deprecation with a published
+    window; the blast radius is every instance whose realization provenance names the provider and every
+    binding through its capabilities'' covers_types; each affected workload migrates through the standard
+    machinery (provider swap via blue/green, per the estate''s change policy and windows) during the window;
+    new realizations against the departing provider are refused from deprecation onward while day-2 operations
+    on existing instances continue to the window''s end. The provider may not complete retirement while
+    instances remain realized under it — the realized-instances-are-pinned-consumers rule at whole-provider
+    scope. The trail reads as one wind-down: announcement, migrations, the empty final state.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Retire an entire provider from an estate as a governed wind-down with derived blast radius,
+    standard-machinery migrations, and no stranded instances
+  success_criteria:
+  - Whole-provider retirement enters deprecation with a published window; it is never immediate
+  - 'The blast radius is derived: instances via realization provenance, consumers via covers_types bindings'
+  - New realizations against the departing provider are refused from deprecation onward, typed with the
+    retirement named
+  - Day-2 operations on existing instances continue through the window; migrations run the standard provider-swap
+    blue/green under each workload's change policy
+  - Retirement cannot complete while any instance remains realized under the provider — the wind-down
+    trail ends at a provably empty state
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: deprecation window + refusal of new realizations + continued day-2 service
+  - domain: data
+    interaction: provenance and covers_types derive the complete blast radius
+  - domain: policy
+    interaction: each migration runs under its workload's own change policy
+  - domain: audit
+    interaction: one wind-down trail from announcement to provably empty
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-26T04:00:00Z'
+tags:
+- hammer
+- change-control
+- matrix-gap
+- provider-retirement
+- wind-down

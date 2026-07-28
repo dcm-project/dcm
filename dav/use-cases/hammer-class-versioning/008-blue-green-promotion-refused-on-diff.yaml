@@ -1,0 +1,52 @@
+uuid: uc-69cb89e7-f878-4739-b97c-01aacd6ed999
+handle: class-versioning/blue-green-promotion-refused-on-diff
+version: 1.0.0
+scenario:
+  description: 'The same blue/green re-pin exercise, but the typed-output diff is NOT clean: the candidate
+    revision changes a realized output the organization''s consumers bind against. Promotion is refused
+    with the diff as the typed reason; the estate remains on the pinned revision with its debt intact;
+    the refusal and diff are recorded. The claimed compatibility of the upstream change is now contradicted
+    by evidence — which is itself a finding routed back to the registry.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Have a class re-pin promotion refused when the typed-output diff contradicts the compatibility
+    claim
+  success_criteria:
+  - Promotion is refused when the typed-output diff shows unapproved differences
+  - 'The refusal is typed and actionable: it carries the diff, naming each changed output and its consumers'
+  - The estate remains on the pinned revision; nothing partially promotes
+  - The refusal and diff are recorded as audit evidence
+  - A finding-routing record (the P0-defined registry kind) is created carrying the contradicted claim with the diff as provenance
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the output diff is computed from declared typed outputs, not provider internals
+  - domain: policy
+    interaction: unapproved differences refuse promotion atomically
+  - domain: audit
+    interaction: refusal, diff, and upstream finding are all recorded
+  - domain: provider
+    interaction: both revisions' dry-run realizations remain reproducible for review
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- blue-green
+- must-reject
+- typed-output-diff

@@ -1,0 +1,58 @@
+uuid: uc-hammer-networking-008
+handle: networking/vlan-reference-vs-inline
+scenario:
+  description: 'Two VM requests both need to sit on VLAN 90. Request A references an existing Network.VLAN
+    by UUID/handle; request B declares the same VLAN inline inside the VM intent. The system must converge
+    both to the SAME single Network.VLAN record — the inline form is sugar that resolves to (or creates
+    once and dedupes to) the referenced record, not a second parallel segment. This tests that by-reference
+    and inline authoring are two projections of one resource, and that inline declarations do not silently
+    fork duplicate segments that later drift apart.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Prove inline VLAN declaration and by-reference attachment resolve to one segment
+  success_criteria:
+  - By-reference attachment binds the VM to the existing Network.VLAN without creating a new one
+  - Inline VLAN declaration resolves to the same segment identity (create-once / dedupe)
+  - Exactly one Network.VLAN record exists for the shared segment after both requests
+  - Both VMs show a dependency edge to the same VLAN UUID
+  - No duplicate or shadow segment is created by the inline form
+  - Resolution of inline-to-record is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: inline VLAN normalized to a single referenced Network.VLAN record
+  - domain: policy
+    interaction: dedupe/identity resolution validated before realization
+  - domain: audit
+    interaction: inline-to-reference resolution recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- vlan
+- by-reference
+- inline
+- dedupe
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

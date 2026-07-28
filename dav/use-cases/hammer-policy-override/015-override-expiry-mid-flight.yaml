@@ -1,0 +1,65 @@
+uuid: uc-hammer-policy-override-015
+handle: policy-override/override-expiry-mid-flight
+scenario:
+  description: 'An SRE holds a time-bounded override that permits a maintenance action across a multi-resource
+    stack. The override''s window expires while the orchestrated flow is still mid-execution — some resources
+    reconfigured under the override, others still pending. The engine must define a deterministic behavior
+    for a mid-flight expiry: does it complete the in-flight unit, halt and leave the stack half-applied,
+    or re-evaluate the remaining steps against the now-expired override (which should deny them)? This
+    probes whether override validity is checked once at admission or continuously along the flow. A silent
+    completion of steps after expiry, or an inconsistent half-state with no defined recovery, is a finding
+    — likely unsupported.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Continue a multi-step flow whose override expires mid-execution
+  success_criteria:
+  - Override validity is bound to a time window with a defined mid-flight semantics
+  - Steps completed before expiry are recorded as override-authorized
+  - Steps reached after expiry are re-evaluated and denied without the override
+  - No step is silently authorized by an expired override
+  - Any resulting partial state is detected and flagged for recovery, not left silent
+  - The expiry boundary within the flow is reconstructable from the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: human_escalation_required
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: override validity re-checked along the flow, not only at admission
+  - domain: provider
+    interaction: post-expiry steps withheld; pre-expiry steps already applied
+  - domain: data
+    interaction: partial state detected and flagged as inconsistent
+  - domain: audit
+    interaction: the expiry boundary within the flow is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- override-expiry
+- mid-flight
+- consistency
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16
+  preconditions:
+  - A time-bounded override covers a multi-step flow
+  - The window expires before the flow completes
+  postconditions:
+  - Post-expiry steps are denied; any partial state is flagged for recovery

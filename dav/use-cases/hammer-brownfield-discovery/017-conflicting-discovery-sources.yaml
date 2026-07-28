@@ -1,0 +1,62 @@
+uuid: uc-hammer-brownfield-017
+handle: brownfield-discovery/conflicting-discovery-sources
+scenario:
+  description: 'Two discovery sources agree on identity (same host, correlated by serial) but DISAGREE
+    on a material attribute: the CMDB says 64 GB RAM, the live hardware scan says 128 GB. The system must
+    correlate them to one entity yet not silently pick a winner. It must record the conflict, apply a
+    source-precedence policy (live scan outranks stale CMDB) to choose an effective value, retain the
+    losing value with its source, and surface the conflict so the stale source can be corrected. This
+    probes whether the model supports per-attribute provenance and source precedence, or collapses to
+    last-writer-wins.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Reconcile conflicting attribute values from two correlated discovery sources
+  success_criteria:
+  - The two observations correlate to a single entity via matching keys
+  - The conflicting attribute is recorded as a conflict rather than silently overwritten
+  - A source-precedence policy selects the effective value (live scan over stale CMDB)
+  - The losing value is retained with its source for traceability
+  - The conflict is surfaced so the stale source can be reconciled
+  - The conflict and precedence decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: CMDB and live-scan providers emit conflicting values for one attribute
+  - domain: data
+    interaction: per-attribute provenance retained; effective value chosen, loser kept
+  - domain: policy
+    interaction: source-precedence policy resolves the conflict deterministically
+  - domain: audit
+    interaction: conflict and precedence decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- conflict
+- source-precedence
+- per-attribute-provenance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

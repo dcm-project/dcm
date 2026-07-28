@@ -1,0 +1,65 @@
+uuid: uc-hammer-dr-rehydration-001
+handle: dr-rehydration/faithful-single-stateless-baseline
+scenario:
+  description: 'Following a control-plane rebuild, a platform engineer rehydrates a single stateless compute
+    service that has no dependencies. The system reads the resource''s pinned intent and its captured
+    realized facts, re-runs the one validation policy that governed it, and re-realizes it on the same
+    provider it originally occupied. This is the baseline faithful case: no substitution, no data movement,
+    no policy change. It proves the minimal rehydration loop works before any edge is introduced, and
+    that the resource''s UUID and configuration are reproduced exactly from the data model.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Faithfully rebuild one stateless service from stored intent after a rebuild
+  success_criteria:
+  - Stored intent and captured realized facts are read for the single resource
+  - The original governing validation policy is re-evaluated and passes unchanged
+  - The resource is re-realized on its original provider (faithful mode, no substitution)
+  - The resource UUID is preserved across the destroy/rebuild cycle
+  - Post-rebuild realized state matches the original intent exactly
+  - The rehydration decision and provider dispatch are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent and realized facts read for the single resource
+  - domain: policy
+    interaction: the single governing validation policy is re-evaluated and passes
+  - domain: provider
+    interaction: original provider re-realizes the resource in faithful mode
+  - domain: audit
+    interaction: rehydration and dispatch recorded with preserved UUID
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- faithful
+- baseline
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A single stateless resource was realized and is now destroyed
+  - Intent and realized facts are preserved in the data stores
+  postconditions:
+  - Resource re-realized on the original provider with preserved UUID
+  - Realized state matches original intent
+  - Audit trail records the faithful rehydration
+  note: batch=framework-hammer-2026-07-16

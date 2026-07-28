@@ -1,0 +1,60 @@
+uuid: uc-51bdeca2-6b74-484c-a848-82c5a5718e62
+handle: intent-fulfillment/request-vs-operational-distinction
+version: 1.0.0
+scenario:
+  description: >-
+    The same two members, member A and member B, one of which cannot be satisfied — under two
+    different dependency natures, producing two legitimately different behaviors. The nature is
+    the ONE thing that differs. Under an OPERATIONAL edge (B operationally depends on A: a hard,
+    directional, Realized-layer coupling), A unsatisfiable blocks B directionally — B is blocked,
+    A is unaffected as a dependency source, and any member independent of A proceeds. Under a
+    REQUEST edge (A and B coupled as a unit: a mutual, Intent-layer coupling), the same shortfall
+    holds BOTH — neither activates, the unit is held together (or cancelled together if
+    permanent). Neither behavior is a defect: directional cascade with independents proceeding is
+    correct for operational coupling; whole-unit hold/cancel is correct for request coupling. The
+    platform reads the declared nature and applies the matching propagation; it never imposes one
+    on the other.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: >-
+    Apply directional operational cascade (dependent blocked, independents proceed) versus mutual
+    request coupling (whole unit held or cancelled) to the same two members purely by their
+    declared dependency nature, treating both as correct
+  success_criteria:
+  - Under an operational edge, an unsatisfiable A blocks only its directional dependent B; members independent of A proceed
+  - Under a request edge, the same unsatisfiable member holds the whole unit — neither A nor B activates (mutual, non-directional)
+  - The nature is the only differing input; the two propagation behaviors follow deterministically from it
+  - Neither behavior is treated as a defect — directional cascade and whole-unit coupling are each correct for their nature
+  - The consumer surface distinguishes the two — a blocked directional dependent versus a held mutual unit — naming the driving nature
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the dependency edge carries a nature (operational | request); the same two members differ only by that field
+  - domain: policy
+    interaction: operational nature propagates directionally (independents proceed); request nature couples the unit (hold-all/cancel-all)
+  - domain: audit
+    interaction: the declared nature and the propagation it selected are recorded for each case
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- dependency-nature
+- request-vs-operational
+- boundary

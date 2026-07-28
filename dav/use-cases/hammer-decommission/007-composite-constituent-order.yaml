@@ -1,0 +1,54 @@
+uuid: uc-hammer-decommission-007
+handle: decommission/composite-constituent-order
+scenario:
+  description: 'An application team decommissions a composite service — a managed message-broker cluster
+    that is a single logical resource made of a coordinator, three brokers, and a shared config store.
+    The system must decompose the composite into its constituents and tear them down in the correct internal
+    order (brokers before coordinator, coordinator before config store), then retire the composite handle
+    only once all constituents are gone. This probes whether a composite service carries its own internal
+    teardown ordering distinct from external dependencies.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives: []
+  intent: Decommission a composite service and tear its constituents down in the right internal order
+  success_criteria:
+  - The composite is decomposed into its declared constituents
+  - Constituents are torn down in the composite's internal reverse order (brokers, coordinator, config
+    store)
+  - No constituent is destroyed while another constituent still depends on it
+  - The composite handle is retired only after every constituent is destroyed
+  - Realized state is cleared for each constituent and for the composite
+  - The constituent teardown order is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: composite decomposed into constituents, internal order resolved
+  - domain: provider
+    interaction: constituents destroyed in order by the owning provider
+  - domain: audit
+    interaction: constituent teardown sequence recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- composite
+- constituent-order
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

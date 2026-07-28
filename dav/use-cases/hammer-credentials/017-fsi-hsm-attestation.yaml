@@ -1,0 +1,61 @@
+uuid: uc-hammer-credentials-017
+handle: credentials/fsi-hsm-attestation
+scenario:
+  description: 'An FSI profile requires that a high-value credential be minted and held in a hardware
+    security module, and that every use be gated by an HSM attestation proving the key never left the
+    hardware boundary. The system must record the attestation requirement, verify a valid attestation
+    before permitting the interaction, and deny use if attestation is missing or stale. This tests whether
+    credential use can be gated on hardware attestation under a compliance mandate, and probes the attestation-gated
+    trust plane.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Gate credential use on a valid HSM attestation
+  success_criteria:
+  - The HSM-attestation requirement is recorded as credential metadata
+  - A valid, fresh attestation is verified before each gated interaction
+  - Use is denied when attestation is missing, stale, or invalid
+  - The attestation proves the key never left the HSM boundary
+  - No secret key material is exported or stored in the model
+  - Attestation checks and any denials are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: provider_failure
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: governance matrix requires HSM attestation for credential use
+  - domain: provider
+    interaction: provider verifies attestation before honoring the credential
+  - domain: data
+    interaction: attestation requirement and results recorded as metadata
+  - domain: audit
+    interaction: attestation verification and denials recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- hsm
+- attestation
+- fsi
+- compliance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

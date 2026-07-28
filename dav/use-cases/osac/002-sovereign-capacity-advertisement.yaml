@@ -1,0 +1,59 @@
+uuid: uc-98266749-fc7e-4ad7-8550-e6bd2951a8ef
+handle: osac/sovereign-capacity-advertisement
+version: 1.0.0
+scenario:
+  description: >-
+    A registered sovereign cloud (OSAC) advertises its live capacity and the capabilities it can
+    satisfy, as data. The platform's placement routes intent to eligible providers by matching the
+    intent's requirements against these advertised capabilities and remaining capacity — never by a
+    hard-coded map of which cloud does what. The cloud-operator's demand is that advertisement is
+    honest data the platform routes against: when capacity is exhausted the cloud is no longer
+    eligible for new placement, and when a capability is not advertised the cloud is never selected
+    for it. Advertisement carries the sovereignty envelope too, so a workload with a residency
+    requirement is only ever routed to a cloud whose advertised jurisdiction admits it.
+  actor:
+    persona: cloud-operator
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+    - solution-architect
+  intent: >-
+    Advertise a sovereign cloud's live capacity and capabilities as data so placement routes intent
+    to it on capability and remaining capacity — and never selects it beyond what it advertises
+  success_criteria:
+  - Placement matches intent to the cloud on advertised capability, not on hard-coded provider knowledge
+  - When advertised capacity is exhausted, the cloud is excluded from new placement
+  - A capability the cloud does not advertise is never placed onto it
+  - A residency-constrained workload is only routed to a cloud whose advertised jurisdiction admits it
+  - Advertisement is data the platform reads; the cloud's native capacity model stays at its edge
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_constrained
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: advertised capability and remaining capacity are carried as declared provider data
+  - domain: policy
+    interaction: placement matches intent requirements to advertised capability and sovereignty envelope
+  - domain: provider
+    interaction: the cloud reports its capacity/capability surface; native capacity accounting stays at its edge
+  - domain: audit
+    interaction: the placement decision records which advertised capabilities and capacity were matched
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- osac
+- cloud-operator
+- capacity-advertisement
+- placement
+- capability

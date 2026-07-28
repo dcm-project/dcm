@@ -1,0 +1,55 @@
+uuid: uc-d0afd979-1545-426b-8400-0eb5ba1ee1a7
+handle: class-versioning/breaking-base-blast-radius-enumerated
+version: 1.0.0
+scenario:
+  description: 'A registry maintainer makes a properly-declared BREAKING Base Class change (major bump).
+    Before merge, the change artifact enumerates the full blast radius computed from the class graph:
+    every Type Class and Provider Class that includes the element, every generated flat spec that re-renders,
+    and every known pinned consumer (via the consumer-conformance manifests) that will accumulate visible
+    debt. The merge recompiles everything in one release; no descendant is left referencing the old shape
+    inside the registry.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Make a breaking Base Class change with its full downstream impact enumerated and recompiled
+    atomically
+  success_criteria:
+  - 'The blast radius is computed from the class graph, not hand-listed: affected classes, regenerated
+    specs, and pinned consumers'
+  - Every affected descendant is regenerated with a matching breaking bump in the same release
+  - No artifact inside the registry references the pre-change element shape after merge
+  - Consumer-conformance manifests identify which downstream consumers now carry version debt
+  - The enumeration is part of the durable change record
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the class graph yields the affected-artifact set deterministically
+  - domain: policy
+    interaction: breaking classification demands and receives a major bump across the set
+  - domain: provider
+    interaction: provider classes re-render against the new base shape in the same release
+  - domain: audit
+    interaction: the blast-radius enumeration is preserved with the change
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- base-class
+- breaking-change
+- blast-radius

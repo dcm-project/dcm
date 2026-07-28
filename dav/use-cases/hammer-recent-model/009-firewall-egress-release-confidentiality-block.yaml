@@ -1,0 +1,66 @@
+uuid: uc-hammer-recent-model-009
+handle: recent-model/firewall-egress-release-confidentiality-block
+scenario:
+  description: "A security officer's policy governs a request that would send a resolved secret-material\
+    \ reference\n    to a peer DCM for cross-boundary fulfillment. The information-firewall performs egress\
+    \ mediation: it\n    inspects the outbound payload before any value crosses the boundary. Structural\
+    \ inspection catches\n    that the payload carries a pointer to confidential material; value inspection,\
+    \ once the pointer would\n    resolve, confirms the datum is release-restricted. The firewall blocks\
+    \ egress, so the value never\n    leaves the boundary and the peer-DCM handoff is refused. This probes\
+    \ egress release/confidentiality\n    control and the structural-vs-value distinction on the outbound\
+    \ side."
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+  intent: Block egress of a release-restricted confidential value before it crosses to a peer DCM
+  success_criteria:
+  - Egress mediation runs before any value crosses the boundary
+  - Structural inspection detects the payload carries a pointer to confidential material
+  - Value inspection confirms the resolved datum is release-restricted
+  - The firewall blocks egress and the value never leaves the boundary
+  - The peer-DCM handoff is refused as a policy violation
+  - The egress block, with structural and value findings, is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: compliance_gated
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: egress mediation performs structural then value inspection and blocks release
+  - domain: data
+    interaction: the confidential reference is resolved only inside the boundary for value inspection
+  - domain: provider
+    interaction: the peer-DCM provider handoff is refused because egress was blocked
+  - domain: audit
+    interaction: the egress block with structural and value findings is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- policy-firewall
+- egress-release
+- confidentiality
+- structural-vs-value
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - A release-restricted classification applies to the referenced material
+  - A peer DCM is the only eligible fulfiller across the boundary
+  postconditions:
+  - The confidential value never crossed the boundary
+  - The peer-DCM handoff is refused and logged as a violation
+  note: batch=recent-model-2026-07-22

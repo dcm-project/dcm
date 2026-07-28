@@ -1,0 +1,53 @@
+uuid: uc-hammer-audit-014
+handle: audit/forensic-query-by-actor
+scenario:
+  description: 'An investigation focuses on one departing employee. A security officer asks for every
+    action that identity took across the estate within a date range — every request, modification, and
+    decommission, across all resources and providers. The architecture must support actor-scoped forensic
+    query over the audit trail, returning a complete, ordered activity list for that identity without
+    the investigator having to walk each resource individually. This tests whether audit is queryable
+    by actor as a first-class axis, not only by resource.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - compliance-auditor
+  intent: Retrieve all actions by one identity across the estate in a time window
+  success_criteria:
+  - The audit trail is queryable by actor identity as a primary axis
+  - All actions by the identity in the window are returned across all resources
+  - Results include requests, modifications, and decommissions
+  - Results are ordered and complete for the specified window
+  - Actions the actor took across multiple providers are all included
+  - Results exclude actions by other identities
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: audit
+    interaction: actor-scoped query returns a complete ordered activity list
+  - domain: data
+    interaction: actions resolved across resources and providers for the identity
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- forensics
+- actor-query
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

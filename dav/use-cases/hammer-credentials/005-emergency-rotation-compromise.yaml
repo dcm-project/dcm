@@ -1,0 +1,61 @@
+uuid: uc-hammer-credentials-005
+handle: credentials/emergency-rotation-compromise
+scenario:
+  description: 'A security officer declares a credential compromised and triggers an emergency rotation
+    with NO transition window: the old credential must be invalidated immediately, before any parallel-validity
+    overlap, even though live interactions are using it. The system must revoke-and-reissue atomically,
+    accept that in-flight interactions on the old credential will fail, and prove the old value can no
+    longer authenticate anywhere. This deliberately conflicts with the parallel-validity rotation path
+    and likely surfaces as partially_supported or unsupported — a finding.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Immediately kill a compromised credential with no overlap window
+  success_criteria:
+  - Old credential is invalidated immediately with no overlap
+  - New credential is issued as part of the same emergency action
+  - In-flight interactions on the old credential are forced to fail
+  - The compromised value cannot authenticate to any provider afterward
+  - All consumers are notified they must re-acquire the new credential
+  - The compromise declaration and emergency rotation are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: provider_failure
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: recovery policy authorizes zero-window emergency rotation
+  - domain: provider
+    interaction: providers reject the compromised value immediately
+  - domain: data
+    interaction: old credential marked invalid without an overlap window
+  - domain: audit
+    interaction: compromise event and forced failures recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- rotation
+- compromise
+- emergency
+- likely-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

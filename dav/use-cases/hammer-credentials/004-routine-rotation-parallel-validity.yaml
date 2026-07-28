@@ -1,0 +1,59 @@
+uuid: uc-hammer-credentials-004
+handle: credentials/routine-rotation-parallel-validity
+scenario:
+  description: 'A platform engineer rotates a provider API credential that is in active use by several
+    running services. The rotation policy requires a parallel-validity window: the new credential must
+    be issued and accepted before the old one is retired, so no in-flight interaction fails. The system
+    must model both credential versions as valid simultaneously for the overlap window, cut consumers
+    over to the new version, then retire the old one only after the window closes. This tests whether
+    the model supports overlapping-validity rotation rather than an atomic swap.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Rotate an in-use credential with a parallel-validity overlap window
+  success_criteria:
+  - New credential version is issued while the old remains valid
+  - Both versions are simultaneously valid during the overlap window
+  - Consumers are cut over to the new version without failed interactions
+  - Old version is retired only after the overlap window closes
+  - Dependency edges to the credential remain stable across rotation
+  - The rotation timeline and overlap window are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: rotation policy enforces parallel-validity before retirement
+  - domain: data
+    interaction: two credential versions coexist; consumer edges updated
+  - domain: provider
+    interaction: providers accept the new version before the old is retired
+  - domain: audit
+    interaction: overlap window and cutover recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- rotation
+- parallel-validity
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

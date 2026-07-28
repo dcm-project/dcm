@@ -1,0 +1,60 @@
+uuid: uc-hammer-provider-portability-003
+handle: provider-portability/cross-provider-class-ec2-to-ocpvirt-mover-timeout
+scenario:
+  description: An AWS EC2 instance is re-ported to OCPVirt. Compute re-realizes from intent quickly, but the third-party
+    data-migration provider moving the disk exceeds its operation deadline. DCM records the timeout on the data
+    step, holds the target in a non-operational state, and does not mark the re-port complete — the compute is realized
+    but the workload cannot be brought up until the data lands.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Cross-cloud re-port stalls when the data-migration provider times out
+  success_criteria:
+  - Compute re-realizes on OCPVirt from the stored intent
+  - The data-migration provider is invoked as a tracked Process
+  - The mover exceeds its deadline and DCM records a timeout on the data step
+  - The target is held non-operational pending the data
+  - The incomplete re-port is not marked successful
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: timeout
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: data-migration provider exceeds its operation deadline
+  - domain: policy
+    interaction: recovery policy holds the target non-operational on the timed-out data step
+  - domain: audit
+    interaction: the timeout and hold are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- timeout
+- data-migration
+- cross-cloud
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - EC2 source; OCPVirt target; a data-migration provider is wired
+  postconditions:
+  - Compute is realized but the workload is held pending the data
+  - A timeout is recorded on the data step
+  note: batch=portability-enrich-2026-07-22

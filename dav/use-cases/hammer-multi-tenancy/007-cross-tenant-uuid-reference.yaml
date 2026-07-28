@@ -1,0 +1,57 @@
+uuid: uc-hammer-tenancy-007
+handle: tenancy/cross-tenant-uuid-reference
+scenario:
+  description: 'An application-team member in tenant B declares a new resource whose dependency references,
+    by UUID, a resource that belongs to tenant A. Unlike a raw read attempt, this is a structural dependency
+    in the intent graph. The system must decide whether a cross-tenant dependency edge is permissible:
+    it should reject the reference (or require an explicit sharing grant from tenant A) rather than silently
+    wiring one tenant''s resource into another tenant''s dependency graph. This tests whether the dependency
+    resolver enforces tenant scope on referenced UUIDs.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Declare a dependency that references another tenant's resource by UUID
+  success_criteria:
+  - Dependency resolver detects the referenced UUID belongs to a foreign tenant
+  - The reference is rejected absent an explicit cross-tenant sharing grant
+  - No dependency edge is created into tenant A's graph without authorization
+  - Rejection distinguishes not-authorized from not-found
+  - If a sharing grant exists, the reference resolves and is recorded as cross-tenant
+  - The attempted cross-tenant reference is captured in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency resolution checks the owning tenant of each referenced UUID
+  - domain: policy
+    interaction: cross-tenant reference constraint requires an explicit sharing grant
+  - domain: audit
+    interaction: cross-tenant reference attempt recorded with both tenant identities
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- isolation
+- cross-tenant-reference
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

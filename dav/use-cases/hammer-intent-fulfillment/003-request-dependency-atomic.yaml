@@ -1,0 +1,62 @@
+uuid: uc-1dc7115d-636a-4e33-afe8-8f662d9623ea
+handle: intent-fulfillment/request-dependency-atomic
+version: 1.0.0
+scenario:
+  description: >-
+    A consumer declares ten peer VMs coupled by a request dependency — an Intent/Requested-layer
+    coupling meaning "I want these as a unit" (a mutual, non-directional nature, distinct from an
+    operational "can't function without"). Because a request dependency binds at request time, it
+    yields both atomic faces from one nature. One VM cannot be satisfied for a transient reason:
+    while the convergence window is open, the WHOLE unit is held together — no VM activates, every
+    member sits at Requested (reserved where possible, ADR-011 validate-and-reserve, which is
+    reservation not activation) — this is hold-all. If the member becomes permanently
+    unsatisfiable, the whole coupled request cancels together and none goes live — this is
+    cancel-all. Both are the single behavior of the request nature: the unit is held up until all
+    can activate, and cancelled down if any member cannot. The consumer's surface names the
+    blocking member and that the request-coupling binds the unit.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: >-
+    Hold ten request-coupled peer VMs as one unit — none activating while any member is
+    unsatisfiable — activating all atomically when every member can, and cancelling the whole unit
+    if a member is permanently unsatisfiable
+  success_criteria:
+  - No VM activates (transitions to Realized) while any request-coupled peer cannot activate — hold-all under an open window
+  - Members are held at Requested (reserved where possible per ADR-011); reservation is not activation — no VM runs while siblings are held
+  - When every member can activate, all commit to Realized atomically — none partially ahead of the others
+  - A permanently-unsatisfiable member cancels the whole coupled request unit — cancel-all — with no member realized
+  - The surface names the blocking member and that the request-nature coupling binds the whole unit (hold-all up, cancel-all down)
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: a request dependency binds the peers as one unit at the Requested layer; members held at Requested, atomic transition to Realized
+  - domain: policy
+    interaction: request nature yields hold-all activation (up) and cancel-all (down) from one binding — the two atomic faces
+  - domain: provider
+    interaction: reserve across all members (ADR-011) before any activates; no reservation becomes an activation until all can
+  - domain: audit
+    interaction: the request-coupling, the blocking member, and the atomic activation or whole-unit cancel are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- request-dependency
+- atomic
+- convergence

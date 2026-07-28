@@ -1,0 +1,59 @@
+uuid: uc-hammer-brownfield-013
+handle: brownfield-discovery/discovered-then-externally-retired
+scenario:
+  description: 'A previously discovered and adopted host stops appearing in the discovery stream — it
+    was decommissioned out-of-band (pulled from the rack) without going through DCM''s decommission flow.
+    The system must detect the absence as drift (a managed entity whose reality has vanished), rather
+    than keeping it indefinitely as present or silently deleting it. Absence must be distinguished from
+    a missed scan: only sustained absence across a configured number of cycles converts to a presumed-retired/decommission-candidate
+    finding. This probes whether discovery models negative observations — the disappearance of expected
+    reality — at all.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Detect a managed resource disappearing from discovery as drift, not a missed scan
+  success_criteria:
+  - Sustained absence across a configured number of scan cycles is detected
+  - A single missed scan does not trigger a retirement conclusion
+  - The vanished managed entity is flagged as presumed-retired / decommission-candidate
+  - The entity is not silently deleted; its record and history persist for review
+  - The discrepancy between realized (present) and discovered (absent) is raised as drift
+  - The presumed-retirement finding is recorded with the last-seen timestamp
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery stream stops reporting a previously present host
+  - domain: data
+    interaction: sustained absence computed against last-seen and raised as a drift record
+  - domain: policy
+    interaction: absence-threshold policy converts sustained absence to a retirement candidate
+  - domain: audit
+    interaction: presumed-retirement finding recorded with last-seen timestamp
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- drift
+- negative-observation
+- presumed-retired
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

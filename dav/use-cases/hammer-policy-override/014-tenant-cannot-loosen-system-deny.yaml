@@ -1,0 +1,63 @@
+uuid: uc-hammer-policy-override-014
+handle: policy-override/tenant-cannot-loosen-system-deny
+scenario:
+  description: 'A tenant-admin authors a tenant-scoped policy that permits unencrypted inter-service traffic,
+    hoping it relaxes a system-scoped policy that denies it. Both policies are in scope for the same request
+    and their verdicts conflict. Domain precedence (system > platform > tenant > resource_type > entity)
+    must resolve this so the system deny wins — a lower-domain permit cannot loosen a higher-domain deny.
+    The tenant permit is recorded as superseded, and the request is denied. The mechanism under test is
+    that precedence is a security boundary: authority flows down, not up, and a tenant cannot self-grant
+    past a system control.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - security-officer
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Attempt to relax a system deny with a tenant-scoped permit
+  success_criteria:
+  - Both the system deny and the tenant permit are in scope and evaluated
+  - The conflict is resolved by domain precedence, not by tenant intent
+  - The system-scoped deny wins over the lower tenant-scoped permit
+  - The tenant permit is recorded as superseded, not applied
+  - The request is denied and no dispatch occurs
+  - The audit record shows the tenant could not loosen the system control
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: system deny and tenant permit conflict resolved by precedence
+  - domain: data
+    interaction: tenant permit stored as superseded against the request
+  - domain: audit
+    interaction: denial recorded showing lower domain cannot override higher
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- precedence
+- privilege-boundary
+- system-deny
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A tenant permit and a system deny are both in scope and conflict
+  postconditions:
+  - The system deny wins; the tenant permit is superseded
+  note: batch=framework-hammer-2026-07-16

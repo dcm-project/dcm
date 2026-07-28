@@ -1,0 +1,61 @@
+uuid: uc-hammer-storage-mobility-009
+handle: storage-mobility/migrate-volume-cross-provider-identity
+scenario:
+  description: 'A platform engineer migrates a Storage.Volume from a Ceph-backed provider to a NetApp-backed
+    provider (for example, to consolidate arrays) while the volume must keep the same DCM identity, dependents,
+    and access bindings. The system must copy the data to the target provider, cut over the realized binding
+    to the new provider-native id, and preserve the volume''s UUID and every dependency edge — the data
+    moves, the identity does not. This exercises provider-portable data mobility and the separation of
+    DCM identity from provider-native handle.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Move a volume's data to a new provider while preserving its DCM identity
+  success_criteria:
+  - Migration is modeled as a modification of the existing volume, not a new resource
+  - Data is copied to the target provider and verified before cutover
+  - Realized binding is repointed to the target provider's native volume id
+  - Volume UUID is preserved across the provider change
+  - All dependency edges and access bindings remain intact after cutover
+  - Source provider allocation is released only after successful cutover
+  - Audit trail records both provider handles across the migration
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: source and target providers coordinate data copy and cutover
+  - domain: data
+    interaction: realized handle repointed while UUID and dependencies preserved
+  - domain: policy
+    interaction: target provider eligibility and capability validated before migration
+  - domain: audit
+    interaction: cross-provider migration recorded with both native handles
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- migration
+- provider-portable
+- identity-preservation
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,67 @@
+uuid: uc-hammer-drift-recovery-017
+handle: drift-recovery/flapping-no-fixed-point
+scenario:
+  description: 'An SRE reconciles a resource whose live value is being continuously toggled by an external
+    controller the DCM does not own — every remediation is reverted within seconds, so the reconciliation
+    loop never reaches a fixed point. The engine must detect that it is flapping — remediating the same
+    field repeatedly with no lasting convergence — recognize this is not a convergent loop, and break
+    out: stop remediating, declare the resource non-convergent, and escalate. This probes what may be
+    an unsupported edge: distinguishing a genuinely convergent loop from a livelock and refusing to churn
+    forever.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Detect a non-convergent flapping loop and break out instead of remediating forever
+  success_criteria:
+  - The same field is remediated and reverted repeatedly across passes
+  - The engine detects that no pass reaches a stable zero-drift fixed point
+  - Flapping is distinguished from a normal convergent loop via oscillation detection
+  - The engine stops remediating rather than churning indefinitely
+  - The resource is declared non-convergent and escalated to a human owner
+  - The oscillation pattern and non-convergence verdict are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: same-field drift re-detected every pass, never stabilizing
+  - domain: policy
+    interaction: oscillation detected; loop declared non-convergent and remediation halted
+  - domain: provider
+    interaction: repeated corrective dispatches reverted by an external controller
+  - domain: audit
+    interaction: oscillation pattern, non-convergence verdict, and escalation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- flapping
+- livelock
+- non-convergence
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - An external controller continuously reverts the DCM's remediations
+  - Resource carries a recovery policy that keeps re-firing
+  postconditions:
+  - Flapping detected; remediation halted
+  - Resource declared non-convergent and escalated
+  - Oscillation recorded
+  note: batch=framework-hammer-2026-07-16

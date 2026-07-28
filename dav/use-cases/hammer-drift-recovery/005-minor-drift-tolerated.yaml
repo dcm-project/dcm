@@ -1,0 +1,63 @@
+uuid: uc-hammer-drift-recovery-005
+handle: drift-recovery/minor-drift-tolerated
+scenario:
+  description: 'A dev-profile application team runs a reconciliation pass on a sandbox service. Discovery
+    reports that a provider-assigned tag was normalized to lowercase and a last-seen timestamp advanced
+    — cosmetic fields outside the declared intent. The engine must classify this divergence as minor drift
+    under the severity model, record it, and deliberately tolerate it: no remediation, no escalation.
+    This validates that drift severity classification exists and that a minor class exists which the system
+    can choose not to act on.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Confirm that cosmetic minor drift is classified and tolerated without remediation
+  success_criteria:
+  - Discovery reports divergence only on cosmetic, non-intent-governed fields
+  - The engine classifies the divergence as minor severity
+  - The classification rationale (fields are outside declared intent) is captured
+  - No remediation action is generated
+  - No escalation is raised
+  - The tolerated minor-drift result is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: data
+    interaction: cosmetic field divergence identified against Realized snapshot
+  - domain: policy
+    interaction: severity model classifies the drift as minor and marks it tolerable
+  - domain: audit
+    interaction: tolerated minor-drift decision recorded with rationale
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- severity-classification
+- minor
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Sandbox service is realized
+  - Only cosmetic, non-intent fields diverged
+  postconditions:
+  - Drift classified minor and tolerated
+  - No remediation or escalation
+  - Decision recorded
+  note: batch=framework-hammer-2026-07-16

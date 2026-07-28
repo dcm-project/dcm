@@ -1,0 +1,61 @@
+uuid: uc-6abbe5e3-056b-487a-94d9-bc7feafbb15e
+handle: osac/cloud-rehydration-from-intent
+version: 1.0.0
+scenario:
+  description: >-
+    A sovereign cloud (OSAC) is itself a UDLM-modeled estate — its own resources, dependency graph,
+    and sovereignty constraints are declared intent, not tribal setup. After an infrastructure loss,
+    the cloud-operator rebuilds the cloud by replaying that declared intent: the estate is realized
+    again in dependency order onto recovered hardware, its residency and jurisdiction guarantees
+    reasserted from the same declaration that first established them. Because the cloud is intent,
+    not a hand-built artifact, rehydration is a faithful replay rather than a reconstruction from
+    memory — and the sovereignty envelope is restored by construction, not re-justified after the
+    fact. The build of a sovereign cloud and its disaster recovery are the same act on the same
+    declared estate.
+  actor:
+    persona: cloud-operator
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+    - compliance-auditor
+  intent: >-
+    Rebuild a sovereign cloud after infrastructure loss by replaying its declared intent — realizing
+    the cloud's own estate in dependency order and reasserting its residency/jurisdiction guarantees
+    from the same declaration
+  success_criteria:
+  - The cloud's estate is realized from its declared intent in dependency order — a faithful replay, not a reconstruction
+  - Residency and jurisdiction guarantees are restored by construction from the original declaration
+  - The rehydrated cloud is verifiably the declared estate, not a drifted approximation
+  - No hand-built step is required that the declared intent does not capture
+  - The build of the cloud and its recovery are the same replay over the same estate
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: full_stack
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: infrastructure_loss
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: the cloud's own estate is declared intent — the source of truth rehydration replays
+  - domain: policy
+    interaction: recovery policy orders the replay and reasserts the sovereignty envelope by construction
+  - domain: provider
+    interaction: the cloud-operator realizes the estate onto recovered hardware from the declaration
+  - domain: audit
+    interaction: the replay, the dependency order, and the restored sovereignty guarantees are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- osac
+- cloud-operator
+- rehydration
+- sovereignty
+- recovery

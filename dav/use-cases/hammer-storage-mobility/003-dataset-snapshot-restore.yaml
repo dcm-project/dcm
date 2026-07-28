@@ -1,0 +1,56 @@
+uuid: uc-hammer-storage-mobility-003
+handle: storage-mobility/dataset-snapshot-restore
+scenario:
+  description: 'An application team takes a point-in-time snapshot of a Storage.Dataset, then later restores
+    the dataset to that snapshot after a bad application migration corrupted data. The system must model
+    the snapshot as a first-class Realized artifact bound to its source dataset, and the restore as a
+    modification that returns the dataset to the captured state without reassigning the dataset UUID.
+    This exercises snapshot lineage and the rollback path on a single dataset with dependents.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives: []
+  intent: Snapshot a dataset and later restore it to that point-in-time state
+  success_criteria:
+  - Snapshot is created as a Realized artifact bound to its source dataset UUID
+  - Snapshot records the capture timestamp and source dataset generation
+  - Restore operation is accepted as a modification of the existing dataset
+  - Dataset UUID is preserved across the restore (no reassignment)
+  - Post-restore realized state matches the snapshot's captured state
+  - Snapshot lineage remains queryable after restore
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: snapshot artifact persisted with lineage to source dataset
+  - domain: provider
+    interaction: storage provider captures snapshot and later executes rollback
+  - domain: policy
+    interaction: restore validated against dataset ownership and snapshot binding
+  - domain: audit
+    interaction: snapshot and restore events recorded with captured generation
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- snapshot
+- restore
+- lineage
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

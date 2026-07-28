@@ -1,0 +1,52 @@
+uuid: uc-f5ff1b9a-7385-4f76-be68-5582143077e2
+handle: change-control/expedite-break-glass
+version: 1.0.0
+scenario:
+  description: 'A security fix lands upstream as a breaking class change and a regulated estate needs
+    it before the next quarterly window. The change policy''s expedite clause exists for exactly this:
+    out-of-window adoption requires an elevated approver, a named justification, and produces a flagged
+    audit record; the blue/green evidence gate still applies — expedite compresses the calendar, never
+    the evidence.'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - compliance-auditor
+    - security-officer
+  intent: Adopt a security-critical breaking change out of window through the policy's expedite clause,
+    with elevated approval and undiminished evidence
+  success_criteria:
+  - The expedite clause is part of the declared policy, with its own approver role and justification requirement
+  - Expedited adoption still requires the blue/green evidence gate — no evidence gate is waivable
+  - The expedited run is flagged as out-of-window in the adoption record with the justification attached
+  - An expedite attempt without the elevated approval is refused like any out-of-window attempt
+  - The next scheduled window's report includes the expedited adoption for retrospective review
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the expedite clause compresses scheduling gates while preserving evidence gates
+  - domain: audit
+    interaction: flagged out-of-window record with justification and elevated approver
+  - domain: data
+    interaction: blue/green evidence remains the promotion input
+  - domain: provider
+    interaction: the expedited orchestration is the normal ceremony minus only the window wait
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- expedite
+- break-glass
+- security

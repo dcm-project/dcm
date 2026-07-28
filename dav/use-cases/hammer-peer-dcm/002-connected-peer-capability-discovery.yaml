@@ -1,0 +1,56 @@
+uuid: uc-hammer-peer-dcm-002
+handle: peer-dcm/connected-peer-capability-discovery
+scenario:
+  description: A local DCM needs a capability no local provider offers. It queries its federated peers' advertised
+    capability sets and finds a peer that provides it. The discovery is read-only and respects each peer's advertised
+    (not internal) capability surface.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+  intent: Discover a peer DCM's advertised capabilities to find an eligible provider
+  success_criteria:
+  - The local DCM queries federated peers' advertised capabilities
+  - A peer advertising the needed capability is identified
+  - Only advertised (not internal) capability is exposed across the boundary
+  - The discovered peer capability is recorded for placement
+  - No realization occurs during discovery
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peers advertise their capability surface across the federation
+  - domain: policy
+    interaction: admission matches the needed capability to a peer's advertised set
+  - domain: data
+    interaction: the discovered peer capability is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- capability-discovery
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Peers are federated and advertise capability sets
+  postconditions:
+  - An eligible peer capability is discovered for placement
+  note: batch=peer-dcm-2026-07-23

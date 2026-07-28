@@ -1,0 +1,58 @@
+uuid: uc-hammer-federation-002
+handle: federation/routing-as-policy-governed-selection
+scenario:
+  description: 'An organization runs three peer DCMs it can route work to, but a governance policy constrains
+    which peer may receive which class of workload: regulated data must stay with the fsi-attested peer,
+    burst compute may go to the lowest-cost peer, and a default-deny applies to any peer not explicitly
+    authorized. A platform engineer submits an ambiguous intent and the placement engine must resolve
+    the target peer purely by evaluating the federation-routing policy chain, not by static configuration.
+    This tests whether federation routing is modeled as policy-governed provider selection.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Route an order to the correct peer DCM by evaluating federation-routing policy
+  success_criteria:
+  - Placement engine enumerates all peer DCMs as candidate providers
+  - Routing policy chain evaluates data-class, cost, and attestation constraints
+  - A peer not explicitly authorized is excluded by default-deny
+  - The selected peer satisfies every constraint in the chain
+  - The selection rationale (which policy admitted/denied each peer) is recorded
+  - No routing decision is made by static config bypassing the policy engine
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: federation-routing policy chain evaluates each peer against constraints
+  - domain: provider
+    interaction: placement engine selects the peer that satisfies the chain
+  - domain: audit
+    interaction: per-peer admit/deny rationale recorded for the routing decision
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- routing
+- policy-governed
+- provider-selection
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

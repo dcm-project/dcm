@@ -1,0 +1,60 @@
+uuid: uc-hammer-brownfield-008
+handle: brownfield-discovery/adopt-attaching-intent
+scenario:
+  description: 'A team claims a Discovered-only host by authoring an Intent that matches its observed
+    reality — the act that moves a resource from "known but ungoverned" into the full managed lifecycle.
+    The system must attach the new Intent to the existing Discovered entity (preserving its UUID), reconcile
+    Intent against the discovered attributes, and — where Intent and reality already agree — treat realization
+    as a no-op adopt rather than a rebuild. Where Intent asks for more than reality provides, the delta
+    becomes managed work. This validates that Intent can be attached to an already-existing entity after
+    the fact, closing the Discovered-only gap.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Attach an Intent to a discovered resource to bring it under managed lifecycle
+  success_criteria:
+  - The authored Intent attaches to the existing Discovered entity without changing its UUID
+  - Intent is reconciled against the discovered attributes to compute any delta
+  - Where Intent matches reality, adoption is a no-op — no rebuild or restart occurs
+  - Where Intent exceeds reality, the delta is recorded as managed reconciliation work
+  - The entity leaves Discovered-only state and enters the governed lifecycle
+  - The intent-attachment and reconciliation outcome are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: Intent attached to the existing entity and reconciled against discovered attributes
+  - domain: policy
+    interaction: validation confirms the attached Intent is admissible for the entity
+  - domain: provider
+    interaction: provider performs a no-op adopt where Intent already matches reality
+  - domain: audit
+    interaction: intent attachment and reconciliation delta recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- adoption
+- attach-intent
+- lifecycle-entry
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

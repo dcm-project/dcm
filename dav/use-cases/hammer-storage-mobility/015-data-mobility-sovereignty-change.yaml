@@ -1,0 +1,61 @@
+uuid: uc-hammer-storage-mobility-015
+handle: storage-mobility/data-mobility-sovereignty-change
+scenario:
+  description: 'A storage provider that currently holds a tenant''s Storage.Volumes has its sovereignty
+    classification changed mid-flight — for example, its operating jurisdiction is reclassified so it
+    no longer satisfies the tenant''s data-residency mandate. Data already resident on that provider must
+    be evacuated to a compliant provider, and any in-flight writes must be held rather than committed
+    to the now-noncompliant provider. The system must detect the sovereignty change, block further placement
+    on the provider, and drive a compliant migration. This stresses data mobility triggered by a governance
+    change rather than an operator request.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Evacuate data off a provider that lost its sovereignty classification
+  success_criteria:
+  - Sovereignty reclassification of the provider is detected as a governance event
+  - Further placement and write-commit on the now-noncompliant provider is blocked
+  - In-flight writes are held, not committed to the noncompliant provider
+  - Resident volumes are migrated to a provider that satisfies the residency mandate
+  - Volume UUIDs and dependencies are preserved across the forced migration
+  - The sovereignty-driven evacuation is fully recorded for the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty change re-evaluates placement and blocks the noncompliant provider
+  - domain: provider
+    interaction: compliant target provider selected and data evacuated
+  - domain: data
+    interaction: in-flight writes held; volumes migrated with identity preserved
+  - domain: audit
+    interaction: sovereignty event and evacuation recorded end to end
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- sovereignty
+- data-residency
+- forced-migration
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

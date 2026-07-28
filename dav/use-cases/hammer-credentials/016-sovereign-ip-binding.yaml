@@ -1,0 +1,61 @@
+uuid: uc-hammer-credentials-016
+handle: credentials/sovereign-ip-binding
+scenario:
+  description: 'A sovereign profile mandates that a credential is only valid when presented from a specific
+    set of source IP ranges inside the sovereign boundary — an IP-bound credential. The system must record
+    the IP-binding constraint as credential metadata and ensure providers refuse the credential when presented
+    from any out-of-boundary address. An interaction from outside the permitted ranges must be denied
+    even with the correct secret. This tests whether credential validity can be constrained by network
+    context under a sovereign mandate.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+    - sovereignty-authority
+  intent: Enforce that a credential is only valid from sovereign-boundary source IPs
+  success_criteria:
+  - The IP-binding constraint is recorded as credential metadata
+  - Providers accept the credential only from permitted source IP ranges
+  - An interaction from an out-of-boundary IP is denied despite a valid secret
+  - The permitted ranges are tied to the sovereign boundary definition
+  - Binding enforcement does not require storing the secret value
+  - Denied out-of-boundary attempts are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty policy enforces the credential IP-binding constraint
+  - domain: provider
+    interaction: provider rejects presentation from out-of-boundary IPs
+  - domain: data
+    interaction: IP-binding constraint stored as credential metadata
+  - domain: audit
+    interaction: out-of-boundary denial recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- sovereignty
+- ip-binding
+- fsi
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16
