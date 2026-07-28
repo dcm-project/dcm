@@ -1,0 +1,61 @@
+uuid: uc-hammer-tenancy-005
+handle: tenancy/shared-ipaddresspool-isolation
+scenario:
+  description: 'A single platform-owned IPAddressPool is shared across tenants. Tenant A and tenant B
+    each request an IPAddress allocation from the pool in parallel. The system must allocate distinct,
+    non-overlapping addresses, attribute each IPAddress to the requesting tenant, and ensure neither tenant
+    can see or reclaim the other''s allocation — while the pool itself remains a single shared allocatable
+    resource. This tests isolation on a shared allocatable pool: the container is common, but each allocation
+    is tenant-private.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Allocate tenant-private IPAddresses from one shared IPAddressPool without overlap
+  success_criteria:
+  - Both tenants receive distinct, non-overlapping IPAddress allocations from the pool
+  - Each IPAddress record is attributed to exactly one owning tenant
+  - Tenant A cannot enumerate, read, or release tenant B's allocation
+  - Concurrent allocation does not double-issue the same address
+  - The shared pool remains a single resource with a running per-tenant allocation map
+  - Each allocation event is recorded in its owning tenant's audit scope
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: pool allocation map updated atomically with per-tenant ownership on each IPAddress
+  - domain: policy
+    interaction: isolation constraint enforces tenant-private visibility of allocations from a shared
+      pool
+  - domain: provider
+    interaction: address provider issues distinct addresses under one pool realization
+  - domain: audit
+    interaction: each allocation logged in the owning tenant's audit scope
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- isolation
+- allocatable-pool
+- ipaddress
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,67 @@
+uuid: uc-seed-007a
+handle: governance/audit-merkle-tree-verification
+scenario:
+  description: A compliance auditor requests cryptographic verification that a specific
+    set of historical audit events has not been tampered with since the events were
+    recorded. DCM must produce signed tree heads and merkle inclusion proofs for the
+    requested events, and the auditor's independent verification against the tree
+    heads must succeed. Under a sovereign profile, the signing key material must
+    remain within sovereignty boundaries. The verification is a query over existing
+    audit state — it modifies no tenant resources, only reads and produces proofs.
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - sovereignty-authority
+    - tenancy-authority
+    - regulator
+  intent: Cryptographically verify that a named range of audit events has not been
+    tampered with
+  success_criteria:
+  - Signed tree heads are retrievable for every audit epoch covering the requested
+    event range
+  - Inclusion proofs are produced for each requested event and verify against the
+    tree heads
+  - Consistency proofs demonstrate the tree heads form a coherent append-only sequence
+  - Signing key material used for tree heads never leaves the sovereignty boundary
+  - Verification failure on any event is surfaced with the specific event and proof
+    step that failed
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: merkle tree heads retrieved for requested audit epochs
+  - domain: audit
+    interaction: inclusion proofs generated for each event in range
+  - domain: audit
+    interaction: consistency proofs generated between epoch tree heads
+  - domain: policy
+    interaction: sovereignty policy verifies signing key material residency
+  - domain: data
+    interaction: audit event records looked up by handle and epoch
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-04-23T04:45:00.000000+00:00'
+tags:
+- governance
+- audit
+- merkle
+- cryptographic-verification
+- sovereign-profile
+- compliance
+version: 1.0.0
+metadata:
+  admitted_at: '2026-04-23T04:45:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt

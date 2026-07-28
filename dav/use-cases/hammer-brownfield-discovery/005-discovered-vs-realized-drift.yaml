@@ -1,0 +1,59 @@
+uuid: uc-hammer-brownfield-005
+handle: brownfield-discovery/discovered-vs-realized-drift
+scenario:
+  description: 'A host is under DCM management with a known realized state (16 cores, firmware 2.3). A
+    fresh discovery scan reports different reality — 32 cores, firmware 2.5 — because someone upgraded
+    it out-of-band. The system must detect the delta between the newly Discovered observation and the
+    recorded realized state, raise a drift record, and NOT silently overwrite realized state with the
+    discovery. Drift resolution (accept-as-new-realized, or restore-to-intent) must be an explicit, policy-governed
+    decision. This probes whether discovery feeds a drift-detection path distinct from the provider-realization
+    path.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Detect out-of-band change as drift between discovered and realized state
+  success_criteria:
+  - The discovery observation is compared against the recorded realized state
+  - A drift record is raised capturing the specific attribute deltas
+  - Realized state is not silently overwritten by the discovery observation
+  - Drift resolution (accept-as-realized vs restore-to-intent) is a governed decision
+  - The drift record links the discovery source and timestamp to the affected entity
+  - The unresolved drift is visible to the owning tenant and to governance
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery provider emits an observation diverging from realized state
+  - domain: data
+    interaction: discovered-vs-realized delta computed and persisted as a drift record
+  - domain: policy
+    interaction: drift-resolution policy governs accept-vs-restore decision
+  - domain: audit
+    interaction: drift record and its resolution recorded with source provenance
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- drift
+- discovered-vs-realized
+- out-of-band
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

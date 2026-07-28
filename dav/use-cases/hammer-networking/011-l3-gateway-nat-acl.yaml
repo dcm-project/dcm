@@ -1,0 +1,57 @@
+uuid: uc-hammer-networking-011
+handle: networking/l3-gateway-nat-acl
+scenario:
+  description: 'A tenant needs egress from a private segment (10.20.0.0/22) to the internet with source
+    NAT, plus an ACL that permits only outbound 443 and denies inbound. The intent declares a Network.Gateway
+    with a nat policy and an attached ACL, routing between the tenant VLAN and the uplink. The system
+    must model routing, NAT, and ACL as declarative properties of the gateway record and realize them
+    coherently, so the security posture is a first-class managed intent rather than a switch/firewall
+    config edited by hand.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - tenancy-authority
+  intent: Provision an L3 gateway with source NAT and an egress-only ACL
+  success_criteria:
+  - Network.Gateway record captures the routed segments (inside VLAN, uplink)
+  - Source NAT policy is recorded as a property of the gateway (nat)
+  - An ACL permitting only outbound 443 and denying inbound is recorded and attached
+  - Provider realizes routing, NAT, and ACL coherently on the gateway
+  - Realized state confirms egress works and disallowed flows are dropped
+  - The routing/NAT/ACL intent and its realization are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: gateway with routed segments, NAT, and ACL recorded as one record
+  - domain: policy
+    interaction: ACL/NAT posture validated against the tenant's security policy
+  - domain: provider
+    interaction: gateway provider realizes routing, NAT, and ACL
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- gateway
+- nat
+- acl
+- routing
+- security
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

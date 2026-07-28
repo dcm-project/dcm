@@ -1,0 +1,64 @@
+uuid: uc-2b6f7df6-51fd-42c2-98c7-fc15006b66db
+handle: class-versioning/day2-operation-on-grandfathered-instance
+version: 1.0.0
+scenario:
+  description: A VM realized under a provider's VM capability 1.2.0 needs a day-2 resize while the provider's
+    current capability is 1.3.0 (a breaking revision). Within 1.2.0's deprecation window the operation
+    succeeds under the contract that governs the instance — the provider operates instances realized under
+    any non-retired revision of the capability (mixed-version operation is part of the capability contract,
+    not a courtesy), and the operation's audit record names the governing capability revision. After 1.2.0
+    retires (its published window elapsed, the calendared forcing function), the same operation is refused
+    — typed as retired-revision, naming the retirement, the migration path (re-realize or update under
+    a current revision, blue/green when breaking), and the change-policy gates that path runs through.
+    The refusal is the beginning of a governed migration, never a surprise outage.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Operate grandfathered instances under their governing capability revision within the deprecation
+    window, and refuse with a migration path after retirement
+  success_criteria:
+  - Within the deprecation window, day-2 operations on an instance realized under a prior capability revision
+    succeed under that revision's contract
+  - The operation's audit record names the governing capability revision (from realization provenance)
+  - 'Every voluntary touch is a declared decision point: the estate''s touch-trigger policy (adopt-on-touch,
+    offer-on-touch, or provenance-until-explicit) is evaluated with the instance''s provenance-distance
+    surfaced, and the chosen path is recorded'
+  - A capability revision with instances realized under it cannot retire before its published deprecation
+    window elapses
+  - After retirement, the operation is refused — typed retired-revision, naming the retirement, the migration
+    path, and the change-policy gates it runs through
+  - The migration itself is the standard governed adoption (window/ceremony, blue/green when breaking),
+    never an emergency improvisation
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: mixed-version operation within the window is contractual
+  - domain: data
+    interaction: realization provenance supplies the governing revision
+  - domain: policy
+    interaction: retirement is the calendared forcing function; migration runs the standard gates
+  - domain: audit
+    interaction: operations name their governing revision; refusals name the path forward
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T03:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- grandfathered
+- must-reject

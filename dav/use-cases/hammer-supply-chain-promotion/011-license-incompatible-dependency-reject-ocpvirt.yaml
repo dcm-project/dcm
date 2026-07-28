@@ -1,0 +1,65 @@
+uuid: uc-hammer-supply-chain-promotion-011
+handle: supply-chain-promotion/license-incompatible-dependency-reject-ocpvirt
+scenario:
+  description: 'A compliance auditor promotes a new base container image for Compute.Container.OCPVirt.
+    The CVE scan is clean and the image is signed, but SBOM analysis reveals a transitive dependency
+    under a copyleft license that the organization prohibits for redistributed base images. The license
+    compliance gate must reject the promotion on licensing grounds alone, keep the image out of the
+    controlled repo, and record which SoftwarePackage and license caused the rejection so the team can
+    swap the dependency.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Promote a base image whose SBOM contains a prohibited-license dependency
+  success_criteria:
+  - SBOM analysis enumerates transitive SoftwarePackages by purl during promotion
+  - CVE scan is clean and the signature verifies, so the block is not security-driven
+  - License compliance gate detects a prohibited copyleft license on a transitive dependency
+  - Promotion is rejected on licensing grounds and the image never becomes canonical
+  - Compute.Container.OCPVirt cannot consume the rejected image
+  - 'Offending package purl and license identifier are recorded on the rejection'
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: SBOM enumerates transitive SoftwarePackages and their license metadata
+  - domain: policy
+    interaction: license compliance gate rejects the prohibited copyleft dependency
+  - domain: provider
+    interaction: no Compute.Container.OCPVirt consumer binding created for the rejected image
+  - domain: audit
+    interaction: offending package purl and license identifier recorded on rejection
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-container
+- license-compliance
+- policy-violation
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - Organization policy prohibits a specific copyleft license in redistributed base images
+  - The candidate image pulls in that license via a transitive dependency
+  postconditions:
+  - Promotion rejected on licensing grounds despite clean security scans
+  - Offending dependency and license are recorded for remediation
+  note: batch=supply-chain-promotion-2026-07-22

@@ -1,0 +1,67 @@
+uuid: uc-hammer-policy-override-002
+handle: policy-override/hard-deny-unoverridable
+scenario:
+  description: 'A security-officer attempts to obtain an override of a hard-enforcement policy that denies
+    exporting regulated customer data outside the sovereign boundary. The override workflow must recognize
+    the target policy as hard-enforcement and reject the override request outright — before any approval
+    is solicited and regardless of the requester''s authority. A hard DENY is a property of the policy,
+    not a default that a sufficiently senior approver can lift. The attempt itself must be audited as
+    a rejected override, so that repeated pressure on an unoverridable control is visible. The mechanism
+    under test is the unoverridable classification of a policy.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Attempt to override a hard-enforcement deny on regulated data export
+  success_criteria:
+  - The target policy is identified as hard-enforcement (override-ineligible)
+  - The override request is rejected without soliciting any approval
+  - No approver, however senior, is offered the option to lift the deny
+  - The underlying request remains denied and no provider dispatch occurs
+  - The rejected override attempt is recorded distinctly from an unattempted request
+  - The audit record names the hard-enforcement classification as the reason
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: target policy classified as hard-enforcement, override declared ineligible
+  - domain: policy
+    interaction: override request rejected before any approval routing
+  - domain: data
+    interaction: rejected override attempt recorded against the request
+  - domain: audit
+    interaction: unoverridable-deny rejection logged with classification reason
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- hard-deny
+- unoverridable
+- compliance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A hard-enforcement deny policy is in scope for the request
+  postconditions:
+  - Override is rejected as ineligible; the deny stands
+  - The rejected attempt is auditable
+  note: batch=framework-hammer-2026-07-16

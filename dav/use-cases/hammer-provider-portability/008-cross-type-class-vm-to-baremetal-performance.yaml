@@ -1,0 +1,56 @@
+uuid: uc-hammer-provider-portability-008
+handle: provider-portability/cross-type-class-vm-to-baremetal-performance
+scenario:
+  description: A latency-sensitive workload on a Compute.VM must run on physical hardware. It is re-realized as
+    Compute.BareMetal — a cross-Type-Class move under Compute Base. Placement finds an eligible bare-metal host
+    by the workload's hard requirements; the portable Base requirements carry, and virtualization-specific elements
+    are dropped.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+  intent: Re-realize a Compute.VM as Compute.BareMetal for a performance requirement
+  success_criteria:
+  - The Base requirements carry from VM to BareMetal
+  - Placement finds an eligible bare-metal host by requirements
+  - The workload re-realizes on physical hardware
+  - Virtualization-specific elements are surfaced/dropped
+  - The cross-Type move is recorded
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: re-scopes Base requirements from Compute.VM to Compute.BareMetal
+  - domain: provider
+    interaction: a bare-metal provider realizes the workload
+  - domain: data
+    interaction: records the cross-Type move and dropped virtualization elements
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-type-class
+- portability
+- compute-vm
+- compute-baremetal
+- performance
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The workload is latency-sensitive and eligible bare-metal hosts exist
+  postconditions:
+  - The workload runs on bare metal with Base requirements satisfied
+  note: batch=portability-enrich-2026-07-22

@@ -1,0 +1,60 @@
+uuid: uc-hammer-storage-mobility-020
+handle: storage-mobility/decommission-pool-dangling-volumes
+scenario:
+  description: 'A platform engineer issues a decommission of a Storage.Pool that still has allocated Storage.Volumes
+    (some attached to running services) carved from it. Because volumes hard-depend on their pool, tearing
+    down the pool would orphan or destroy live data. The system must detect the dangling dependents, refuse
+    the naive decommission, and require that dependents first be migrated off or explicitly decommissioned
+    — enforcing dependency-aware teardown ordering. This exercises safe decommission with hard dependents
+    and likely returns a blocked verdict until the pool is empty.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Decommission a storage pool that still has dependent volumes
+  success_criteria:
+  - Pool decommission detects volumes that hard-depend on the pool
+  - Naive teardown is refused while live dependents exist
+  - The blocking dependents are enumerated in the verdict
+  - Decommission proceeds only after dependents are migrated off or decommissioned
+  - No attached volume or its data is destroyed by the blocked request
+  - The refusal and the required teardown ordering are recorded for audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph consulted for volumes bound to the pool
+  - domain: policy
+    interaction: dependency-aware teardown blocks decommission with live dependents
+  - domain: provider
+    interaction: pool teardown withheld until dependents are cleared
+  - domain: audit
+    interaction: blocked decommission and required ordering recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- decommission
+- dangling-dependents
+- teardown-ordering
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

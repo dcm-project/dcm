@@ -1,0 +1,65 @@
+uuid: uc-hammer-recent-model-006
+handle: recent-model/references-edge-policy-over-all-pointing-to-dc-east
+scenario:
+  description: "A compliance auditor enforces a residency rule that must apply to every resource located\
+    \ in the\n    DataCenter dc-east, regardless of resource type. The policy is written against the reference\
+    \ dc-east\n    and evaluates over anything that points to it through a located_in references-context\
+    \ edge, gathering\n    the full set by reverse-walking the edges rather than by a hand-maintained\
+    \ membership list. A newly\n    linked VM that violates the residency rule is caught because it now\
+    \ points to dc-east. This stresses\n    reference-scoped policy: the set of governed resources is\
+    \ derived from who points at the reference."
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Enforce a residency rule against every resource that references DataCenter dc-east
+  success_criteria:
+  - The policy is authored against the reference dc-east, not a static resource list
+  - The governed set is derived by reverse-walking located_in edges to dc-east
+  - A resource is included the moment it gains an edge to dc-east
+  - A newly linked VM violating the residency rule is flagged as a violation
+  - Resources not pointing to dc-east are excluded from evaluation
+  - The violation and the derived governed set are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: cross_dependency_payload
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: the governed set is computed by reverse-walking references edges into dc-east
+  - domain: policy
+    interaction: the residency rule evaluates over every resource pointing to the dc-east reference
+  - domain: audit
+    interaction: the derived set and the residency violation are recorded for the auditor
+  - domain: provider
+    interaction: provider state confirms the offending VM's realized location for the check
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- references-context-edge
+- reference-scoped-policy
+- blast-set
+- governance-matrix
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - A residency rule is scoped to the dc-east reference
+  - Multiple resource types carry located_in edges to dc-east
+  postconditions:
+  - The reference-scoped governed set is materialized
+  - The offending VM is marked in violation of residency
+  note: batch=recent-model-2026-07-22

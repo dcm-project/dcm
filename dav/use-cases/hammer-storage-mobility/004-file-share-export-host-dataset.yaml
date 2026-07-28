@@ -1,0 +1,58 @@
+uuid: uc-hammer-storage-mobility-004
+handle: storage-mobility/file-share-export-host-dataset
+scenario:
+  description: 'A platform engineer exports an NFS file share whose backing storage is a host-local Storage.Dataset
+    (a ZFS dataset on a specific host, not a portable block volume). The share is a Service that yields
+    file access; its backing dataset is pinned to the host that owns the pool. The system must model the
+    file-share Service as depending on a host-local dataset, and must record that the share''s placement
+    is constrained to the dataset''s host. This probes whether the model distinguishes a filesystem export
+    over a host-pinned dataset from an export over a relocatable volume.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+  intent: Export a file share backed by a host-local ZFS dataset
+  success_criteria:
+  - File-share Service resource is created with a stable UUID
+  - Share declares a hard dependency on the backing Storage.Dataset
+  - Backing dataset is recorded as host-local (pinned to its pool's host)
+  - Share placement is constrained to the host that owns the dataset
+  - Export parameters (protocol, path, access list) are recorded as intent
+  - Realized state binds the share to the dataset's host
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: file-share service persisted with host-local dataset dependency
+  - domain: policy
+    interaction: placement constrained to the dataset's owning host
+  - domain: provider
+    interaction: storage provider realizes the NFS export on the dataset's host
+  - domain: audit
+    interaction: export event recorded with backing dataset and host binding
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- file-share
+- dataset
+- host-local
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

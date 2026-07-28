@@ -1,0 +1,67 @@
+uuid: uc-bbd05a8c-23f4-475f-bbb9-73fe4c292c39
+handle: change-control/storage-array-maintenance-ordered
+version: 1.0.0
+scenario:
+  description: 'A breaking change must be adopted on a storage array whose file shares serve ten client
+    applications. The impact set — the ten clients, their dependency edges, their tolerance classes —
+    is derived from the dependency graph, never hand-listed. Each client''s own availability policy sorts
+    it: three require continuity and are cut over to a verified DR replica first (a re-bind to the replica
+    shares'' declared typed outputs); seven tolerate the window and quiesce in reverse dependency order
+    in verified batches. Maintenance may not even be scheduled until the DR gate passes (replica healthy,
+    current, sized). After maintenance, post-verification proves the array publishes its expected outputs
+    before the forward-order restart, and a failback policy — not a habit — decides whether the continuity
+    clients return or the replica is promoted primary. One trail records the derived orders and every
+    gate verdict.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Execute disruptive storage-array maintenance under change control with a derived impact set,
+    per-client tolerance policies, DR-gated scheduling, output-surface cutover, and ordered quiesce/restart
+  success_criteria:
+  - The ten-client impact set and both orders (quiesce reverse, restart forward) are derived from dependency
+    edges, not authored
+  - Each client's tolerance class comes from its declared availability policy; the plan reads it
+  - The DR gate refuses maintenance scheduling (typed) until the replica is verified healthy, current,
+    and sized
+  - Continuity clients cut over by re-binding to the replica shares' declared typed outputs, with cutover
+    verification before the window opens
+  - Quiesce and restart run in derived order, batched, each batch verified before the next
+  - The failback decision is made by a declared policy and the chosen outcome (failback or replica-promoted)
+    is recorded
+  - One adoption trail carries the impact set, the derived orders, and every gate verdict end to end
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: cross_dependency_payload
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency edges derive impact set and both orders; typed outputs are the cutover surface
+  - domain: policy
+    interaction: window + per-client availability policies + DR-gate precondition + failback policy gate
+      every step
+  - domain: provider
+    interaction: array, replica, and orchestration jobs execute cutover, quiesce, maintenance, restart
+      under the gates
+  - domain: audit
+    interaction: 'one trail: impact set, orders, every batch and gate verdict'
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T21:00:00Z'
+tags:
+- hammer
+- change-control
+- storage-array
+- dr-cutover
+- ordered-shutdown
+- dependent-applications

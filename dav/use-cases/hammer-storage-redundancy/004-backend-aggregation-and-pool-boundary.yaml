@@ -1,0 +1,56 @@
+uuid: uc-storage-redundancy-004
+handle: storage-redundancy/backend-aggregation-and-pool-boundary
+version: 1.0.0
+scenario:
+  description: "Top-level aggregation belongs to the backend, not the type: zfs dynamic-stripes across\
+    \ top-level vdevs, lvm allocates per VG policy, and a hardware controller does not aggregate independent\
+    \ virtual disks \u2014 two independent VDs are two Pools, because a Pool is one capacity source. This\
+    \ stresses the boundary rule and its consequences: authoring that mistakes two capacity sources for\
+    \ one pool is rejected or flagged; cross-backend portability queries (via the canonical raid_type\
+    \ mapping) still compare protection across all aggregation styles."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Enforce the one-capacity-source pool boundary per backend aggregation semantics while keeping
+    protection comparable across backends via the canonical mapping
+  success_criteria:
+  - A zfs pool with multiple top-level vdevs is one pool (the backend aggregates); its capacity is the
+    aggregate
+  - Two independent hardware-RAID virtual disks model as two Pools; a single-pool authoring of them is
+    rejected or flagged
+  - An lvm pool spanning PVs models as one pool with the VG's allocation semantic, not an implied stripe
+  - A cross-backend query by canonical raid_type compares protection across all three aggregation styles
+  - 'The worked distinction is queryable: which pools aggregate at the backend vs carry one explicit tree'
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the pool-boundary rule (one capacity source) is validated at authoring
+  - domain: policy
+    interaction: validation rejects capacity-source conflation per backend semantics
+  - domain: provider
+    interaction: each backend's aggregation semantic is declared, never assumed
+  - domain: audit
+    interaction: boundary rejections and their reasons are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: storage-redundancy-2026-07-25
+  timestamp: '2026-07-25T03:00:00.000000+00:00'
+tags:
+- storage-pool
+- backend-semantics
+- pool-boundary
+- raid-type-mapping

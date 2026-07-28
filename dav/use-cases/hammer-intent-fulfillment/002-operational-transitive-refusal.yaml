@@ -1,0 +1,61 @@
+uuid: uc-30145f26-68ae-43c9-96ec-551fde9ad2be
+handle: intent-fulfillment/operational-transitive-refusal
+version: 1.0.0
+scenario:
+  description: >-
+    A three-member chain: an app operationally depends on a container, which operationally
+    depends on a PVC. The PVC is permanently refused (a sovereignty/policy violation — it will
+    never realize unless the intent changes). Because permanence is refused immediately
+    regardless of the convergence window, the PVC does not wait. Its dependents inherit the
+    status transitively along the operational chain: the container, operationally blocked by a
+    now-refused dependency, becomes blocked-permanent (refused); the app, operationally blocked
+    by the refused container, inherits the same. None of the three realizes dangling. The whole
+    operational chain is surfaced together as a single refusal-with-resolution that names the
+    ROOT — the PVC and its violated rule — and the chain it took down, so the consumer is never
+    told to wait for a member that can never converge. Members outside this operational chain
+    still proceed.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: >-
+    Propagate a permanent refusal down the operational chain — refused PVC to blocked-permanent
+    container to blocked-permanent app — and surface the whole chain as one refusal naming the
+    root dependency and its rule
+  success_criteria:
+  - A permanently-refused PVC is classified refused immediately, regardless of the convergence window
+  - The container operationally depending on it is classified blocked-permanent (refused), inheriting the status transitively
+  - The app operationally depending on the container inherits blocked-permanent along the chain — no member realizes dangling
+  - The surface is a single refusal-with-resolution naming the ROOT (the PVC and its violated rule) plus the affected chain
+  - Members outside this operational chain still realize — the permanent cascade is scoped to the directional dependency path
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: multi_dependent
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: operational edges make each member's realization conditional on its dependency's; status inherits along the chain
+  - domain: policy
+    interaction: permanent refusal at the root propagates as blocked-permanent down the operational chain, immediately (window-independent)
+  - domain: audit
+    interaction: the root refusal, the violated rule, and the transitively-refused chain are recorded together
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- operational-dependency
+- transitive-refusal
+- surfacing

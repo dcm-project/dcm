@@ -1,0 +1,62 @@
+uuid: uc-hammer-day0-day2-ops-002
+handle: day0-day2-ops/composite-workflow-3tier-ordered-update
+scenario:
+  description: 'An SRE updates a three-tier application (web, app, database) where the tiers must be touched
+    in dependency order: database last-drained first is wrong — the update must go database, then app,
+    then web to preserve compatibility. DCM itself sequences a composite Automation.Workflow across three
+    separate Automation.Job calls, one per tier, each bound to that tier''s realized resource. DCM owns
+    the ordering between the calls; each call is an atomic process against its resource. This probes whether
+    a composite process is modeled as DCM-sequenced discrete calls rather than one opaque blob.'
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Update a 3-tier app tier-by-tier in dependency order via a DCM-sequenced composite process
+  success_criteria:
+  - DCM sequences the three per-tier job calls in dependency order (database, app, web)
+  - Each per-tier job is bound to that tier resource and runs as a discrete atomic call
+  - DCM owns the ordering between calls; ordering is not delegated to a single opaque provider job
+  - A tier update only starts after the prior tier reports a COMPLETED terminal outcome
+  - The composite workflow records an aggregate terminal outcome over its constituent calls
+  - The dependency graph among the three tiers is consulted to derive the update order
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: reads the inter-tier dependency graph to derive update ordering
+  - domain: provider
+    interaction: executes each per-tier Automation.Job as a discrete bound call
+  - domain: policy
+    interaction: enforces the static orchestration flow that gates each tier on the prior one
+  - domain: audit
+    interaction: records the composite workflow and each constituent call outcome
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- composite-process
+- ordering
+- 3-tier
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The three tiers are realized and their dependency edges recorded
+  - Per-tier update jobs are registered
+  postconditions:
+  - All three tiers carry the new version
+  - The composite workflow is recorded terminal with its call sequence
+  note: batch=day0-day2-ops-2026-07-22

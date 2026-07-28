@@ -1,0 +1,58 @@
+uuid: uc-hammer-tenancy-015
+handle: tenancy/cross-tenant-dependency-decommission
+scenario:
+  description: 'Tenant A owns a resource that tenant B''s resource hard-depends on via an authorized cross-tenant
+    sharing grant. Tenant A requests decommission of that resource. The system must detect the live hard
+    dependency held by tenant B and refuse to destroy the resource while B''s dependent remains, rather
+    than leaving tenant B with a dangling hard dependency. This probes whether the decommission dependency
+    check spans tenant boundaries when a sharing grant has created a legitimate cross-tenant edge.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Decommission a shared resource that another tenant hard-depends on
+  success_criteria:
+  - Decommission traversal finds the cross-tenant hard dependency held by tenant B
+  - Destruction is blocked while tenant B's dependent is live
+  - Tenant B is never left with a dangling hard dependency
+  - Blocking rationale names the dependent resource and its tenant
+  - Decommission can proceed only after the dependency is removed or migrated
+  - The blocked decommission and cross-tenant dependency are recorded in audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph traversed across tenant boundary to find live dependents
+  - domain: policy
+    interaction: decommission-safety policy blocks destruction with a live cross-tenant hard dependency
+  - domain: audit
+    interaction: blocked decommission recorded with the cross-tenant dependent
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- decommission
+- cross-tenant-dependency
+- dangling
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

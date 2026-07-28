@@ -1,0 +1,60 @@
+uuid: uc-hammer-federation-006
+handle: federation/split-brain-single-writer-authority
+scenario:
+  description: 'Two peer DCMs both hold intent for a shared resource — a jointly-operated network fabric
+    — and, during a federation partition, each independently accepts a conflicting modification. When
+    the partition heals, the system detects a split-brain: two divergent intents for one resource. Resolution
+    must defer to the single-writer authority designated for that resource (only the owning peer''s write
+    is authoritative); the non-authoritative write is rejected and its originator notified. This tests
+    whether split-brain on a shared resource is resolved by single-writer authority rather than last-write-wins
+    or silent merge.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - federation-peer-operator
+  intent: Resolve a split-brain on a shared resource via single-writer authority
+  success_criteria:
+  - Both peers accept conflicting modifications during the partition
+  - On heal, the system detects divergent intent for the same shared resource
+  - The designated single-writer (owning peer) is identified for the resource
+  - The authoritative write is retained; the non-authoritative write is rejected
+  - Resolution is NOT last-write-wins and NOT a silent field-level merge
+  - The rejected originator is notified with the reason
+  - The split-brain event and resolution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: divergent intents detected for one shared resource on partition heal
+  - domain: policy
+    interaction: single-writer authority policy selects the authoritative write and rejects the other
+  - domain: audit
+    interaction: split-brain detection and authority-based resolution recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- split-brain
+- single-writer
+- consistency
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

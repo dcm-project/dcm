@@ -1,0 +1,64 @@
+uuid: uc-hammer-cost-quota-016
+handle: cost-quota/multi-currency-fx-normalization
+scenario:
+  description: 'A global finance-analyst rolls up cost across regions billed in different currencies (USD,
+    EUR, JPY) into one reporting currency. Correct normalization requires per-line currency tags and an
+    FX rate at the charge period — neither of which UDLM is likely to carry. The system must either normalize
+    using present currency and rate metadata or declare that currency and FX are outside the model and
+    the rollup cannot be trusted as a single-currency total. The mechanism under test is multi-currency
+    awareness; expect unsupported.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+    - executive
+  intent: Roll up multi-region cost into a single reporting currency
+  success_criteria:
+  - Per-region cost lines are enumerated across currencies
+  - Each line is checked for a currency tag and a charge-period FX rate
+  - If currency and FX are present, lines normalize to the reporting currency
+  - If absent, the rollup declines to assert a single-currency total
+  - Missing currency/FX metadata is named as the blocking gap
+  - The normalization attempt and its coverage are recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: per-line currency tags and FX rates sought across regions
+  - domain: policy
+    interaction: normalization constraint requires currency and FX before asserting a total
+  - domain: audit
+    interaction: normalization coverage and missing FX metadata recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- currency
+- fx
+- normalization
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Cost lines span multiple billing currencies
+  postconditions:
+  - A single-currency total is asserted only if currency and FX are present
+  - Otherwise the gap is reported
+  note: batch=framework-hammer-2026-07-16

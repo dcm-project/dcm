@@ -1,0 +1,57 @@
+uuid: uc-hammer-provider-portability-006
+handle: provider-portability/cross-type-class-vm-to-container-portable-subset
+scenario:
+  description: A stateless web workload realized as a Compute.VM is re-realized as a Compute.Container — a cross-Type-Class
+    move under the same Compute Base. The Base-Class requirements (cpu, memory, the portable network intent) carry
+    across; VM-specific Provider/Type elements (a BIOS profile, a vTPM) have no container equivalent and are surfaced
+    as the non-portable remainder.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Re-realize a stateless workload from Compute.VM to Compute.Container across Type Classes
+  success_criteria:
+  - The Compute Base requirements carry from VM to Container
+  - The workload re-realizes as a Compute.Container
+  - VM-specific elements with no container equivalent are surfaced
+  - The partial re-realization records what did not carry
+  - The container serves the same portable network intent
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: re-scopes Base requirements from Compute.VM to Compute.Container
+  - domain: provider
+    interaction: a container provider realizes the workload
+  - domain: data
+    interaction: records VM-specific elements that did not carry
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-type-class
+- portability
+- compute-vm
+- compute-container
+- partial-port
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source is a stateless Compute.VM with Base-portable requirements
+  postconditions:
+  - The workload runs as a Compute.Container; VM-specifics surfaced
+  note: batch=portability-enrich-2026-07-22

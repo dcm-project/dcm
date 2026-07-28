@@ -1,0 +1,60 @@
+uuid: uc-hammer-capacity-012
+handle: capacity/reservation-released-on-abort
+scenario:
+  description: 'A multi-resource request reserves capacity across providers, then a downstream validation
+    fails and the operation aborts before any resource is realized. Per the validate-and-reserve model
+    (ADR-011), the engine must release every held reservation on abort so capacity returns to the pool
+    and is not stranded. This tests reservation cleanup on the failure path — the guarantee that an aborted
+    request leaves no capacity leaks behind.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - security-officer
+  intent: Release all held capacity when a reserved operation aborts
+  success_criteria:
+  - Capacity reservations are placed across the required providers
+  - A downstream validation failure triggers an abort before realization
+  - Every held reservation is released as part of the abort
+  - Released capacity is returned to each provider's available pool
+  - No resource is realized and no reservation is left dangling
+  - The abort and each reservation release are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: held reservations released and capacity returned on abort
+  - domain: policy
+    interaction: recovery policy drives reservation cleanup on failure
+  - domain: audit
+    interaction: abort and per-reservation releases recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:12.000000+00:00'
+tags:
+- capacity
+- reservation
+- rollback
+- abort
+- adr-011
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

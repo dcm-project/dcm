@@ -1,0 +1,60 @@
+uuid: uc-hammer-capacity-004
+handle: capacity/sovereignty-allowed-zones-placement
+scenario:
+  description: 'A compliance-bound tenant declares a workload that may only be placed within a sovereignty-defined
+    set of allowed zones. The placement engine must intersect the eligible-provider set with the allowed-zones
+    set before scoring, reserve capacity only inside the permitted geography, and reject any otherwise-cheaper
+    out-of-zone candidate. This validates that residency is a hard placement constraint applied ahead
+    of capacity scoring, not a soft preference.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Place a workload only within a sovereignty allowed-zones set
+  success_criteria:
+  - Allowed-zones set is resolved from the sovereignty policy for the tenant
+  - Candidate providers outside the allowed zones are excluded before scoring
+  - Only in-zone providers with capacity are scored and reserved
+  - A cheaper out-of-zone candidate is demonstrably rejected
+  - The realized resource resides in a permitted zone
+  - The zone constraint and the exclusion of out-of-zone candidates are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty allowed-zones constraint intersected with candidate set
+  - domain: provider
+    interaction: only in-zone providers scored and reserved
+  - domain: audit
+    interaction: zone constraint and out-of-zone exclusions recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:04.000000+00:00'
+tags:
+- capacity
+- placement
+- sovereignty
+- allowed-zones
+- residency
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

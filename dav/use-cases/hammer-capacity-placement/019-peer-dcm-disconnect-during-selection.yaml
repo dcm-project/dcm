@@ -1,0 +1,59 @@
+uuid: uc-hammer-capacity-019
+handle: capacity/peer-dcm-disconnect-during-selection
+scenario:
+  description: 'Mid-selection, the peer DCM that offered candidate capacity becomes unreachable after
+    the engine has begun scoring but before a reservation is confirmed. The engine must not hang or assume
+    the peer reservation succeeded; it must time out the peer, treat its candidates as unavailable, and
+    either complete selection on remaining local/peer candidates or fail closed. This tests placement
+    resilience to peer-DCM disconnect at the worst moment — an in-flight cross-boundary selection.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+    - federation-peer-operator
+  intent: Keep placement safe when a peer DCM disconnects during selection
+  success_criteria:
+  - The peer DCM's candidates are in-flight when it becomes unreachable
+  - The engine bounds the peer interaction with a timeout rather than hanging
+  - The peer's candidates are treated as unavailable, not assumed reserved
+  - Selection completes on remaining candidates or fails closed
+  - No phantom reservation is attributed to the disconnected peer
+  - The disconnect, timeout, and resulting decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer DCM disconnects mid-selection, candidates dropped after timeout
+  - domain: policy
+    interaction: recovery policy completes selection or fails closed without the peer
+  - domain: audit
+    interaction: disconnect, timeout, and resulting decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:19.000000+00:00'
+tags:
+- capacity
+- placement
+- peer-dcm
+- disconnect
+- resilience
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

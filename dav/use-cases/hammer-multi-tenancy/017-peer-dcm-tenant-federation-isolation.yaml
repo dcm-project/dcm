@@ -1,0 +1,62 @@
+uuid: uc-hammer-tenancy-017
+handle: tenancy/peer-dcm-tenant-federation-isolation
+scenario:
+  description: 'A tenant''s request must be satisfied partly by a peer DCM in another sovereignty domain
+    via federation. The platform engineer requires that only the delegated resource''s intent crosses
+    to the peer — the tenant''s other resources, its full catalog, and its audit scope must remain isolated
+    on the home DCM. Midway, the peer DCM disconnects. The system must keep the tenant''s home-side state
+    consistent and never expose non-delegated tenant data across the federation boundary, even under peer
+    failure. This tests tenant isolation that must hold across a federation seam.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+    - compliance-auditor
+    - security-officer
+  intent: Federate one tenant resource to a peer DCM without leaking the tenant's other scope
+  success_criteria:
+  - Only the delegated resource's intent crosses the federation boundary
+  - The tenant's non-delegated resources and audit scope stay on the home DCM
+  - Peer DCM disconnect leaves home-side tenant state consistent
+  - No partial or orphaned cross-DCM record persists after the disconnect
+  - The federation boundary carries tenant identity so the peer scopes correctly
+  - Federation and disconnect events are recorded in the tenant's home audit scope
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: peer_dcm_disconnect
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer DCM engaged for the delegated resource only; disconnect handled without orphaning
+  - domain: policy
+    interaction: federation boundary constraint limits what tenant data may cross to the peer
+  - domain: data
+    interaction: home-side tenant state kept consistent across the peer disconnect
+  - domain: audit
+    interaction: federation and disconnect recorded in the tenant's home audit scope
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- federation
+- peer-dcm
+- isolation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

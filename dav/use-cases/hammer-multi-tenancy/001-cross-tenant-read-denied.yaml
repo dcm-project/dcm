@@ -1,0 +1,58 @@
+uuid: uc-hammer-tenancy-001
+handle: tenancy/cross-tenant-read-denied
+scenario:
+  description: 'An application-team member in tenant B crafts an intent that names a resource UUID owned
+    by tenant A, attempting to read its realized state and cross-reference its payload. The store boundary
+    and validation layer must recognize that the requesting principal''s tenant scope does not include
+    the target resource and reject the request before any store read returns tenant-A data. This tests
+    whether tenant ownership is a first-class, enforced scope on the four-state stores rather than an
+    advisory label.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Prove a cross-tenant read of another tenant's resource is rejected at the boundary
+  success_criteria:
+  - Request naming tenant-A UUID from a tenant-B principal is rejected
+  - No tenant-A intent or realized payload is returned to the caller
+  - Rejection cites tenant-scope violation, not a generic not-found that leaks existence
+  - The store query is scoped by tenant before evaluation, not filtered after fetch
+  - The denied attempt is recorded in the audit trail with both tenant identities
+  - No provider dispatch is triggered by the rejected request
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: store read is scoped by requesting tenant; cross-tenant UUID resolves to no visible record
+  - domain: policy
+    interaction: tenant-isolation constraint evaluates ownership before returning any payload
+  - domain: audit
+    interaction: denied cross-tenant access recorded with source and target tenant identities
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- isolation
+- data-leakage
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

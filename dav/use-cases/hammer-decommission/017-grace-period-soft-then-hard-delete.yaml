@@ -1,0 +1,55 @@
+uuid: uc-hammer-decommission-017
+handle: decommission/grace-period-soft-then-hard-delete
+scenario:
+  description: 'A platform engineer decommissions a production database with a required grace period:
+    teardown must first soft-delete — detach and quiesce the resource but keep it recoverable — then,
+    only after the grace window elapses with no cancellation, hard-delete and destroy the data irreversibly.
+    The system must orchestrate the two-phase flow, allow an operator to cancel and restore during the
+    window, and treat the hard-delete as terminal once it fires. This probes whether decommission supports
+    a staged, reversible-then-irreversible flow rather than a single destructive step.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives: []
+  intent: Decommission with a grace period — soft-delete, then hard-delete if not cancelled
+  success_criteria:
+  - Phase one soft-deletes the resource (detached and quiesced) while keeping it recoverable
+  - The resource is restorable by an operator cancellation at any point during the grace window
+  - Hard-delete fires only after the grace window elapses with no cancellation
+  - The hard-delete destroys the data irreversibly and clears realized state
+  - Both phases and any cancellation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: orchestration_flow_static
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: two-phase grace-period flow orchestrates soft-delete then hard-delete
+  - domain: provider
+    interaction: provider quiesces on soft-delete, destroys on hard-delete
+  - domain: data
+    interaction: resource held recoverable during window, realized state cleared on hard-delete
+  - domain: audit
+    interaction: both phases and any cancellation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- grace-period
+- soft-delete
+- two-phase
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

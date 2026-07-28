@@ -1,0 +1,60 @@
+uuid: uc-hammer-storage-mobility-005
+handle: storage-mobility/file-share-export-block-volume
+scenario:
+  description: 'A tenant admin requests a file share whose backing storage is a relocatable Storage.Volume
+    (block) rather than a host-local dataset. Because a block volume must first be attached to a host,
+    formatted with a filesystem, and only then exported, the share depends on a chain: volume -> host
+    attachment -> filesystem -> export. The system must either model this multi-hop realization or return
+    that a filesystem export over a bare block volume is not directly expressible. This contrasts with
+    the host-local dataset export and likely surfaces a gap in how block-to-file layering is modeled.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - tenancy-authority
+  intent: Export a file share backed by a relocatable block volume
+  success_criteria:
+  - System recognizes the share cannot bind a bare block volume directly
+  - The volume -> attachment -> filesystem -> export dependency chain is expressed or flagged
+  - If unsupported, the missing filesystem-layering abstraction is named as the gap
+  - No file share is realized over an unformatted block device
+  - The volume retains its relocatable identity if the chain is modeled
+  - Verdict distinguishes this case from the host-local dataset export
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: multi-hop volume-to-export dependency chain evaluated for expressibility
+  - domain: policy
+    interaction: validation checks that a filesystem layer exists before export
+  - domain: provider
+    interaction: provider capability for block-to-file layering is probed
+  - domain: audit
+    interaction: expressibility verdict and gap recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- file-share
+- block-volume
+- layering
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,63 @@
+uuid: uc-hammer-day0-day2-ops-014
+handle: day0-day2-ops/config-bundle-layer-consumed-policy-violation
+scenario:
+  description: A platform engineer applies a shared configuration bundle as a layer that a day-2 Automation.Job
+    consumes to configure a fleet of app hosts. One setting in the bundle (an open SSH cipher) violates
+    the platform hardening policy. The system must evaluate the bundle-plus-process against policy before
+    the process runs, reject the run as a policy_violation, and identify the offending setting — the process
+    must not partially apply a non-compliant bundle to the bound resources.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Apply a config bundle via a consuming process, blocked when the bundle violates policy
+  success_criteria:
+  - The configuration bundle is modeled as a layer the process consumes, distinct from the process
+  - The bundle-plus-process is evaluated against policy before the process runs
+  - The run is rejected as a policy_violation when the bundle breaches hardening policy
+  - The specific offending setting is identified in the rejection
+  - No partial application of the non-compliant bundle to the bound hosts occurs
+  - The rejected run and the violated policy are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: evaluates the config bundle against hardening policy and rejects the violating setting
+  - domain: data
+    interaction: represents the bundle as a consumed layer bound to the process and target hosts
+  - domain: provider
+    interaction: is prevented from running the process until the bundle passes policy
+  - domain: audit
+    interaction: records the policy violation and the blocked run
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- config-bundle
+- policy_violation
+- layer
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A shared config bundle and a consuming job are registered
+  - A hardening policy is in force
+  postconditions:
+  - The non-compliant run is blocked
+  - The offending setting and violated policy are auditable
+  note: batch=day0-day2-ops-2026-07-22

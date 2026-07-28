@@ -1,0 +1,68 @@
+uuid: uc-hammer-policy-override-010
+handle: policy-override/override-injected-as-constraint-on-resume
+scenario:
+  description: 'A platform-engineer''s provisioning flow is suspended at a soft-policy block that restricts
+    a workload to on-demand instances. An authorized override is granted to permit spot instances for
+    this one request. On resume, the override must be applied not as a blanket bypass that silences the
+    policy, but as a scoped constraint modification injected into the request context: the spot-permitted
+    constraint is added, the flow re-enters evaluation, and the same policy now passes because the modified
+    constraint conforms. The mechanism under test is resume-with-override modeled as a constraint edit
+    that re-flows through evaluation, preserving the audit of a real pass rather than a suppressed check.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Resume a blocked flow with an override injected as a scoped constraint change
+  success_criteria:
+  - The flow is suspended at the soft-policy block with resumable state
+  - The granted override is applied as a scoped constraint modification, not a bypass
+  - On resume the request re-enters policy evaluation with the modified constraint
+  - The previously-blocking policy now passes against the modified constraint
+  - The override is narrowed to this request and does not silence the policy globally
+  - The resume, the injected constraint, and the resulting pass are audit-linked
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: override applied as a scoped constraint edit, flow re-evaluated
+  - domain: data
+    interaction: modified constraint stored in the resumed request context
+  - domain: provider
+    interaction: dispatch proceeds on the now-conforming constraint
+  - domain: audit
+    interaction: resume, injected constraint, and resulting pass linked
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- constraint-modification
+- resume
+- recovery-policy
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A flow is suspended at a soft-policy block with resumable state
+  - An authorized override has been granted for this request
+  postconditions:
+  - Override applied as a scoped constraint; policy passes on re-evaluation
+  - Global policy behavior is unchanged
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,54 @@
+uuid: uc-storage-redundancy-002
+handle: storage-redundancy/declare-hardware-raid-at-provision
+version: 1.0.0
+scenario:
+  description: "A platform engineer declares a bare-metal host's storage topology as a hardware_raid Storage.Pool\
+    \ intent record contained_by the host, before the host is provisioned. The bare-metal provisioning\
+    \ provider derives its RAID-controller configuration from the declared pool (members, native type,\
+    \ canonical mapping), builds the virtual disk during provisioning, and the pool reaches Realized alongside\
+    \ the host. This stresses that RAID is never host-type fields: the same Pool model that describes\
+    \ a live ZFS pool IS the provisioning declaration for firmware RAID \u2014 replayable intent for storage\
+    \ topology, completing the bare-metal rehydration story."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Declare firmware RAID as a Pool intent on an unprovisioned host and have the provisioning provider
+    build it from that declaration
+  success_criteria:
+  - The hardware_raid pool exists as Intent contained_by the host before provisioning
+  - The provisioning provider derives controller configuration solely from the declared pool
+  - Host and pool reach Realized together; the pool's outputs publish usable capacity and health
+  - Host rehydration replays BOTH the host's provisioning intent and its declared pools
+  - No RAID configuration exists anywhere except the Pool record
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the declared pool is the single home of storage topology intent
+  - domain: policy
+    interaction: validation checks member availability and admitted provider pre-dispatch
+  - domain: provider
+    interaction: the Metal3/BMC-class provider builds the controller config from the record
+  - domain: audit
+    interaction: derivation from declaration and the build result are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: storage-redundancy-2026-07-25
+  timestamp: '2026-07-25T00:00:00.000000+00:00'
+tags:
+- storage-pool
+- hardware-raid
+- provisioning-intent
+- bare-metal
+- rehydration

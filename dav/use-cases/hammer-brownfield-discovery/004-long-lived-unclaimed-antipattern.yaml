@@ -1,0 +1,61 @@
+uuid: uc-hammer-brownfield-004
+handle: brownfield-discovery/long-lived-unclaimed-antipattern
+scenario:
+  description: 'A Discovered-only server has sat unclaimed for 180 days — the recorded antipattern: reality
+    the system knows about but no one governs. The architecture is expected to surface long-lived unclaimed
+    entities and force a decision — claim (adopt with an Intent) or retire (record as decommission-candidate)
+    — via a recovery policy, rather than letting Discovered-only entities accumulate indefinitely. This
+    probes whether there is any lifecycle pressure on Discovered-only state at all, or whether unclaimed
+    entities are inert forever. It likely comes back partially_supported or unsupported: the data model
+    can hold the age, but a policy that forces claim-or-retire may not exist.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Force a claim-or-retire decision on a resource unclaimed past a threshold
+  success_criteria:
+  - Entities in Discovered-only state past an age threshold are surfaced as a distinct class
+  - A recovery policy raises a claim-or-retire obligation for each such entity
+  - Claiming attaches an Intent and moves the entity into the managed lifecycle
+  - Retiring records the entity as a decommission-candidate without touching the running resource
+  - The age of the unclaimed state is tracked from the first discovery timestamp
+  - The unresolved-unclaimed condition is reported to governance as a standing finding
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: unclaimed age tracked from first-discovery timestamp on the Discovered entity
+  - domain: policy
+    interaction: recovery policy raises a claim-or-retire obligation past threshold
+  - domain: audit
+    interaction: standing unclaimed finding reported to governance
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- antipattern
+- unclaimed
+- claim-or-retire
+- recovery-policy
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

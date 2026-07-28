@@ -1,0 +1,54 @@
+uuid: uc-hammer-audit-018
+handle: audit/meta-audit-who-read-the-log
+scenario:
+  description: 'Under an FSI mandate, reads of the audit log are themselves auditable: pulling another
+    tenant''s or a VIP account''s audit trail is a sensitive act that must leave its own trace. A security
+    officer queries the audit records for a high-profile account; the architecture must record that access
+    — who read which records, when, and under what authorization — into a meta-audit trail that is equally
+    tamper-evident, without creating an infinite regress. This probes whether the architecture models
+    access to the audit substrate as an audited event, a capability many systems lack.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - compliance-auditor
+    - tenancy-authority
+  intent: Ensure reads of the audit log are themselves recorded in a tamper-evident meta-audit
+  success_criteria:
+  - Reading audit records produces a meta-audit entry for the access
+  - The meta-audit entry records reader identity, records accessed, and time
+  - The authorization under which the read occurred is captured
+  - The meta-audit trail is itself tamper-evident
+  - Recording the read does not trigger infinite regress of meta-meta entries
+  - Unauthorized read attempts are recorded as denied accesses
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: read access to the audit log recorded in a tamper-evident meta-audit trail
+  - domain: policy
+    interaction: authorization for the audit read evaluated and captured
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- meta-audit
+- access-logging
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

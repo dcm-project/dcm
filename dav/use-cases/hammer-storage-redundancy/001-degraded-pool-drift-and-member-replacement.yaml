@@ -1,0 +1,58 @@
+uuid: uc-storage-redundancy-001
+handle: storage-redundancy/degraded-pool-drift-and-member-replacement
+version: 1.0.0
+scenario:
+  description: "A member drive in a protected pool fails. Discovery reports the pool degraded: the redundancy_status\
+    \ output flips, fault_tolerance_remaining drops (0 on a degraded mirror \u2014 the next failure loses\
+    \ data), and the dead drive's inbound member edges identify exactly which vdevs, pools, and datasets\
+    \ sit in the blast radius. An operator replaces the drive; resilver/rebuild completes; status returns\
+    \ healthy. This stresses redundancy state as first-class discovered drift with graph-walkable blast\
+    \ radius \u2014 uniformly across ZFS, md, and hardware RAID, because all three are the same Pool shape."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Detect pool degradation as discovered drift, walk the blast radius via member references, and
+    track recovery through member replacement
+  success_criteria:
+  - The failed member's inbound edges enumerate affected vdevs/pools/datasets with no bespoke tooling
+  - redundancy_status and fault_tolerance_remaining outputs reflect degradation at discovery
+  - Degradation in a nested vdev (a mirror leg inside a stripe) composes up the tree to the pool's reported
+    tolerance
+  - 'fault_tolerance_remaining: 0 is distinguishable as at-risk (next failure loses data)'
+  - Member replacement and rebuild restore healthy status, recorded as governed operations
+  - The identical flow holds for pool_kind zfs, md, and hardware_raid
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: component_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: member references and protection topology are the walked record
+  - domain: policy
+    interaction: degradation thresholds can gate maintenance windows (fault-domain serialization)
+  - domain: provider
+    interaction: the backend provider reports degradation and executes the rebuild
+  - domain: audit
+    interaction: failure, blast radius, replacement, and recovery are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: storage-redundancy-2026-07-25
+  timestamp: '2026-07-25T00:00:00.000000+00:00'
+tags:
+- storage-pool
+- raid
+- drift
+- blast-radius
+- degradation

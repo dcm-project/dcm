@@ -1,0 +1,65 @@
+uuid: uc-hammer-policy-override-017
+handle: policy-override/separation-of-duties-approver-is-requester
+scenario:
+  description: 'A platform-engineer who is also assigned an approver role requests an override and then
+    attempts to approve their own request. The override eligibility declares separation-of-duties: the
+    approving principal must differ from the requesting principal. The engine must reject the self-approval
+    even though the actor formally holds the approver role, leaving the override pending an independent
+    approver. This probes whether the architecture models approver identity distinct from approver role
+    — a system that only checks role membership will wrongly let a role-holding requester self-approve.
+    A self-approval that succeeds here is a finding; the correct outcome is rejection on separation-of-duties.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Attempt to self-approve an override the same principal requested
+  success_criteria:
+  - The override eligibility declares a separation-of-duties constraint
+  - The approving principal identity is checked, not merely the approver role
+  - The self-approval is rejected because requester and approver are the same principal
+  - The override remains pending an independent authorized approver
+  - No policy suppression takes effect from the rejected self-approval
+  - The rejected self-approval attempt is recorded for review
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: separation-of-duties checks approver identity against requester
+  - domain: policy
+    interaction: self-approval rejected, override left pending
+  - domain: data
+    interaction: rejected self-approval recorded against the override request
+  - domain: audit
+    interaction: separation-of-duties rejection logged for review
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- separation-of-duties
+- self-approval
+- identity-vs-role
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16
+  preconditions:
+  - The requester also holds the approver role
+  - Override eligibility requires separation of duties
+  postconditions:
+  - Self-approval is rejected; override stays pending an independent approver

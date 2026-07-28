@@ -1,0 +1,62 @@
+uuid: uc-hammer-day0-day2-ops-004
+handle: day0-day2-ops/patch-fail-midrun-rollback
+scenario:
+  description: 'A platform operator applies a kernel patch to a production database host via an Automation.Job
+    bound to that host. The job fails mid-run: the new kernel is staged but the host will not come back
+    to a healthy state. Because the resource has hard dependents (application VMs), the system must invoke
+    the recovery policy and roll the host back to its pre-patch snapshot, restoring the exact prior realized
+    state before the failed process, and mark the patch attempt FAILED without leaving the host wedged.'
+  actor:
+    persona: platform-operator
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Recover a resource to its pre-patch state when a bound patch job fails mid-run
+  success_criteria:
+  - The patch job is bound to the database host and records a FAILED terminal outcome on failure
+  - The recovery policy fires because the host has hard dependents
+  - The host is rolled back to its exact pre-patch realized state (snapshot restore)
+  - No partial/half-patched state is left as the resources recorded realized state
+  - The failed attempt is retained in history for audit, distinct from the restored state
+  - Dependent application VMs are re-validated as healthy after the rollback
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: rollback_required
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: runs the patch job, reports mid-run failure, executes the snapshot restore
+  - domain: policy
+    interaction: triggers the recovery policy and mandates rollback given hard dependents
+  - domain: data
+    interaction: restores the pre-patch realized state and preserves the failed-attempt record
+  - domain: audit
+    interaction: records the failure, the rollback decision, and the restored state
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- rollback
+- recovery
+- patch
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A pre-patch snapshot of the host exists
+  - The host has hard dependents recorded
+  postconditions:
+  - The host is restored to its pre-patch state
+  - The failed patch attempt is auditable, dependents healthy
+  note: batch=day0-day2-ops-2026-07-22

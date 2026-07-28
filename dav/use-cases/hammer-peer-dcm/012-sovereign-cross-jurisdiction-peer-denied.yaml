@@ -1,0 +1,58 @@
+uuid: uc-hammer-peer-dcm-012
+handle: peer-dcm/sovereign-cross-jurisdiction-peer-denied
+scenario:
+  description: A sovereign workload's only capable peer operates in a jurisdiction the residency policy forbids.
+    The sovereignty gate rejects federation to that peer before any realization; the request is denied as a policy
+    violation rather than placed non-compliantly.
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+    - sovereignty-authority
+  intent: Deny federation to a peer in a non-compliant jurisdiction
+  success_criteria:
+  - The only capable peer is in a forbidden jurisdiction
+  - The sovereignty gate evaluates the peer's jurisdiction
+  - Federation to the non-compliant peer is rejected
+  - The request is denied as a policy violation, not placed
+  - The denial and the reason are audited
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: policy_violation
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty gate rejects the non-compliant-jurisdiction peer
+  - domain: provider
+    interaction: no compliant peer is available to realize
+  - domain: audit
+    interaction: the policy-violation denial recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- sovereignty
+- policy-violation
+- cross-jurisdiction
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Sovereign profile; the only capable peer is non-compliant
+  postconditions:
+  - Federation denied; nothing placed non-compliantly
+  note: batch=peer-dcm-2026-07-23

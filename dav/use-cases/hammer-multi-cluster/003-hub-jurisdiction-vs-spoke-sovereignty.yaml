@@ -1,0 +1,54 @@
+uuid: uc-multi-cluster-003
+handle: multi-cluster/hub-jurisdiction-vs-spoke-sovereignty
+version: 1.0.0
+scenario:
+  description: "A sovereign-profile tenant requires that management-plane control of their clusters stays\
+    \ within jurisdiction: the spokes are compliant, but the HUB managing them runs elsewhere. Management\
+    \ is control \u2014 a hub outside the jurisdiction can mutate in-jurisdiction workloads. This stresses\
+    \ that the hub's own sovereignty position (its location, its provider's sovereignty declaration) is\
+    \ evaluated as part of the spokes' sovereignty posture, not just the spokes' data residency; a non-compliant\
+    \ hub placement is rejected or flagged for the affected spokes."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Evaluate spoke sovereignty including the managing hub's jurisdiction and reject or flag management
+    from outside the required jurisdiction
+  success_criteria:
+  - The hub's location/sovereignty declaration participates in each managed spoke's compliance evaluation
+  - A spoke requiring in-jurisdiction management cannot be imported into an out-of-jurisdiction hub
+  - An existing compliant fleet flags when the hub's declared sovereignty changes (discovered drift)
+  - The evaluation distinguishes data residency (spoke) from control residency (hub) explicitly
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_constrained
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the hub's sovereignty declaration and location edge are the evaluated facts
+  - domain: policy
+    interaction: sovereignty policy composes spoke residency with hub control residency
+  - domain: provider
+    interaction: hub providers declare sovereignty like any provider; changes are drift
+  - domain: audit
+    interaction: control-residency evaluations and rejections are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: multi-cluster-2026-07-24
+  timestamp: '2026-07-24T21:00:00.000000+00:00'
+tags:
+- multi-cluster
+- sovereignty
+- control-residency
+- platform-hub

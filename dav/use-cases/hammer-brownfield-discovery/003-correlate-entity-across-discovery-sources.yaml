@@ -1,0 +1,56 @@
+uuid: uc-hammer-brownfield-003
+handle: brownfield-discovery/correlate-entity-across-discovery-sources
+scenario:
+  description: 'The same physical host is reported by three independent discovery sources: a hardware-inventory
+    provider (by serial), an Ansible inventory (by hostname), and a network-scan provider (by MAC/IP).
+    The system must correlate all three observations into ONE entity using correlation_ids rather than
+    creating three near-duplicate entities. Each source identifier is retained on the entity as a correlation
+    key so future re-scans from any single source resolve to the same entity. This probes whether the
+    data model carries a multi-valued correlation_ids set and a deterministic correlation rule, or whether
+    it silently forks identity per source.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Correlate observations of one host from multiple discovery sources into a single entity
+  success_criteria:
+  - All three source observations resolve to exactly one entity
+  - The entity carries a correlation_ids set with the serial, hostname, and MAC/IP keys
+  - Re-scan from any single source resolves to the existing entity, creating no duplicate
+  - Conflicting non-key attributes are retained per-source rather than blindly overwritten
+  - The correlation decision and the keys that matched are recorded in the audit trail
+  - A stable Entity UUID spans all correlated observations
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: three information providers emit observations of the same host
+  - domain: data
+    interaction: observations merged into one entity via correlation_ids with per-source keys retained
+  - domain: audit
+    interaction: correlation decision and matched keys recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- correlation
+- correlation-ids
+- multi-source
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

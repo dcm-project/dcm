@@ -1,0 +1,71 @@
+uuid: uc-hammer-sovereignty-003
+handle: sovereignty/provider-jurisdiction-falls-out-of-compliance
+scenario:
+  description: 'A compliance auditor''s monitoring detects that a provider currently hosting residency-pinned
+    workloads has had its jurisdiction re-classified mid-operation — a legal change places its region
+    under a foreign-access regime that violates the sovereign mandate the workloads were placed under.
+    Nothing about the intent changed, but the provider''s compliance posture did. The architecture must
+    detect this as drift against the sovereignty policy, flag the affected realized resources, and trigger
+    a recovery policy that quarantines new dispatch and proposes remediation (re-placement to a still-compliant
+    provider) rather than leaving the resources silently non-compliant. This case probes whether the model
+    can react to provider-side compliance changes it did not originate.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Re-evaluate placements when a provider's jurisdiction loses compliance mid-operation
+  success_criteria:
+  - The provider compliance change is ingested as a signal against the data model
+  - Sovereignty policy is re-evaluated for every resource realized on that provider
+  - Affected realized resources are flagged as drifted from their sovereign mandate
+  - A recovery policy quarantines further dispatch to the now-non-compliant provider
+  - Remediation (re-placement to a compliant provider) is proposed, not silently executed
+  - The compliance-loss event and affected resource set are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provider jurisdiction re-classification ingested as a compliance signal
+  - domain: policy
+    interaction: sovereignty policy re-evaluated; recovery policy quarantines dispatch and proposes re-placement
+  - domain: data
+    interaction: affected realized resources flagged as drifted from mandate
+  - domain: audit
+    interaction: compliance-loss event and affected resource set recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- provider-compliance-drift
+- recovery
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resources are realized on a provider that was compliant at placement time
+  - The provider's jurisdiction is later re-classified as non-compliant
+  postconditions:
+  - Affected resources flagged as drifted
+  - Dispatch to the non-compliant provider quarantined
+  - Remediation proposed and recorded
+  note: batch=framework-hammer-2026-07-16

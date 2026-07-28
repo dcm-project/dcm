@@ -1,0 +1,64 @@
+uuid: uc-hammer-dr-rehydration-005
+handle: dr-rehydration/rehydrate-from-requested-only
+scenario:
+  description: 'A resource was requested and validated but the original realization never completed before
+    the disaster — it exists only in the requested state, never in realized. An application-team member
+    asks the system to rehydrate it. The system must decide whether a never-realized request is a legitimate
+    rehydration source or a first-time new_request wearing a rehydration label. It must not fabricate
+    realized facts that never existed, and must not silently downgrade the operation without recording
+    the ambiguity. This probes whether the four-state model cleanly distinguishes "rebuild what was" from
+    "finish what was started," and may come back partially_supported or unsupported.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Rehydrate a resource that was only ever requested, never realized
+  success_criteria:
+  - System detects the resource has requested state but no prior realized state
+  - It does not fabricate realized facts or a UUID that never existed
+  - The operation is classified explicitly (rehydration vs first realization), not left implicit
+  - Validation policies are evaluated against the requested state
+  - If realization proceeds, provenance records it originated from requested-only source
+  - Any ambiguity or downgrade of the operation is surfaced as a finding, not hidden
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: requested state present, realized state absent; source classified
+  - domain: policy
+    interaction: validation evaluates the requested state for eligibility
+  - domain: audit
+    interaction: operation classification and requested-only provenance recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- requested-only
+- four-state
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource has requested state but was never realized
+  - No realized facts or provider handle exist for it
+  postconditions:
+  - Operation classified explicitly with recorded rationale
+  - No fabricated realized facts
+  - Ambiguity surfaced as a finding
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,58 @@
+uuid: uc-hammer-tenancy-014
+handle: tenancy/per-tenant-residency-enforcement
+scenario:
+  description: 'Two tenants share a platform but carry different data-residency mandates: tenant A must
+    remain in-region, tenant B is unconstrained. A compliance-auditor validates that a tenant-A request
+    is placed only on providers within tenant A''s mandated region, while an otherwise-identical tenant-B
+    request may be placed anywhere. This tests whether sovereignty is enforced per-tenant — the residency
+    constraint must travel with the tenant scope, not be a single platform-wide setting.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Enforce per-tenant residency so each tenant's mandate governs placement
+  success_criteria:
+  - Tenant A's request is placed only on in-region providers
+  - The identical tenant-B request may be placed on out-of-region providers
+  - The residency constraint is resolved from the tenant scope, not a global setting
+  - An in-region-only tenant with no eligible provider is failed, not silently relocated
+  - The governing residency mandate is recorded on each placement decision
+  - Residency enforcement is auditable per tenant
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: per-tenant sovereignty mandate resolved and enforced during placement
+  - domain: provider
+    interaction: placement filtered to providers satisfying the tenant's residency region
+  - domain: data
+    interaction: governing residency mandate bound to each placement record
+  - domain: audit
+    interaction: residency decision recorded per tenant
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- sovereignty
+- residency
+- placement
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

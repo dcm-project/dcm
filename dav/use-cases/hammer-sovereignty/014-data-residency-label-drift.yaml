@@ -1,0 +1,66 @@
+uuid: uc-hammer-sovereignty-014
+handle: sovereignty/data-residency-label-drift
+scenario:
+  description: 'An SRE''s drift check finds that a realized resource''s actual data-at-rest location,
+    as reported by the provider, no longer matches the jurisdiction recorded in its intent — the provider
+    moved the data to a different region during a maintenance event. The intent still says one jurisdiction;
+    the realized fact now says another. The architecture must detect this divergence between recorded
+    intent and reported realized state, flag it as a sovereignty drift (not a benign difference), and
+    surface it for remediation. This probes whether residency is continuously reconciled against provider-reported
+    reality, not just checked at placement.
+
+    '
+  actor:
+    persona: sre
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+    - sovereignty-authority
+  intent: Detect when a resource's actual data-at-rest drifts out of its mandated jurisdiction
+  success_criteria:
+  - Provider-reported data-at-rest location is compared against the recorded intent jurisdiction
+  - A divergence between intent jurisdiction and realized location is detected
+  - The divergence is classified as a sovereignty drift, not a benign difference
+  - The drifted resource is flagged for remediation with both jurisdictions shown
+  - The drift event and the mismatched locations are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: recorded intent jurisdiction compared against provider-reported realized location
+  - domain: policy
+    interaction: sovereignty validation classifies the divergence as drift
+  - domain: provider
+    interaction: provider-reported data-at-rest location read for reconciliation
+  - domain: audit
+    interaction: drift event and mismatched jurisdictions recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- residency-drift
+- reconciliation
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource was placed in the mandated jurisdiction
+  - Provider later reports data-at-rest in a different region
+  postconditions:
+  - Divergence flagged as sovereignty drift
+  - Both jurisdictions recorded for remediation
+  note: batch=framework-hammer-2026-07-16

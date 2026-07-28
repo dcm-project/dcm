@@ -1,0 +1,65 @@
+uuid: uc-hammer-cost-quota-017
+handle: cost-quota/decommission-releases-quota-final-statement
+scenario:
+  description: 'A tenant-admin decommissions a service. On teardown the pipeline must stop cost accrual
+    at the decommission instant, release the resource''s footprint back to the tenant''s quota, and emit
+    a final cost statement covering the resource''s full lifetime up to that instant. No cost may accrue
+    after decommission and the freed quota must be immediately available to new requests. The mechanism
+    under test is lifecycle-coupled cost and quota release — orphaned accrual on a torn-down resource
+    is a common billing defect.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - finance-analyst
+    - tenancy-authority
+  intent: Decommission a service, release its quota, and close its cost
+  success_criteria:
+  - Decommission clears the resource's realized state
+  - Cost accrual stops precisely at the decommission instant
+  - The resource's footprint is released back to tenant quota
+  - Freed quota is immediately usable by a subsequent request
+  - A final cost statement covering the full lifetime is emitted
+  - No cost accrues after the decommission instant
+  - The teardown, quota release, and final statement are recorded in audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: realized state cleared; footprint returned to quota
+  - domain: policy
+    interaction: decommission validation closes accrual and releases quota
+  - domain: provider
+    interaction: provider tears the resource down
+  - domain: audit
+    interaction: teardown, quota release, and final cost statement recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- decommission
+- quota-release
+- final-statement
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A realized service consumes quota and accrues cost
+  postconditions:
+  - Quota is released and accrual is closed
+  - Freed quota is immediately reusable
+  note: batch=framework-hammer-2026-07-16

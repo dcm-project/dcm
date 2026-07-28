@@ -1,0 +1,58 @@
+uuid: uc-196cb096-c65d-4601-b3e9-ba5b6d799fe6
+handle: intent-fulfillment/surfacing-mandatory
+version: 1.0.0
+scenario:
+  description: >-
+    A realization completes an intent partially and reports the shortfall ONLY as a structured
+    partial_failures field, with no warning surfaced to the consumer — who can miss it entirely
+    and believe the intent was fully satisfied. This is REFUSED as insufficient surfacing: an
+    unsatisfiable intent the consumer is not actively told about is a silent failure, whatever the
+    dependency nature or window that produced it. A field is not a signal. The mandatory surface is
+    a warning (for a transient shortfall) or a refusal-with-resolution (for a permanent one): what
+    was not realized, why, and how to resolve it. The refusal here is of the SURFACING, not of the
+    partial realization itself — converging the satisfiable members while a transient member stays
+    pending is correct; hiding that fact behind a missable field is not.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: >-
+    Refuse a partial realization whose shortfall is expressed only as a missable field and never
+    surfaced to the consumer as an actionable warning or refusal-with-resolution
+  success_criteria:
+  - A partial realization that surfaces its shortfall only as a structured field (no warning) is refused as insufficient surfacing
+  - 'The required surface is a warning (transient) or refusal-with-resolution (permanent): what was not realized, why, and how to resolve it'
+  - The refusal is of the SURFACING, not the partial realization itself — converging satisfiable members is correct
+  - '"The consumer could have read the field" is explicitly not a sufficient defense'
+  - The surfacing requirement holds on every partial-fulfillment path, whatever the nature or window that produced the shortfall
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: surfacing an unsatisfiable intent is mandatory, not optional; a field is not a signal
+  - domain: data
+    interaction: the warning or refusal-with-resolution is a first-class output, distinct from the partial_failures record
+  - domain: audit
+    interaction: the missing-surface refusal is recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- surfacing
+- must-reject
+- intent-requirement

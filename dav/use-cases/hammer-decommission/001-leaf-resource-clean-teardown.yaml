@@ -1,0 +1,53 @@
+uuid: uc-hammer-decommission-001
+handle: decommission/leaf-resource-clean-teardown
+scenario:
+  description: 'A platform engineer decommissions a single realized resource that nothing else depends
+    on — a scratch VM at the end of a sprint. The system must confirm the resource has no dependents,
+    dispatch a destroy to the owning provider, clear the realized state, and mark the intent retired.
+    This is the baseline decommission path that every harder case builds on: no cascade, no compensation,
+    just a clean single-resource teardown recorded end to end.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: dev
+  perspectives: []
+  intent: Decommission an unshared leaf resource and confirm clean teardown
+  success_criteria:
+  - Dependency check confirms the resource has zero dependents before teardown begins
+  - Destroy is dispatched to the owning provider and acknowledged
+  - Realized state for the resource is cleared
+  - Intent is marked retired (not deleted) so the decommission remains auditable
+  - Resource UUID is not reassigned to any new resource
+  - The full decommission arc is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph queried, realized state cleared, intent marked retired
+  - domain: provider
+    interaction: destroy dispatched to owning provider and acknowledged
+  - domain: audit
+    interaction: decommission decision and completion recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- teardown
+- leaf
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

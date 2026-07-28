@@ -1,0 +1,56 @@
+uuid: uc-hammer-networking-009
+handle: networking/connectivity-ordering-network-before-compute
+scenario:
+  description: 'A three-tier application is requested as one intent: a VLAN, a gateway, and three VMs
+    that attach to the VLAN and route through the gateway. The system must derive from the dependency
+    graph that the segment and gateway are realized BEFORE any VM is dispatched, so no compute is ever
+    launched onto a network that does not yet exist. This tests that connectivity is a hard dependency
+    that constrains ordering, not an afterthought applied post-boot.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Provision a full stack and verify network resources realize before compute
+  success_criteria:
+  - The dependency graph places Network.VLAN and Network.Gateway upstream of the VMs
+  - The VLAN and gateway are realized before any VM dispatch occurs
+  - No VM is dispatched onto a not-yet-realized segment
+  - VMs attach to the already-realized segment and route through the realized gateway
+  - Ordering is derived from the graph, not from a hand-written sequence
+  - The realized order is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph orders network resources upstream of compute
+  - domain: provider
+    interaction: network providers realize segment and gateway before compute providers dispatch
+  - domain: audit
+    interaction: realized ordering recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- ordering
+- dependency-graph
+- full-stack
+- connectivity
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

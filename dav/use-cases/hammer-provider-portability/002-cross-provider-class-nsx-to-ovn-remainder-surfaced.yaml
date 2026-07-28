@@ -1,0 +1,62 @@
+uuid: uc-hammer-provider-portability-002
+handle: provider-portability/cross-provider-class-nsx-to-ovn-remainder-surfaced
+scenario:
+  description: A Compute.VM.VMware carries provider-specific elements (an NSX security group, a distributed switch)
+    alongside portable ones. Re-porting to Compute.VM.OCPVirt re-realizes the portable subset automatically; the
+    NSX security group maps to an OVN NetworkPolicy only if the intent was captured at the Type Class, and the distributed
+    switch has no OCPVirt equivalent and is surfaced as the non-portable remainder for a human decision.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - security-officer
+  intent: Re-port a VMware/NSX VM to OCPVirt/OVN, surfacing the provider-specific remainder
+  success_criteria:
+  - The portable Base/Type subset re-realizes on OCPVirt automatically
+  - The Type-Class network intent naturalizes to an OVN NetworkPolicy
+  - The provider-specific distributed-switch element is flagged non-portable
+  - The non-portable remainder is surfaced, not silently dropped
+  - The partial result is recorded with the surfaced remainder
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: evaluates which Provider-Class elements have a target equivalent
+  - domain: provider
+    interaction: OCPVirt/OVN realizes the portable subset; remainder surfaced
+  - domain: data
+    interaction: partial re-realization records the non-portable remainder
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- partial-port
+- provider-remainder
+- networking
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source carries NSX-specific Provider-Class elements
+  - OCPVirt/OVN is the target
+  postconditions:
+  - The portable subset runs on OCPVirt
+  - The non-portable remainder is surfaced for a decision
+  note: batch=portability-enrich-2026-07-22

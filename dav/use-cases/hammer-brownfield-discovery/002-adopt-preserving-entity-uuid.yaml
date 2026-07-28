@@ -1,0 +1,56 @@
+uuid: uc-hammer-brownfield-002
+handle: brownfield-discovery/adopt-preserving-entity-uuid
+scenario:
+  description: 'A platform engineer adopts a previously Discovered server into DCM management. Adoption
+    must attach the entity to an owning tenant and flip management_authority from legacy to dcm WITHOUT
+    reassigning the Entity UUID that was minted at discovery. Any external correlation (BMC records, CMDB
+    rows, monitoring keyed on that UUID) must survive the transition. This validates that identity is
+    stable across the discovery-to-managed boundary — adoption is a state transition on an existing entity,
+    not the creation of a new one.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Adopt a discovered resource into management while preserving its Entity UUID
+  success_criteria:
+  - The adopted entity retains the exact Entity UUID assigned at discovery
+  - management_authority transitions from legacy to dcm at cutover
+  - The entity gains an owning tenant and enters the managed lifecycle
+  - No new entity is created and no duplicate UUID appears
+  - Adopt-in-place holds — the running resource is not restarted, recreated, or moved
+  - The authority transition is recorded with before/after provenance in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: entity transitioned to managed with UUID preserved and tenant attached
+  - domain: policy
+    interaction: adoption-scope validation confirms the entity is eligible for adoption
+  - domain: audit
+    interaction: management_authority legacy-to-dcm transition recorded with provenance
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- adoption
+- uuid-stability
+- adopt-in-place
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

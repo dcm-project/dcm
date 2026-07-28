@@ -1,0 +1,60 @@
+uuid: uc-hammer-federation-020
+handle: federation/peer-audit-chain-verification
+scenario:
+  description: 'A compliance auditor must independently verify a peer DCM''s account of a completed federation
+    interaction. The peer provides its audit chain for the interaction; the local DCM re-verifies the
+    chain''s integrity (each entry links to the prior, the peer''s signatures are valid, and the peer''s
+    entries agree with the local cross-signed checkpoints). A broken link or a peer entry that disagrees
+    with the local checkpoint must be flagged as an integrity failure. This tests whether a peer''s audit
+    chain is independently verifiable across the federation, not merely trusted.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - federation-peer-operator
+    - regulator
+  intent: Independently verify a peer DCM's audit chain for a federation interaction
+  success_criteria:
+  - Peer supplies its audit chain for the completed interaction
+  - Local DCM verifies each entry links to its predecessor (chain integrity)
+  - The peer's signatures over each entry are validated
+  - Peer entries are reconciled against the local cross-signed checkpoints
+  - A broken link or a disagreeing entry is flagged as an integrity failure
+  - The verification outcome (pass or the specific failure) is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: peer audit chain verified for linkage, signatures, and checkpoint agreement
+  - domain: policy
+    interaction: integrity policy flags broken links or disagreeing entries as failures
+  - domain: data
+    interaction: peer entries reconciled against locally-held cross-signed checkpoints
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- audit
+- chain-verification
+- integrity
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

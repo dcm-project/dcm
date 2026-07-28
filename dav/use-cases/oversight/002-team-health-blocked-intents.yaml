@@ -1,0 +1,59 @@
+uuid: uc-5425fbcf-8ffa-414c-9c45-3a25a83e0a77
+handle: oversight/team-health-blocked-intents
+version: 1.0.0
+scenario:
+  description: >-
+    A manager accountable for a single team's services needs to see, at team scope, what their
+    team's intents are doing — specifically which are blocked or unsatisfiable and why. The demand
+    maps directly onto the intent-fulfillment surfacing contract, scoped to the team: a blocked or
+    refused intent surfaces with its root cause named and the owner, so the manager sees "this is
+    stuck on that unmet dependency" rather than a silent pending. Alongside it, the team's capacity,
+    cost, and policy posture are visible without standing up a bespoke report — a projection at team
+    scope over the same estate data. The manager operates nothing directly; they are accountable for
+    delivery and need the team's operational health surfaced, not assembled by hand.
+  actor:
+    persona: manager
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - finance-analyst
+    - director
+  intent: >-
+    Surface a team's blocked or unsatisfiable intents with root cause and owner, and the team's
+    capacity/cost/policy posture, as a team-scoped projection over the estate — not a bespoke report
+  success_criteria:
+  - A blocked or refused team intent surfaces with its root cause named and the owner (ADR-052 surfacing, team-scoped)
+  - The manager sees why an intent is stuck, not a silent pending
+  - The team's capacity, cost, and policy posture are a projection over the estate, not a hand-built report
+  - The view is scoped to the manager's team without a parallel data source
+  - The manager consumes the team's operational health without operating any resource directly
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: multi_dependent
+    policy_complexity: multi_validation
+    provider_landscape: mixed
+    governance_context: internal_audit
+    failure_mode: partial_fulfillment
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: the team view is a scoped projection over the team's declared and realized intents
+  - domain: policy
+    interaction: intent-fulfillment surfacing (root cause + owner) scoped to the team drives what the manager sees
+  - domain: provider
+    interaction: n/a — the manager consumes the team's aggregate health; no dispatch
+  - domain: audit
+    interaction: the surfaced blocked intents, their root causes, and owners are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- oversight
+- manager
+- team-health
+- intent-fulfillment
+- surfacing

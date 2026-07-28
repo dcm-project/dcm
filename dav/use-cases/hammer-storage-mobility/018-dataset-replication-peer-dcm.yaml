@@ -1,0 +1,62 @@
+uuid: uc-hammer-storage-mobility-018
+handle: storage-mobility/dataset-replication-peer-dcm
+scenario:
+  description: 'A platform engineer configures asynchronous replication of a Storage.Dataset from the
+    local DCM to a dataset managed by a peer DCM in a partner organization, for cross-site DR. The replication
+    relationship spans an administrative boundary: each DCM owns its own copy''s identity, and the replica''s
+    lifecycle is governed by the peer. The system must express a cross-DCM replication edge, negotiate
+    the replication contract with the peer, and keep both sides'' realized state coherent — while tolerating
+    a peer disconnect without corrupting the local dataset. This stresses federated data mobility across
+    a peer boundary.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+  intent: Replicate a dataset to a peer-DCM-managed replica for cross-site DR
+  success_criteria:
+  - A cross-DCM replication edge is expressed between local and peer datasets
+  - Each DCM retains ownership of its own copy's identity
+  - The replication contract (mode, direction, cadence) is negotiated with the peer
+  - Both sides' realized state reflects the replication relationship coherently
+  - A peer disconnect degrades gracefully without corrupting the local dataset
+  - Replication lag and peer reachability are observable and audited
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: replication realized between local and peer-managed datasets
+  - domain: policy
+    interaction: cross-DCM replication contract negotiated and enforced
+  - domain: data
+    interaction: cross-DCM replication edge persisted with per-side ownership
+  - domain: audit
+    interaction: replication state, lag, and peer disconnect recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- replication
+- federation
+- peer-dcm
+- dr
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

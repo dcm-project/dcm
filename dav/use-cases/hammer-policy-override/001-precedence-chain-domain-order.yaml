@@ -1,0 +1,67 @@
+uuid: uc-hammer-policy-override-001
+handle: policy-override/precedence-chain-domain-order
+scenario:
+  description: 'A platform-engineer submits an intent that is in scope for four policies whose verdicts
+    conflict: a platform policy permits a public-subnet placement, a tenant policy restricts it, a resource-type
+    policy permits it, and an entity-level tag policy denies it. The engine must resolve the conflict
+    deterministically by domain precedence (system > platform > tenant > resource_type > entity), not
+    by evaluation order or last-writer-wins. The winning verdict, the losing verdicts, and the precedence
+    rule that decided must all be recorded. The mechanism under test is conflict resolution as a declared
+    precedence lattice, not an ad-hoc tiebreak.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - provider-owner
+    - tenancy-authority
+  intent: Submit an intent matched by conflicting policies at different domain levels
+  success_criteria:
+  - All four in-scope policies are evaluated and their individual verdicts captured
+  - Conflict is detected and resolved by domain precedence, not evaluation order
+  - The higher-precedence tenant deny overrides the lower entity-level and resource_type verdicts
+  - The winning verdict names the precedence rule that decided it
+  - Losing verdicts are recorded as superseded, not silently dropped
+  - No provider dispatch occurs until the resolved verdict permits
+  - The full precedence resolution is reconstructable from the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: four conflicting in-scope policies evaluated and verdicts captured
+  - domain: policy
+    interaction: conflict resolved by declared domain-precedence lattice
+  - domain: data
+    interaction: resolved verdict plus superseded verdicts stored against the request
+  - domain: audit
+    interaction: precedence resolution recorded with the deciding rule
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- precedence
+- conflict-resolution
+- multi-policy-chain
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Four policies at distinct domain levels are in scope for the request
+  - Their verdicts conflict
+  postconditions:
+  - A single deterministic verdict is produced by domain precedence
+  - Superseded verdicts and the deciding rule are recorded
+  note: batch=framework-hammer-2026-07-16

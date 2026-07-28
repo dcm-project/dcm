@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-001
+handle: peer-dcm/connected-cross-dcm-resource-realization
+scenario:
+  description: A local DCM has a request whose only eligible provider lives in a peer DCM's estate. Placement selects
+    the peer, the realization request is dispatched across the federation boundary, and the peer realizes the resource
+    in its own estate and returns a realized handle. The local DCM records the resource with a reference to the
+    owning peer and does not claim direct control of it.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+  intent: Realize a resource on a peer DCM's provider across the federation boundary
+  success_criteria:
+  - Placement identifies the peer DCM as the eligible provider
+  - The realization request is dispatched across the federation boundary
+  - The peer realizes the resource and returns a realized handle
+  - Local realized state records the resource with a reference to the owning peer
+  - The cross-boundary dispatch and the peer acknowledgement are audited
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the peer DCM's provider realizes the resource
+  - domain: data
+    interaction: local records the peer-owned reference, not direct control
+  - domain: audit
+    interaction: cross-boundary dispatch + peer ack recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- cross-boundary
+- realization
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - A peer DCM is federated and advertises the eligible provider
+  postconditions:
+  - The resource runs in the peer's estate; the local record references the owner
+  note: batch=peer-dcm-2026-07-23

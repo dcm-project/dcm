@@ -1,0 +1,67 @@
+uuid: uc-hammer-cost-quota-004
+handle: cost-quota/budget-gate-routes-to-approval
+scenario:
+  description: 'A finance-analyst-governed prod tenant submits a request whose projected cost pushes cumulative
+    committed spend past a soft budget threshold. Rather than a hard denial, policy must route the request
+    to a human approval step: the pipeline pauses, emits an approval task naming the projected overage
+    and the approver role, and blocks realization until an explicit decision returns. The mechanism under
+    test is human_escalation_required as an orchestration outcome of a budget gate — does the architecture
+    support a pause-for-approval state, or does it only model allow/deny?
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Approve or reject spend that crosses a soft budget threshold
+  success_criteria:
+  - Projected cost of the request is computed and added to cumulative committed spend
+  - Cumulative spend is found to cross the soft budget threshold
+  - Request is neither admitted nor denied but paused pending approval
+  - An approval task is emitted naming the overage amount and approver role
+  - Realization is blocked until an explicit approval decision returns
+  - On approval the request proceeds; on rejection it is denied with rationale
+  - The pause, the approval task, and the final decision are recorded in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: cumulative committed spend and budget threshold read
+  - domain: policy
+    interaction: budget gate escalates the over-threshold request to human approval
+  - domain: provider
+    interaction: dispatch withheld until approval returns
+  - domain: audit
+    interaction: pause, approval task, and final decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- budget
+- approval
+- escalation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A soft budget threshold and an approver role are defined for the tenant
+  postconditions:
+  - Request is paused with an outstanding approval task
+  - Realization occurs only after explicit approval
+  note: batch=framework-hammer-2026-07-16

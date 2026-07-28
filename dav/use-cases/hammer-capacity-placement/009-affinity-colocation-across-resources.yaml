@@ -1,0 +1,56 @@
+uuid: uc-hammer-capacity-009
+handle: capacity/affinity-colocation-across-resources
+scenario:
+  description: 'An application team declares two resources — a latency-sensitive app tier and its in-memory
+    cache — that must be co-located on the same provider (or fault domain) via an affinity rule. The placement
+    engine must solve placement jointly: reserve capacity for both on a provider that can host the pair,
+    rather than placing each greedily. This tests whether affinity is a cross-resource placement constraint
+    the engine can satisfy in one coherent decision.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: prod
+  perspectives:
+    - provider-owner
+  intent: Co-locate two affine resources on the same provider
+  success_criteria:
+  - The affinity rule between the two resources is resolved before placement
+  - The engine finds a provider with capacity for both resources jointly
+  - Both resources are reserved on the same provider or fault domain
+  - Greedy independent placement that would violate affinity is avoided
+  - Both resources realize on the co-located target
+  - The affinity constraint and joint placement decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: affinity constraint resolved across the two resources
+  - domain: provider
+    interaction: joint capacity reservation on a single co-location target
+  - domain: audit
+    interaction: affinity constraint and joint placement decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:09.000000+00:00'
+tags:
+- capacity
+- placement
+- affinity
+- colocation
+- multi-resource
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

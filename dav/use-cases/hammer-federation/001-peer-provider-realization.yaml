@@ -1,0 +1,58 @@
+uuid: uc-hammer-federation-001
+handle: federation/peer-provider-realization
+scenario:
+  description: 'A platform engineer submits an intent for a database resource that can only be satisfied
+    by capacity another organization exposes through its own DCM. The local placement engine must treat
+    the peer DCM as a Provider: it dispatches the realization request across the federation boundary,
+    the peer realizes the resource in its own estate, and the returned realized handle is recorded locally
+    with a reference to the owning peer. This tests whether a peer realization can be a first-class Provider
+    in the placement model rather than a special case.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+  intent: Realize a resource whose only eligible provider is a peer DCM acting as a Provider
+  success_criteria:
+  - Intent is accepted and the placement engine identifies the peer DCM as an eligible provider
+  - Realization request is dispatched across the federation boundary to the peer
+  - Peer realizes the resource in its own estate and returns a realized handle
+  - Local realized state records the resource with a reference to the owning peer
+  - 'Ownership boundary is explicit: local DCM does not claim direct control of the peer-owned resource'
+  - Audit trail records the cross-boundary dispatch and the peer's acknowledgement
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent recorded; realized handle stored with peer-ownership reference
+  - domain: policy
+    interaction: validation confirms the peer is an admitted, eligible provider
+  - domain: provider
+    interaction: peer DCM realizes the resource and returns a handle across the boundary
+  - domain: audit
+    interaction: cross-boundary dispatch and peer acknowledgement recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- peer-provider
+- placement
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

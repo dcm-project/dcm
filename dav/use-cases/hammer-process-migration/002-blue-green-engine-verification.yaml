@@ -1,0 +1,52 @@
+uuid: uc-process-migration-002
+handle: process-migration/blue-green-engine-verification
+version: 1.0.0
+scenario:
+  description: "Before cutting automation over to a new engine, the org verifies behavioral equivalence\
+    \ with data instead of faith. The process type is declared idempotent and both engines publish identical\
+    \ typed outputs \u2014 so a green run against targets the blue engine just converged should produce\
+    \ an empty change-set. Any non-empty delta is a behavioral difference between engines, surfaced as\
+    \ a queryable result before any production cutover. The comparison is a diff of declared outputs,\
+    \ not a hand-built test harness."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Verify a new engine against the incumbent by running the same idempotent process type and diffing
+    typed outputs, requiring an empty delta before cutover
+  success_criteria:
+  - The green engine runs the same process type against blue-converged targets
+  - A conformant green run yields an empty change-set output; the comparison is mechanical
+  - Any non-empty delta blocks cutover and is attributable to specific behavioral differences
+  - "No bespoke comparison tooling exists \u2014 the typed output surface IS the harness"
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: identical typed outputs make engines comparable by construction
+  - domain: policy
+    interaction: cutover is gated on the empty-delta verification result
+  - domain: provider
+    interaction: both engines execute the same definition; neither is trusted on faith
+  - domain: audit
+    interaction: the verification runs and their deltas are recorded as evidence
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: process-migration-2026-07-25
+  timestamp: '2026-07-25T02:00:00.000000+00:00'
+tags:
+- process-migration
+- blue-green
+- verification
+- typed-outputs

@@ -1,0 +1,62 @@
+uuid: uc-hammer-cost-quota-008
+handle: cost-quota/shared-allocatable-split-by-stake
+scenario:
+  description: 'A single physical GPU is time-sliced across three application teams via fractional allocations
+    recorded as stakes on the allocatable. A finance-analyst needs the GPU''s amortized cost split across
+    the three stakes exactly in proportion to their fractional allocation. The system must read the allocatable,
+    enumerate its fractional stakes, and divide cost by stake weight. The mechanism under test is stake-weighted
+    cost division over one allocatable resource — does the model carry fractional stake weights, or only
+    whole-resource ownership?
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Split one allocatable's cost across fractional stakes by weight
+  success_criteria:
+  - The allocatable and its fractional stakes are enumerated
+  - Each stake carries a resolvable fractional weight
+  - Cost is divided across stakes strictly by weight
+  - The split sums to the allocatable's total cost within rounding tolerance
+  - Rounding residue is assigned deterministically, not dropped
+  - Stakes lacking a weight are surfaced as an attribution gap
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: allocatable and its fractional stake weights read from the model
+  - domain: policy
+    interaction: stake-weighted division validates the split totals to the whole
+  - domain: audit
+    interaction: per-stake split and rounding residue assignment recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- allocatable
+- stake-weight
+- split
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - One allocatable is shared via fractional stakes summing to its capacity
+  postconditions:
+  - Cost is split by weight and reconciles to the whole
+  - Missing weights are reported
+  note: batch=framework-hammer-2026-07-16

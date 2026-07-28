@@ -1,0 +1,49 @@
+uuid: uc-d75b2657-082d-4555-9826-a7c59d96c0bc
+handle: class-versioning/pin-ahead-or-unknown-refused
+version: 1.1.0
+scenario:
+  description: 'A downstream organization''s estate declares a class pin whose version or digest does not
+    exist in the registry ref the estate consumes — ahead of the registry, or fabricated. The pin is refused
+    at estate validation: a pin must resolve to a real published revision (a (handle, version) row in the
+    pin manifest, or recorded bytes for a @sha256 pin — ADR-051). The refusal distinguishes unknown-revision
+    from behind-but-legal, so legitimate debt is not conflated with broken references.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Have a pin that resolves to no real registry revision refused, distinct from legal pin-behind
+  success_criteria:
+  - A pin naming a version or digest absent from the consumed registry ref fails estate validation
+  - 'The refusal is typed: unknown-revision, distinct from the legal behind-with-debt state'
+  - The refusal names the pinned reference and the registry ref it failed to resolve against
+  - Legal behind pins in the same estate continue to validate with debt, unaffected
+  - The refusal is recorded in the estate's validation output
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: pin resolution is checked against the consumed registry ref
+  - domain: policy
+    interaction: unknown-revision refuses; behind-revision accrues debt
+  - domain: audit
+    interaction: the failed resolution is recorded with both sides named
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- pinning
+- must-reject

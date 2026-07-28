@@ -1,0 +1,65 @@
+uuid: uc-hammer-dr-rehydration-006
+handle: dr-rehydration/rehydrate-from-realized-facts
+scenario:
+  description: 'A resource had drifted from its declared intent before the disaster — an operator had
+    manually resized it — and the realized state captured that drift. An SRE rehydrates and must choose
+    the source of truth: rebuilding from intent restores the original declared shape, while rebuilding
+    from realized reproduces the drifted, as-run configuration. This UC exercises rehydration explicitly
+    sourced from realized facts, testing whether the system can faithfully reproduce what was actually
+    running (including sanctioned drift) rather than only what was originally declared. It also tests
+    that the intent-versus-realized divergence is made visible so the operator chooses knowingly.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+    - executive
+  intent: Rebuild a drifted resource from its captured realized state, not intent
+  success_criteria:
+  - System detects that realized state diverged from declared intent before the disaster
+  - The divergence between intent and realized is surfaced to the operator
+  - Rehydration reproduces the realized (as-run) configuration when that source is chosen
+  - Validation policies are re-evaluated against the realized-derived request
+  - The resource UUID is preserved across the rebuild
+  - The chosen source (realized over intent) and its rationale are recorded
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent and drifted realized state compared; realized chosen as source
+  - domain: policy
+    interaction: validation re-evaluated against the realized-derived request
+  - domain: provider
+    interaction: provider re-realizes the as-run configuration
+  - domain: audit
+    interaction: intent/realized divergence and chosen source recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- realized-source
+- drift
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Realized state captured sanctioned drift from intent before destruction
+  - Both intent and realized states are preserved
+  postconditions:
+  - Resource rebuilt from realized facts with divergence surfaced
+  - Chosen source recorded in audit trail
+  note: batch=framework-hammer-2026-07-16

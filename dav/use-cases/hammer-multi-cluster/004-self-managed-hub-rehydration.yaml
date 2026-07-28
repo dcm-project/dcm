@@ -1,0 +1,54 @@
+uuid: uc-multi-cluster-004
+handle: multi-cluster/self-managed-hub-rehydration
+version: 1.0.0
+scenario:
+  description: "The self-managed pattern: the hub runs on a cluster it also manages, its reflexive management\
+    \ edge correctly demoted to references so the ordering graph stays acyclic (ADR-043). Then the host\
+    \ cluster is lost \u2014 taking the hub and its runtime state with it. Rehydration must replay the\
+    \ HUB's intent from the estate (the intent store, not the dead hub), rebuild it (possibly on a new\
+    \ host), re-adopt surviving imported spokes (soft edges \u2014 they kept running), and rebuild hosted\
+    \ spokes from their own intent. This stresses the hardest multi-cluster question: what rehydrate-the-manager\
+    \ means when the manager's home was inside its own blast radius."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: 'Rehydrate a self-managed hub after losing its host cluster: replay hub intent, re-adopt surviving
+    spokes, rebuild hosted spokes from intent'
+  success_criteria:
+  - The hub rebuilds from estate-stored intent, not from any state that died with the host
+  - Surviving imported spokes re-attach without workload disruption (soft edge semantics)
+  - Hosted spokes rebuild from their own intent with lineage to the originals
+  - The reflexive references edge and derived hub role re-derive on the new topology
+  - At no point does an ordering cycle exist in the rebuilt graph (CYCLE gate clean throughout)
+  dimensions:
+    lifecycle_phase: recovery
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: infrastructure_loss
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent in the estate is the single recovery source; derived markers re-derive
+  - domain: policy
+    interaction: rehydration re-evaluates under current policy (RHY-001 semantics)
+  - domain: provider
+    interaction: the multi-cluster provider rebuilds the hub and re-runs adoption
+  - domain: audit
+    interaction: the recovery sequence and re-adoptions are fully recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: multi-cluster-2026-07-24
+  timestamp: '2026-07-24T21:00:00.000000+00:00'
+tags:
+- multi-cluster
+- rehydration
+- self-managed-hub
+- adr-043

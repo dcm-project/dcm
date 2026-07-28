@@ -1,0 +1,57 @@
+uuid: uc-hammer-audit-015
+handle: audit/immutable-record-drift-detection
+scenario:
+  description: 'A privileged operator with direct database access edits a committed audit row to soften
+    an embarrassing denial into an approval. Because audit records are immutable and hash-chained, the
+    edit must be detectable: a routine integrity scan recomputes the chain and finds the tampered record
+    no longer matches its stored digest, then reports drift on an immutable record and localizes it. The
+    architecture must treat any post-commit mutation of an audit record as a detectable integrity violation,
+    not an accepted update. This probes tamper-detection on the audit substrate itself.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - executive
+  intent: Detect out-of-band mutation of an immutable, hash-chained audit record
+  success_criteria:
+  - An integrity scan recomputes the hash chain over stored records
+  - A record altered out-of-band fails to match its stored digest
+  - The tampering is reported as drift on an immutable record
+  - The specific tampered record is localized within the chain
+  - The system refuses to treat the mutation as a valid update
+  - The detection event is itself recorded tamper-evidently
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: hash-chain scan detects and localizes the out-of-band mutation
+  - domain: data
+    interaction: tampered record flagged as an integrity violation, not an update
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- tamper-detection
+- immutable
+- drift
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

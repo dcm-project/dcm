@@ -1,0 +1,57 @@
+uuid: uc-hammer-capacity-015
+handle: capacity/in-place-capacity-expansion
+scenario:
+  description: 'A tenant asks to grow a running resource''s capacity in place — more vCPU and memory on
+    an already-realized VM — without recreating it or changing its UUID. The architecture models create/reserve/realize
+    and destroy, but may have no in-place-expand primitive: the engine must either reserve the delta on
+    the same node and mutate the realized resource, or declare the modification unsupported and require
+    replace-and-migrate. This probes whether day-2 vertical scaling exists as a first-class capacity operation.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - provider-owner
+    - tenancy-authority
+  intent: Expand a running resource's capacity in place without recreation
+  success_criteria:
+  - The modification targets an already-realized resource by stable UUID
+  - The engine checks for delta capacity on the resource's current node
+  - Either the delta is reserved and the resource mutated in place, or
+  - The engine cleanly declares in-place expansion unsupported with a reason
+  - No silent recreate/destroy occurs under the guise of an in-place edit
+  - The expansion attempt and its outcome (applied or unsupported) are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: delta capacity checked on the current node for in-place growth
+  - domain: policy
+    interaction: modification validation decides in-place vs replace-and-migrate
+  - domain: audit
+    interaction: expansion attempt and applied-or-unsupported outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:15.000000+00:00'
+tags:
+- capacity
+- expansion
+- vertical-scale
+- day-2
+- possibly-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

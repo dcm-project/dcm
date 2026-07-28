@@ -1,0 +1,61 @@
+uuid: uc-hammer-federation-010
+handle: federation/peer-trust-attestation-gate
+scenario:
+  description: 'Before any order may be dispatched to a peer DCM, the local DCM requires a fresh trust
+    attestation from that peer (signed capability posture, valid within a bounded window). A security
+    officer initiates an order to a peer whose attestation has just expired. The interaction must be gated:
+    the placement engine refuses to select the peer until a fresh, verifiable attestation is presented,
+    and re-attestation unblocks the exact same order without re-authoring it. This tests peer trust/attestation
+    gating an interaction as a precondition, not an afterthought.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Gate a federation interaction on a fresh, verifiable peer attestation
+  success_criteria:
+  - Order targets a peer whose trust attestation has expired
+  - Placement engine refuses to select the peer while attestation is stale
+  - The order is held (not failed outright) pending re-attestation
+  - A fresh attestation is verified against the peer's key and validity window
+  - Re-attestation unblocks the same order without re-authoring it
+  - A forged or out-of-window attestation is rejected
+  - The gate decision, refusal, and later admission are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the attestation Validation Policy blocks peer selection until fresh proof is verified
+  - domain: provider
+    interaction: peer becomes selectable only after re-attestation; order proceeds unchanged
+  - domain: audit
+    interaction: gate refusal, verification, and admission recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- attestation
+- trust-gate
+- security
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

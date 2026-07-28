@@ -1,0 +1,61 @@
+uuid: uc-hammer-brownfield-020
+handle: brownfield-discovery/discovery-source-disconnect-partial-scan
+scenario:
+  description: 'A brownfield ingestion is running against a peer DCM''s discovery feed for a remote site
+    when that peer disconnects mid-scan, leaving the inventory partially populated — some hosts ingested,
+    some dependency edges dangling to not-yet-seen targets. The system must treat the partial scan as
+    incomplete rather than authoritative: entities already ingested are retained as provisional, dangling
+    edges are held pending, and cutover is blocked until the scan completes on reconnect. It must not
+    conclude that un-ingested resources were retired. This probes brownfield ingestion resilience under
+    a peer disconnect — resumability and partial-state integrity.
+
+    '
+  actor:
+    persona: platform-operator
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - federation-peer-operator
+  intent: Survive a peer-DCM disconnect mid-ingestion without corrupting the partial inventory
+  success_criteria:
+  - Entities ingested before the disconnect are retained as provisional, not authoritative
+  - Dangling dependency edges to unseen targets are held pending rather than dropped
+  - The system does not conclude that un-ingested resources were retired
+  - Cutover is blocked while the scan is known-incomplete
+  - On reconnect the ingestion resumes and completes without re-creating provisional entities
+  - The disconnect, partial state, and resumption are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer DCM discovery feed disconnects mid-scan leaving inventory partial
+  - domain: data
+    interaction: ingested entities held provisional; dangling edges pending; no false retirement
+  - domain: policy
+    interaction: completeness policy blocks cutover while the scan is incomplete
+  - domain: audit
+    interaction: disconnect, partial state, and resumption recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- peer-disconnect
+- partial-scan
+- resumable-ingestion
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

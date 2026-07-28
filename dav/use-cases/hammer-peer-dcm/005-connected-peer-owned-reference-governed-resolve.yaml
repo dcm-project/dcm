@@ -1,0 +1,58 @@
+uuid: uc-hammer-peer-dcm-005
+handle: peer-dcm/connected-peer-owned-reference-governed-resolve
+scenario:
+  description: 'A local record references an entity owned by a peer DCM. Resolving that reference is a governed
+    cross-boundary dereference: the resolve is permitted only if policy (sovereignty, tenancy, authorization) admits
+    it, and the resolved value carries provenance of the peer authority.'
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - federation-peer-operator
+    - compliance-auditor
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Resolve a reference to a peer-owned entity across the federation boundary, governed
+  success_criteria:
+  - The reference to the peer-owned entity is addressable across the federation
+  - The dereference is gated by sovereignty/tenancy/authorization policy
+  - Only a permitted dereference returns the peer value
+  - The resolved value carries the peer-authority provenance
+  - A denied dereference is recorded, not silently dropped
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: governs the cross-boundary dereference by sovereignty/tenancy/authz
+  - domain: data
+    interaction: the resolved value carries peer-authority provenance
+  - domain: audit
+    interaction: the governed dereference is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- reference-resolution
+- governed-dereference
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - A local record references a peer-owned entity
+  postconditions:
+  - The reference resolves under policy with peer provenance
+  note: batch=peer-dcm-2026-07-23

@@ -1,0 +1,60 @@
+uuid: uc-71ec8be8-673a-4a81-a543-3c471a45e6b7
+handle: oversight/portfolio-rollup-and-gaps
+version: 1.0.0
+scenario:
+  description: >-
+    A director accountable for a portfolio of services across several teams needs one rolled-up view
+    of that portfolio's state — health, compliance posture, and open gaps — derived from the estate
+    graph rather than chased team by team. The demand is aggregate and computed: a gap or drift
+    anywhere in the portfolio surfaces to the director with its blast radius and the responsible
+    team, before it becomes an incident, and the rollup is a projection over the same declared and
+    realized data the operators work from, not a separately maintained report. The director does not
+    operate any resource; they consume assurance. The test for the model is whether an oversight
+    projection at portfolio scope is derivable at all, or whether only per-resource views exist.
+  actor:
+    persona: director
+    profile: prod
+  perspectives:
+    - executive
+    - manager
+    - compliance-auditor
+    - sre
+  intent: >-
+    Produce a rolled-up portfolio view — health, compliance, and gaps across teams — derived from the
+    estate graph, surfacing any gap or drift with its blast radius and responsible team before it
+    becomes an incident
+  success_criteria:
+  - The portfolio view is a projection over the estate graph, not a separately maintained report
+  - A gap or drift anywhere in the portfolio surfaces with its blast radius and the responsible team
+  - The rollup aggregates health and compliance posture across teams at portfolio scope
+  - The director consumes the assurance without operating any resource
+  - The projection is derived from the same declared and realized data operators work from — no parallel source
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: multi_dependent
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: mixed
+    governance_context: audit_heavy
+    failure_mode: partial_fulfillment
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: the portfolio rollup is a derived projection over the declared and realized estate graph
+  - domain: policy
+    interaction: gap/drift detection and blast-radius computation drive what surfaces to the director
+  - domain: provider
+    interaction: n/a — oversight consumes the aggregate; it does not dispatch to providers
+  - domain: audit
+    interaction: the surfaced gaps, their blast radius, and the responsible teams are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- oversight
+- director
+- portfolio-rollup
+- blast-radius
+- assurance

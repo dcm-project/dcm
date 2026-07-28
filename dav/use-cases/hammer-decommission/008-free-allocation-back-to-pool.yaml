@@ -1,0 +1,54 @@
+uuid: uc-hammer-decommission-008
+handle: decommission/free-allocation-back-to-pool
+scenario:
+  description: 'A finance-conscious platform engineer decommissions a VM that holds a 200 GB allocation
+    carved out of a shared storage pool. The teardown must not just destroy the VM — it must release the
+    allocation back to the pool so the pool''s free capacity increases by exactly 200 GB and the allocation
+    stake is removed. This is the inverse of an allocation request and probes whether decommission correctly
+    reverses resource accounting rather than leaking capacity.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+    - security-officer
+  intent: Decommission a resource and return its allocation to the shared pool
+  success_criteria:
+  - The VM's 200 GB allocation stake against the pool is identified during teardown
+  - The VM is destroyed by its owning provider
+  - The allocation is released and the pool's free capacity increases by exactly 200 GB
+  - The allocation stake is removed from the pool's stake list (no leaked capacity)
+  - The freed-capacity accounting change is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: allocation stake released, pool free capacity incremented
+  - domain: provider
+    interaction: VM destroyed by owning provider
+  - domain: audit
+    interaction: capacity return accounting recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- allocation
+- pool-return
+- accounting
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,65 @@
+uuid: uc-hammer-drift-recovery-008
+handle: drift-recovery/reconcile-budget-exhausted-escalate
+scenario:
+  description: 'An SRE reconciles a resource whose recovery policy grants a bounded remediation budget
+    — a maximum number of corrective attempts within a grace window. Each remediation pass restores intent,
+    but a persistent external condition re-introduces the same drift before the next discovery. The engine
+    must count attempts against the budget, and once the budget is exhausted within the grace window it
+    must stop auto-remediating and escalate to a human owner instead of looping forever. This validates
+    that recovery has a defined give-up boundary rather than unbounded retry.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Exhaust a bounded remediation budget then escalate instead of retrying indefinitely
+  success_criteria:
+  - Recovery policy defines a max attempt count within a grace window
+  - Each remediation restores intent but drift recurs before the next pass
+  - The engine counts remediation attempts against the budget
+  - When the budget is exhausted, auto-remediation stops
+  - A human escalation is raised carrying the attempt history and recurring-drift evidence
+  - Budget exhaustion and escalation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: recurring drift re-detected each pass against the Realized snapshot
+  - domain: policy
+    interaction: remediation attempts counted against budget; escalation fires on exhaustion
+  - domain: provider
+    interaction: repeated corrective dispatches issued until budget exhausted
+  - domain: audit
+    interaction: attempt history, budget exhaustion, and escalation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- remediation-budget
+- grace-window
+- escalation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource has a recovery policy with a bounded remediation budget and grace window
+  - An external condition keeps re-introducing the same drift
+  postconditions:
+  - Remediation budget exhausted; auto-remediation stopped
+  - Human escalation raised with attempt history
+  - Budget and escalation recorded
+  note: batch=framework-hammer-2026-07-16

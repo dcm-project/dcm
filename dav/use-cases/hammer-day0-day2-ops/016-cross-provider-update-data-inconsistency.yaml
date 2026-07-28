@@ -1,0 +1,64 @@
+uuid: uc-hammer-day0-day2-ops-016
+handle: day0-day2-ops/cross-provider-update-data-inconsistency
+scenario:
+  description: An SRE updates a composite service whose constituents span the local DCM and a peer DCM
+    in another sovereign domain. The local calls report COMPLETED, but the peer DCM's realized state for
+    its constituents diverges from what the local record believes — a data_inconsistency between the two
+    authorities. The system must detect the divergence, refuse to declare the composite updated, and quarantine
+    the inconsistent constituents for reconciliation rather than trusting the stale local view.
+  actor:
+    persona: sre
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - federation-peer-operator
+    - sovereignty-authority
+  intent: Update a cross-domain composite and correctly handle divergent realized state across DCMs
+  success_criteria:
+  - The composite update spans local DCM and a peer DCM in another domain
+  - Divergence between local record and the peer DCM's realized state is detected
+  - The composite is NOT declared updated while a data_inconsistency stands
+  - Inconsistent constituents are quarantined for reconciliation, not trusted from the stale local view
+  - The authoritative source for each constituent is honored (peer owns its realized state)
+  - The detected inconsistency and quarantine are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: issues update calls across local and peer DCM constituents
+  - domain: data
+    interaction: detects realized-state divergence and quarantines inconsistent constituents
+  - domain: policy
+    interaction: enforces the peer-authority and sovereignty reconciliation policy chain
+  - domain: audit
+    interaction: records the divergence detection and quarantine decision
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- peer-dcm
+- data_inconsistency
+- sovereign
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The composite spans a local and a peer DCM
+  - Peer connectivity and authority mapping exist
+  postconditions:
+  - The composite is held un-updated pending reconciliation
+  - Divergent constituents are quarantined and auditable
+  note: batch=day0-day2-ops-2026-07-22

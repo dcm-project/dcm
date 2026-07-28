@@ -1,0 +1,60 @@
+uuid: uc-hammer-audit-017
+handle: audit/erasure-vs-immutable-audit-conflict
+scenario:
+  description: 'A data subject exercises a GDPR right-to-erasure request over personal data that appears
+    inside immutable, hash-chained audit records. Two mandates collide: erase the personal data, yet never
+    mutate an audit record. The architecture must reconcile them without lying — for example crypto-shredding
+    the field''s key while preserving the record''s hash and a tombstone attesting a lawful erasure occurred,
+    so tamper-evidence and the erasure obligation both hold. This is a genuine conflict and may well return
+    unsupported or partially_supported; that is the finding.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Satisfy right-to-erasure over data inside immutable audit records without breaking integrity
+  success_criteria:
+  - The erasure request is recognized as targeting data inside immutable records
+  - The conflict between erasure and audit immutability is surfaced explicitly, not silently resolved
+  - Personal data is rendered irrecoverable (e.g. crypto-shredded) after erasure
+  - The audit record's hash and chain position remain intact and still verify
+  - A tombstone attests a lawful erasure occurred, by whom and under what basis
+  - No audit record is deleted or rewritten to satisfy the request
+  - If the architecture cannot reconcile both, it reports the limitation rather than faking success
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: erasure obligation and audit-immutability mandate reconciled or reported as conflicting
+  - domain: audit
+    interaction: hash preserved while the erased field is crypto-shredded and tombstoned
+  - domain: data
+    interaction: personal data rendered irrecoverable without deleting the audit record
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- gdpr
+- right-to-erasure
+- immutability-conflict
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

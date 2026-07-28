@@ -1,0 +1,52 @@
+uuid: uc-hammer-binding-surface-001
+handle: binding-surface/typed-outputs-declared-per-type
+version: 1.0.0
+scenario:
+  description: "A platform engineer composes a service that must bind a consumer (a load balancer backend\
+    \ pool) to a producer's realized facts (a VM's addresses). The binding is only contract-checkable\
+    \ if the producer TYPE declares typed Realized outputs (the E2 surface) \u2014 a registry review found\
+    \ the declared surfaces systemically inadequate for binding (median one thin boolean; five types empty\
+    \ and silent). This stresses that every realizable resource type publishes its output surface so bindings\
+    \ resolve against declarations, never string-splicing."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Bind a composite constituent to a producer type's declared Realized outputs and have the binding
+    validated against the type's output declaration
+  success_criteria:
+  - The producer type declares named, typed Realized outputs in its specification
+  - A binds_to edge with target_field resolves against the producer's output declaration
+  - A binding naming an undeclared output is rejected at validation time, not at runtime
+  - The realized entity publishes values for every declared output when it reaches Realized
+  - No consumer parses provider-native structures to obtain what an output should carry
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the producer type's output declaration is the typed binding surface
+  - domain: policy
+    interaction: validation rejects bindings to undeclared outputs at request time
+  - domain: provider
+    interaction: the provider populates declared outputs at realization
+  - domain: audit
+    interaction: the binding resolution and output publication are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: binding-surface-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- typed-outputs
+- binding-surface
+- e2
+- composition

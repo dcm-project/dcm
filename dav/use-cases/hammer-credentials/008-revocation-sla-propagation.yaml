@@ -1,0 +1,57 @@
+uuid: uc-hammer-credentials-008
+handle: credentials/revocation-sla-propagation
+scenario:
+  description: 'A security officer revokes a credential that is referenced by many consumers across multiple
+    providers. Policy sets a hard SLA: every consumer and provider must observe the revocation and stop
+    accepting the credential within a bounded time. The system must fan the revocation out to all dependents,
+    confirm propagation to each, and prove that none can still authenticate after the SLA elapses. This
+    tests whether revocation is a tracked, acknowledged, SLA-bounded propagation rather than a single
+    flag flip.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives: []
+  intent: Revoke a credential and confirm SLA-bounded propagation to all consumers
+  success_criteria:
+  - All consumers referencing the credential are enumerated from the dependency graph
+  - Revocation is fanned out to every consumer and provider
+  - Each dependent's acknowledgement of the revocation is tracked
+  - No dependent can authenticate with the credential after the SLA window
+  - Any consumer that fails to acknowledge within SLA is escalated
+  - Propagation timeline and per-consumer acknowledgements are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph enumerates every credential consumer
+  - domain: policy
+    interaction: SLA policy bounds and verifies propagation completeness
+  - domain: provider
+    interaction: each provider stops accepting the revoked credential
+  - domain: audit
+    interaction: per-consumer acknowledgement and SLA compliance recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- revocation
+- sla
+- propagation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

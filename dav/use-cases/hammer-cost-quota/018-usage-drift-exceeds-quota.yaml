@@ -1,0 +1,63 @@
+uuid: uc-hammer-cost-quota-018
+handle: cost-quota/usage-drift-exceeds-quota
+scenario:
+  description: 'An sre runs drift detection and finds a workload whose realized consumption has grown
+    past the quota its intent declared — a provider-side autoscale expanded it beyond the committed ceiling.
+    The system must detect the divergence between declared-quota intent and realized consumption, flag
+    the over-quota drift, and surface the unbudgeted overage rather than silently absorbing it. The mechanism
+    under test is quota drift detection: does the model reconcile realized usage against the quota intent,
+    or does quota only gate admission and never re-check?
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - compliance-auditor
+  intent: Detect realized consumption that has drifted past declared quota
+  success_criteria:
+  - Realized consumption is compared against the declared-quota intent
+  - The over-quota drift is detected and the exceeded dimension identified
+  - The unbudgeted overage amount is quantified
+  - The drift is flagged for remediation rather than silently absorbed
+  - Remediation options (reclaim, raise quota, charge overage) are surfaced
+  - The detected drift and its overage are recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: realized consumption reconciled against declared-quota intent
+  - domain: policy
+    interaction: recovery policy flags over-quota drift and proposes remediation
+  - domain: audit
+    interaction: drift detection and unbudgeted overage recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- drift
+- quota-overage
+- reconciliation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A workload's realized use has grown past its declared quota
+  postconditions:
+  - Over-quota drift is flagged with a quantified overage
+  - Remediation options are surfaced
+  note: batch=framework-hammer-2026-07-16

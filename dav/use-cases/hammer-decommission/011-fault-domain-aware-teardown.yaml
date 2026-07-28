@@ -1,0 +1,59 @@
+uuid: uc-hammer-decommission-011
+handle: decommission/fault-domain-aware-teardown
+scenario:
+  description: 'An SRE decommissions a hyperconverged host that is simultaneously an OpenShift worker
+    node and a Ceph OSD host — the compute node and a storage fault domain share the same physical box.
+    Tearing it down naively could drop the cluster below its Ceph replication floor and take healthy data
+    with it. The system must recognize the shared fault domain, refuse or serialize the teardown until
+    Ceph reports HEALTH_OK and the OSDs are drained, and never destroy a host whose loss would breach
+    a fault-domain quorum. This probes whether the architecture models physical co-location as a teardown
+    constraint.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Decommission a host without breaching a shared compute/storage fault domain
+  success_criteria:
+  - System recognizes the host belongs to both a compute pool and a Ceph storage fault domain
+  - Teardown is gated on Ceph reporting HEALTH_OK and the host's OSDs being drained first
+  - Decommission is refused or serialized if destroying the host would breach the replication floor
+  - The compute node is only removed after the storage fault domain is proven safe
+  - The fault-domain check and the gating decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: host's dual membership in compute pool and Ceph fault domain resolved
+  - domain: policy
+    interaction: fault-domain constraint gates teardown on HEALTH_OK and OSD drain
+  - domain: provider
+    interaction: storage provider drains OSDs before compute provider removes the node
+  - domain: audit
+    interaction: fault-domain gating decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- fault-domain
+- ceph
+- cross-domain
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

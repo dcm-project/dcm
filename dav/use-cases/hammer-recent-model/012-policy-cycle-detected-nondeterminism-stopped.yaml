@@ -1,0 +1,64 @@
+uuid: uc-hammer-recent-model-012
+handle: recent-model/policy-cycle-detected-nondeterminism-stopped
+scenario:
+  description: "An SRE change introduces two policies that mutually inject each other's inputs: policy\
+    \ A sets a\n    field that policy B reads and mutates, and B's mutation changes an input A reads,\
+    \ so re-evaluation\n    never settles and the value set oscillates. The re-entrant evaluator must\
+    \ detect the policy loop as a\n    cycle / non-deterministic fixpoint, stop iterating rather than\
+    \ spin, and roll back the in-flight\n    change so no partially converged state is committed. This\
+    \ stresses the loop-guard side of the\n    fixpoint machinery: cycle detection and safe rollback when\
+    \ convergence is impossible."
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - compliance-auditor
+  intent: Detect a non-converging policy cycle and roll back rather than commit oscillating state
+  success_criteria:
+  - Mutual injection between two policies produces an oscillating, non-settling value set
+  - The evaluator detects a policy loop / non-deterministic fixpoint
+  - Iteration is stopped rather than allowed to spin unbounded
+  - The in-flight change is rolled back with no partially converged state committed
+  - The offending policy pair and the oscillating fields are identified
+  - The cycle detection and rollback are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: rollback_required
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the evaluator detects the mutual-injection cycle and stops iterating
+  - domain: data
+    interaction: the oscillating state is discarded and the prior committed state is restored
+  - domain: audit
+    interaction: the cycle, offending policy pair, and rollback are recorded
+  - domain: provider
+    interaction: no provider change is applied because the change was rolled back
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- reentrant-fixpoint
+- cycle-detection
+- nondeterminism
+- loop-guard
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - Two policies mutually inject each other's inputs
+  - The evaluation has a loop guard configured
+  postconditions:
+  - No oscillating state was committed
+  - The entity is restored to its pre-change state
+  note: batch=recent-model-2026-07-22

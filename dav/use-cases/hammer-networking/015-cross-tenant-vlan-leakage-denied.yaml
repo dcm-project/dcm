@@ -1,0 +1,59 @@
+uuid: uc-hammer-networking-015
+handle: networking/cross-tenant-vlan-leakage-denied
+scenario:
+  description: 'Tenant B requests a VM and attaches it — by referencing the VLAN UUID directly — to tenant
+    A''s private segment, attempting to gain L2 adjacency to A''s workloads. The system must recognize
+    that the referenced Network.VLAN is owned/staked by another tenant, deny the cross-tenant attachment,
+    and refuse to realize L2 connectivity across the isolation boundary. This probes whether segment ownership
+    is enforced at attach time or whether any actor who knows a VLAN''s identity can bridge into it.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Attach a VM to another tenant's private VLAN and get denied
+  success_criteria:
+  - The referenced VLAN's tenant ownership/stake is resolved from the data model
+  - The attach request is evaluated against cross-tenant isolation policy
+  - The cross-tenant attachment is denied and no L2 adjacency is realized
+  - The requesting VM is not left half-attached to the foreign segment
+  - The denial names the isolation boundary that was violated
+  - The attempted cross-tenant attach and denial are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: cross-tenant isolation policy denies attach to a foreign-owned VLAN
+  - domain: data
+    interaction: VLAN ownership/stake resolved; no cross-tenant edge written
+  - domain: audit
+    interaction: attempted leakage and denial recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- vlan
+- multi-tenancy
+- isolation
+- leakage
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

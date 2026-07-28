@@ -1,0 +1,58 @@
+uuid: uc-hammer-tenancy-016
+handle: tenancy/shared-pool-chargeback-attribution
+scenario:
+  description: 'A finance-analyst needs per-tenant chargeback for a shared allocatable pool: each tenant
+    should be billed only for the fraction of the pool it holds. The system must attribute pool consumption
+    to owning tenants precisely enough to split the shared resource''s cost, without double-counting or
+    leaving unattributed remainder. This probes whether the data model carries enough per-tenant allocation
+    attribution to support chargeback on shared resources, or whether cost attribution across a shared
+    pool is beyond what UDLM/DCM records.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Produce per-tenant chargeback for a shared allocatable pool
+  success_criteria:
+  - Each tenant's share of the shared pool is computed from its attributed allocations
+  - The sum of per-tenant shares reconciles to total pool consumption
+  - No allocation is double-counted across tenants
+  - Unallocated pool remainder is attributed to the pool owner, not to consumers
+  - The attribution basis (allocation records) is inspectable per tenant
+  - Chargeback computation is reproducible from the recorded data
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: per-tenant allocation records aggregated to split shared-pool cost
+  - domain: policy
+    interaction: attribution rule reconciles shares to total and assigns remainder to the owner
+  - domain: audit
+    interaction: chargeback basis recorded for reproducibility
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- chargeback
+- cost-attribution
+- shared-pool
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

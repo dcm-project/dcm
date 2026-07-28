@@ -1,0 +1,59 @@
+uuid: uc-hammer-brownfield-007
+handle: brownfield-discovery/discovered-resource-unknown-provider
+scenario:
+  description: 'A discovery scan finds a running resource — a storage appliance exposing an unfamiliar
+    management API — that maps to no known provider capability. The system can record it as a Discovered
+    entity, but there is no provider able to claim, reconcile, or realize it. The architecture must represent
+    an entity whose provider is unknown WITHOUT blocking the rest of ingestion and without pretending
+    a provider exists. Adoption should be refused (or held) with a clear provider-gap finding rather than
+    a silent failure. This likely returns unsupported or partially_supported: Discovered state can hold
+    it, but a provider-less entity has no path into the managed lifecycle.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Record a discovered resource that maps to no known provider and surface the provider gap
+  success_criteria:
+  - The resource is persisted as a Discovered entity despite having no eligible provider
+  - The entity is flagged with a provider-unknown / provider-gap marker
+  - Adoption into the managed lifecycle is refused or held, not silently attempted
+  - The provider gap is reported as a finding that names the unrecognized management API
+  - The unresolvable entity does not block ingestion of the rest of the scan
+  - The provider-gap condition is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: no provider capability matches the discovered management API
+  - domain: data
+    interaction: entity persisted in Discovered state with a provider-unknown marker
+  - domain: audit
+    interaction: provider-gap finding recorded naming the unrecognized resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- provider-gap
+- unknown-provider
+- unsupported-probe
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

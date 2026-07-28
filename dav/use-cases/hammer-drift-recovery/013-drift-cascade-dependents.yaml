@@ -1,0 +1,67 @@
+uuid: uc-hammer-drift-recovery-013
+handle: drift-recovery/drift-cascade-dependents
+scenario:
+  description: 'An SRE reconciles a three-tier application where the database tier''s discovered connection
+    endpoint has drifted after a provider-side failover. Two dependent tiers were realized against the
+    old endpoint, so the base drift invalidates their realized configuration. The engine must detect the
+    base drift, recognize via the dependency graph that dependents are now inconsistent, and remediate
+    in dependency order — fixing the base first, then re-converging the dependents that referenced the
+    stale value. This validates drift handling that respects hard dependencies rather than treating each
+    resource in isolation.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - tenancy-authority
+  intent: Detect drift on a base resource and remediate its dependents in dependency order
+  success_criteria:
+  - Drift detected on the database endpoint against its Realized snapshot
+  - The dependency graph identifies the two tiers that reference the drifted endpoint
+  - Dependents are flagged as inconsistent due to the base drift
+  - Remediation proceeds in dependency order, base resource first
+  - Dependent tiers are re-converged to reference the corrected endpoint
+  - The cascade, ordering, and per-resource outcomes are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    provider_landscape: multiple_eligible
+    policy_complexity: recovery_policy
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: base drift detected; dependency graph reveals dependents referencing the stale endpoint
+  - domain: policy
+    interaction: recovery policy orders remediation by dependency, base before dependents
+  - domain: provider
+    interaction: base endpoint corrected, then dependent tiers re-dispatched to converge
+  - domain: audit
+    interaction: cascade, ordering, and per-resource outcomes recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- dependency-cascade
+- ordering
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Three-tier app realized; dependents reference the database endpoint
+  - Provider failover drifted the database endpoint
+  postconditions:
+  - Base drift and dependent inconsistency remediated in order
+  - All tiers converged to the corrected endpoint
+  - Cascade recorded
+  note: batch=framework-hammer-2026-07-16

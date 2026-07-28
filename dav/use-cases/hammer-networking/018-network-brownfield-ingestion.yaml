@@ -1,0 +1,58 @@
+uuid: uc-hammer-networking-018
+handle: networking/network-brownfield-ingestion
+scenario:
+  description: 'An existing homelab has VLANs, a Kea DHCP server with dozens of static reservations, a
+    DNS zone, and a gateway — all configured by hand over years, none of it under the data model. An operator
+    ingests this brownfield estate: the system must discover the segments, reservations, zone, and gateway,
+    and represent each as the correct record type — reservations as Network.IPAddress(allocation: static)
+    per ADR-023, the DHCP/DNS daemons as Network.AddressService, segments as Network.VLAN — with cross-references
+    intact. This tests faithful discovery-to-model ingestion of a network estate without inventing intent
+    that was never declared.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Ingest a hand-built brownfield network estate into the data model
+  success_criteria:
+  - Existing VLANs are discovered and represented as Network.VLAN records
+  - Static DHCP reservations are ingested as Network.IPAddress(allocation=static) per ADR-023
+  - The DHCP and DNS daemons are represented as Network.AddressService (services dhcp/dns)
+  - Cross-references (reservation -> interface, host -> segment) are reconstructed
+  - Ingested records are marked as adopted/brownfield, not fabricated as fresh intent
+  - Anything undiscoverable is reported as a gap rather than silently guessed
+  - The ingestion and adopted set are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered segments/reservations/services mapped to canonical record types
+  - domain: policy
+    interaction: adoption policy marks records brownfield and validates references
+  - domain: audit
+    interaction: ingested and adopted network estate recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- brownfield
+- ingestion
+- adoption
+- adr-023
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

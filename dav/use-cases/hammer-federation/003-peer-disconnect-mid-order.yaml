@@ -1,0 +1,60 @@
+uuid: uc-hammer-federation-003
+handle: federation/peer-disconnect-mid-order
+scenario:
+  description: 'A platform engineer dispatches a multi-resource order to a peer DCM. After the peer acknowledges
+    and begins realizing the second of four resources, the federation link drops and the peer becomes
+    unreachable, leaving the local DCM uncertain whether the in-flight resource was realized. The system
+    must not assume success or silently duplicate the resource; it must mark the order as indeterminate,
+    hold the dependent resources, and expose a recovery path that reconciles once the peer returns. This
+    tests the architecture''s handling of a peer disconnect mid-operation.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - federation-peer-operator
+  intent: Survive a peer DCM disconnect mid-order without data loss or duplication
+  success_criteria:
+  - Order is dispatched and the peer acknowledges before the link drops
+  - Local DCM detects the peer became unreachable during realization
+  - The in-flight resource is marked indeterminate rather than success or failure
+  - Dependent resources are held, not dispatched against an unknown state
+  - No duplicate realization is issued blindly on reconnect
+  - On peer return, a reconciliation step compares realized state and resolves the order
+  - Audit trail records the disconnect, the indeterminate window, and the reconciliation
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: peer becomes unreachable mid-realization; in-flight resource state unknown
+  - domain: policy
+    interaction: recovery policy holds dependents and forbids blind re-dispatch
+  - domain: data
+    interaction: order marked indeterminate; reconciled against peer realized state on return
+  - domain: audit
+    interaction: disconnect, indeterminate window, and reconciliation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- peer-disconnect
+- recovery
+- failure-mode
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

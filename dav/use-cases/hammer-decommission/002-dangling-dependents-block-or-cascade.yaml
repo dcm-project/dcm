@@ -1,0 +1,54 @@
+uuid: uc-hammer-decommission-002
+handle: decommission/dangling-dependents-block-or-cascade
+scenario:
+  description: 'An application team requests decommission of a database that three running services still
+    depend on. The system must NOT silently destroy the database and strand its dependents. It must either
+    refuse the decommission and surface the dangling dependents, or offer an explicit cascade that tears
+    the dependents down first in reverse-dependency order. This probes whether the data model''s dependency
+    graph is consulted as a hard gate on destroy, not just on create.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Decommission a resource that still has live dependents
+  success_criteria:
+  - System detects the three dependent services from the dependency graph before any destroy
+  - Naive destroy of the depended-on resource is blocked
+  - Either the request is refused with the dangling dependents named, or an explicit cascade is offered
+  - No dependent is left referencing a destroyed resource (no stranded state)
+  - The block/cascade decision and its rationale are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: reverse-dependency edges queried to find live dependents
+  - domain: policy
+    interaction: destroy-with-dependents constraint evaluated as a hard gate
+  - domain: audit
+    interaction: block-or-cascade decision recorded with the dependents named
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- dependency-safety
+- cascade
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,51 @@
+uuid: uc-b7499564-c60e-4962-aeaa-f41760cc322b
+handle: class-versioning/blue-green-unpin-promoted-on-clean-diff
+version: 1.0.0
+scenario:
+  description: A pinned organization wants to move from Base Class revision A to current revision B without
+    trusting the compatibility claim blindly. The same intent corpus is compiled under blue (the pinned
+    revision) and green (the candidate revision) side by side; realizations are dry-run and their TYPED
+    OUTPUTS diffed. The diff is empty (or every difference is reviewed and approved), so the re-pin is
+    promoted, and the diff artifact is preserved as the promotion evidence. Unpinning becomes a tested
+    act, not a leap.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Promote a class re-pin through blue/green compilation with an empty-or-approved typed-output
+    diff as the gate
+  success_criteria:
+  - The identical intent corpus compiles under both the pinned and candidate class revisions
+  - Realization is dry-run under both; declared typed outputs are diffed mechanically
+  - Promotion requires the diff to be empty or every difference explicitly approved
+  - The diff artifact and approval are preserved as the promotion's audit evidence
+  - After promotion the estate's pins reference the new revision and the debt entry closes
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: two compilations of one intent corpus under two class revisions
+  - domain: policy
+    interaction: the promotion gate is the typed-output diff, not the version claim
+  - domain: provider
+    interaction: dry-run realization produces comparable declared outputs under both revisions
+  - domain: audit
+    interaction: the diff and approval trail are the promotion evidence
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- blue-green
+- unpinning
+- typed-output-diff

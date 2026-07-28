@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-012
+handle: audit/retention-outlives-referenced-entity
+scenario:
+  description: 'A regulated retention policy requires audit records to be kept for seven years. A resource
+    referenced by those records is decommissioned in year two, and the tenant and provider that owned
+    it are later removed entirely. The audit records must remain intact, queryable, and self-describing
+    for the full retention period even though every entity they reference no longer exists. The architecture
+    must resolve references to tombstoned or removed entities without breaking the record. This tests
+    whether audit retention is independent of the lifecycle of the things it describes.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - tenancy-authority
+  intent: Keep audit records valid and queryable after every referenced entity is gone
+  success_criteria:
+  - Audit records survive decommission of the resource they describe
+  - Records remain intact after the owning tenant and provider are removed
+  - Queries against the records still resolve within the retention window
+  - References to removed entities resolve to tombstones, not dangling errors
+  - Each record remains self-describing without the live referenced entities
+  - Retention expiry is governed independently of referenced-entity lifecycles
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: records retained and self-describing beyond referenced-entity lifetimes
+  - domain: data
+    interaction: references to removed entities resolved via tombstones
+  - domain: policy
+    interaction: retention window enforced independently of entity decommission
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- retention
+- tombstone
+- lifecycle-independence
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

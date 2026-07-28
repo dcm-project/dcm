@@ -1,0 +1,54 @@
+uuid: uc-hammer-audit-008
+handle: audit/forensic-who-changed-when-authorized
+scenario:
+  description: 'After a production incident, a security officer asks the classic forensic triad about
+    a firewall rule that was loosened: who changed it, exactly when, and were they authorized to at that
+    moment. The architecture must answer all three from the audit trail — resolving the acting identity,
+    the precise commit time, and the authorization decision that was in force at that time (not the actor''s
+    current permissions). Answering authorization as-of-then, rather than as-of-now, is the hard part
+    and the point.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - compliance-auditor
+  intent: Answer who changed a resource, when, and whether they were authorized then
+  success_criteria:
+  - The acting identity for the change is resolved from the audit trail
+  - The precise commit timestamp of the change is returned
+  - The authorization decision in force at that time is retrieved
+  - Authorization is evaluated as-of-then, not from the actor's current permissions
+  - The policy or role grant that permitted the change is identified
+  - An unauthorized change would be surfaced as a violation, not silently accepted
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: audit
+    interaction: actor, timestamp, and as-of-then authorization resolved for the change
+  - domain: policy
+    interaction: authorization decision in force at change time retrieved
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- forensics
+- who-what-when
+- authorization
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

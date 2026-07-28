@@ -1,0 +1,57 @@
+uuid: uc-hammer-audit-010
+handle: audit/fsi-field-level-audit-granularity
+scenario:
+  description: 'An FSI profile mandates field-level audit granularity: every change to a regulated attribute
+    (account owner, residency, retention class) must be audited per field, and this granularity is a floor
+    that cannot be downgraded to coarser resource-level logging by any lower-precedence policy, tenant
+    setting, or performance override. An operator attempts to relax audit to resource-level to cut volume.
+    The architecture must refuse the downgrade for regulated fields and keep field-level capture. This
+    tests whether audit granularity is a non-negotiable profile mandate or a tunable knob.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Enforce field-level audit granularity as a floor that cannot be downgraded
+  success_criteria:
+  - Each change to a regulated field produces a distinct field-level audit entry
+  - An attempt to downgrade to resource-level audit for regulated fields is refused
+  - The refusal cites the FSI profile mandate as the reason
+  - Lower-precedence policy or tenant settings cannot lower the granularity floor
+  - The downgrade attempt is itself audited as a rejected governance change
+  - Non-regulated fields may still use coarser logging without affecting the floor
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: profile mandate enforces field-level granularity as a non-downgradable floor
+  - domain: audit
+    interaction: per-field entries captured and the downgrade attempt recorded as rejected
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- field-level
+- fsi
+- granularity-floor
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

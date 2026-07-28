@@ -1,0 +1,61 @@
+uuid: uc-hammer-day0-day2-ops-005
+handle: day0-day2-ops/upgrade-job-exceeds-deadline-timeout
+scenario:
+  description: 'An SRE launches a major in-place upgrade of a large storage appliance as a long-running
+    Automation.Job bound to that appliance, with a hard maintenance-window deadline. The job runs past
+    the deadline without reaching a terminal outcome. The system must enforce the deadline: cancel/time-out
+    the process, record a terminal TIMEOUT rather than leaving it RUNNING forever, and flag the appliance
+    as in an indeterminate upgrade state needing operator inspection before any retry.'
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Enforce a deadline on a long-running upgrade job and record a terminal timeout
+  success_criteria:
+  - The upgrade job is bound to the appliance and carries an explicit deadline
+  - When the deadline passes with no terminal outcome, the process is timed out
+  - The process records a terminal TIMEOUT/CANCELLED outcome, never an eternal RUNNING
+  - The appliance is flagged as in an indeterminate upgrade state pending inspection
+  - No automatic retry fires until an operator clears the indeterminate flag
+  - The deadline breach and forced termination are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: timeout
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: runs the upgrade job and is signalled to cancel on deadline breach
+  - domain: policy
+    interaction: enforces the maintenance-window deadline and the no-auto-retry gate
+  - domain: data
+    interaction: records the terminal timeout and the indeterminate appliance state
+  - domain: audit
+    interaction: records the deadline breach and forced termination
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- timeout
+- deadline
+- upgrade
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A maintenance window with a hard deadline is set
+  - The upgrade job is registered with that deadline
+  postconditions:
+  - The job is terminated with a TIMEOUT outcome
+  - The appliance is flagged indeterminate, retry gated
+  note: batch=day0-day2-ops-2026-07-22

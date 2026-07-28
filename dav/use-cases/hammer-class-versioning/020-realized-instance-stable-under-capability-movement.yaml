@@ -1,0 +1,64 @@
+uuid: uc-aaa79575-8b28-4b14-8a16-51c203500ce2
+handle: class-versioning/realized-instance-stable-under-capability-movement
+version: 1.0.0
+scenario:
+  description: 'A VM was realized by a virtualization provider under VM resource type 1.1.0 and the provider''s
+    VM capability 1.2.0 — both recorded immutably in realization provenance. The provider then releases
+    VM capability 1.3.0. The running VM is untouched: no redeploy, no update, no reconciliation is triggered
+    by the capability movement, and its provenance continues to state 1.2.0 as the revision that governed
+    it — fact does not float. The movement IS surfaced: the instance carries a realized-under-vs-current
+    distance notice, typed distinctly from spec pin-lag debt, and the organization''s change policy owns
+    the decision — adopt by updating or re-realizing under 1.3.0 (through the window/ceremony gates, blue/green
+    if the capability change was breaking), or deliberately do nothing, which is a legitimate, recorded
+    choice. Breaking-ness matters at the next realization, never retroactively to a running instance.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Have a provider capability version movement leave realized instances untouched while surfacing
+    the distance for the organization's change policy to decide on
+  success_criteria:
+  - The capability movement (1.2.0 to 1.3.0) triggers no redeploy, update, or reconciliation of the realized
+    VM
+  - Realization provenance continues to record capability 1.2.0 as the governing revision — immutable
+    fact
+  - The realized-under-vs-current distance is surfaced at instance level, typed distinctly from spec pin-lag
+    debt
+  - Drift detection and reconciliation compare the instance against the revisions in its realization provenance,
+    never against current — the capability movement manufactures zero drift
+  - 'Adoption is a change-policy decision: update or re-realize under the estate''s gates (blue/green
+    when the capability change is breaking), or a recorded deliberate no-action'
+  - A subsequent NEW realization under the provider uses the current capability revision and records it
+    — the movement governs the future, never rewrites the past
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: capability movement changes nothing about existing realizations
+  - domain: data
+    interaction: immutable realization provenance vs surfaced current-distance are distinct surfaces
+  - domain: policy
+    interaction: the change policy owns adoption — including deliberate no-action
+  - domain: audit
+    interaction: the surfaced distance and the adoption (or no-action) decision are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T02:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- realized-stability

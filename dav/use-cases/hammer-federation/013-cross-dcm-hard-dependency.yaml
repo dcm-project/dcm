@@ -1,0 +1,61 @@
+uuid: uc-hammer-federation-013
+handle: federation/cross-dcm-hard-dependency-realize
+scenario:
+  description: 'A platform engineer authors a full-stack order where an application tier realized locally
+    has a hard dependency on a network fabric that only a peer DCM can realize. The placement engine must
+    order the realization across the boundary: the peer''s fabric must be realized and confirmed before
+    the local application tier is dispatched, with the cross-DCM dependency edge honored exactly as a
+    local hard dependency would be. This tests whether the dependency graph and realization ordering span
+    the federation boundary for hard dependencies.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - federation-peer-operator
+  intent: Realize a local resource whose hard dependency is realized by a peer DCM
+  success_criteria:
+  - Dependency graph includes a cross-DCM edge from local app tier to peer-realized fabric
+  - Peer fabric is realized and confirmed before the local tier is dispatched
+  - The cross-boundary hard dependency is enforced, not treated as soft/best-effort
+  - If the peer cannot realize the dependency, the dependent local resource is not dispatched
+  - UUIDs and the cross-DCM dependency reference are recorded consistently on both sides
+  - The ordered cross-boundary realization is captured in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: cross-DCM hard-dependency edge recorded in the dependency graph
+  - domain: provider
+    interaction: peer realizes the dependency first; local tier dispatched only after confirmation
+  - domain: policy
+    interaction: ordering policy enforces the cross-boundary hard dependency
+  - domain: audit
+    interaction: ordered cross-boundary realization recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- hard-dependency
+- cross-dcm
+- ordering
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

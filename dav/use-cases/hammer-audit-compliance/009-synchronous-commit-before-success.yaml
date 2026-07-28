@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-009
+handle: audit/synchronous-commit-before-success
+scenario:
+  description: 'A resource change is dispatched, but the audit store cannot durably commit the audit record
+    at that instant. The architecture must not return success to the caller. Under an audit_heavy contract,
+    the audit commit is synchronous and precedes acknowledgement: if the record cannot be written, the
+    operation fails closed and either rolls back or is held, so there is never a realized change that
+    lacks an audit entry. This tests the ordering guarantee "no unaudited change" — that audit is on the
+    critical path, not a best-effort async side effect.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Guarantee no change is acknowledged as successful before its audit record commits
+  success_criteria:
+  - The audit record commit is attempted before success is returned
+  - When the audit commit fails, the operation does not return success
+  - The change is rolled back or held so no unaudited realized state persists
+  - There exists no realized change without a corresponding committed audit entry
+  - The audit-commit failure is itself recorded once the store recovers
+  - A retry after recovery produces exactly one audit entry, not a duplicate
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: audit
+    interaction: synchronous audit commit gates the success acknowledgement
+  - domain: provider
+    interaction: dispatch rolled back or held when the audit commit cannot durably write
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- synchronous-commit
+- fail-closed
+- no-unaudited-change
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,59 @@
+uuid: uc-hammer-peer-dcm-015
+handle: peer-dcm/sovereign-cross-dcm-rehydration-pending-review
+scenario:
+  description: A sovereign workload's original provider is offline, so it is rebuilt from intent onto a peer DCM.
+    Rehydration re-evaluates tenancy and sovereignty under current policy (not the historical one), and a residency
+    rule introduced since original realization now conflicts — the entity lands in PENDING_REVIEW before it proceeds.
+  actor:
+    persona: sre
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - provider-owner
+    - federation-peer-operator
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Rehydrate onto a peer DCM under current sovereignty policy, landing in review
+  success_criteria:
+  - The original provider is offline; rehydration targets a peer DCM
+  - Tenancy and sovereignty are re-evaluated under current policy
+  - A residency rule introduced since original realization now conflicts
+  - The entity lands in PENDING_REVIEW rather than proceeding
+  - The current-policy re-evaluation and the pause are audited
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: policy_violation
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: current sovereignty/residency policy re-evaluated on rehydration
+  - domain: provider
+    interaction: the peer would host, pending the review
+  - domain: audit
+    interaction: the current-policy conflict and PENDING_REVIEW recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- sovereignty
+- rehydration
+- pending-review
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Sovereign profile; original provider offline; residency policy tightened since
+  postconditions:
+  - The rehydration is paused in PENDING_REVIEW under current policy
+  note: batch=peer-dcm-2026-07-23

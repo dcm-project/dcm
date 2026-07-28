@@ -1,0 +1,56 @@
+uuid: uc-hammer-brownfield-009
+handle: brownfield-discovery/discovery-stream-retention-vs-durable-inventory
+scenario:
+  description: 'Discovery sources emit a high-volume stream of transient observations (a scan every five
+    minutes), but the durable inventory should hold entities, not raw observation history forever. The
+    architecture must distinguish a bounded-retention discovery stream from the durable entity store:
+    observations age out on a retention window, while the derived entities, their correlation_ids, and
+    the last-known Discovered state persist. An auditor must still be able to answer "when was this first
+    and last seen" from durable fields even after the raw stream has expired. This probes whether the
+    model separates ephemeral discovery telemetry from durable inventory, or conflates the two.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: standard
+  perspectives: []
+  intent: Separate bounded-retention discovery observations from durable inventory entities
+  success_criteria:
+  - Raw discovery observations are retained on a bounded window and then aged out
+  - Derived entities, correlation_ids, and last-known Discovered state persist durably
+  - First-seen and last-seen timestamps survive on the entity after the raw stream expires
+  - Aging out observations never deletes or orphans the durable entity
+  - An auditor can reconstruct discovery timing from durable fields alone
+  - Retention-window configuration and expiry events are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery provider emits a high-volume stream of transient observations
+  - domain: data
+    interaction: bounded-retention stream separated from durable entity store with preserved first/last-seen
+  - domain: audit
+    interaction: retention configuration and observation-expiry events recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- retention
+- discovery-stream
+- durable-inventory
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

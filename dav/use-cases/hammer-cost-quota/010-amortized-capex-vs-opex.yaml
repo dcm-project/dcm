@@ -1,0 +1,65 @@
+uuid: uc-hammer-cost-quota-010
+handle: cost-quota/amortized-capex-vs-opex
+scenario:
+  description: 'An on-prem estate mixes owned hardware (capex, depreciated on a schedule) with cloud-burst
+    capacity (opex, billed by usage). A finance-analyst needs a unified per-tenant cost that amortizes
+    the capex asset over its depreciation life and blends in metered opex for the same period. The system
+    must distinguish an asset''s cost basis (capital, amortized) from consumption-metered cost and combine
+    them on one statement. The mechanism under test is whether UDLM carries a cost-basis / depreciation
+    model at all — capex amortization is almost certainly outside the intent model, so expect unsupported
+    or partial.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+    - tenancy-authority
+  intent: Blend amortized capex and metered opex into one tenant cost view
+  success_criteria:
+  - Capex assets and opex-metered resources are distinguished in the estate
+  - Each capex asset carries a cost basis and depreciation schedule
+  - Amortized capex for the period is computed from the schedule
+  - Metered opex for the same period is computed from usage
+  - The two are combined into a single per-tenant cost for the period
+  - Absence of a depreciation model is reported explicitly rather than assumed zero
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: capex cost basis and depreciation schedule sought alongside opex usage
+  - domain: policy
+    interaction: amortization rule combines capex and opex for the period
+  - domain: audit
+    interaction: blended statement and any missing depreciation model recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- capex
+- opex
+- amortization
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Estate mixes owned (capex) and burst (opex) capacity
+  postconditions:
+  - A blended cost is produced or the missing capex model is reported
+  note: batch=framework-hammer-2026-07-16

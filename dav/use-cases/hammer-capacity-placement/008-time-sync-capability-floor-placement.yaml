@@ -1,0 +1,58 @@
+uuid: uc-hammer-capacity-008
+handle: capacity/time-sync-capability-floor-placement
+scenario:
+  description: 'An FSI trading workload requires nodes whose attested time-synchronization capability
+    (traceable, bounded-offset clock) meets a profile-defined floor for regulatory timestamping. The placement
+    engine must treat attested time-sync as a scored capability admission criterion, admitting only providers
+    whose current attested clock quality clears the floor. This tests capability-typed placement where
+    the deciding attribute is an operational, time-varying attestation, not a static provider label.
+
+    '
+  actor:
+    persona: sre
+    profile: fsi
+  perspectives:
+    - provider-owner
+    - compliance-auditor
+    - regulator
+  intent: Place only where attested time-sync capability meets the profile floor
+  success_criteria:
+  - The profile's time-sync capability floor is resolved for the request
+  - Each candidate's attested clock quality is evaluated against the floor
+  - Providers whose attested time-sync is below the floor are excluded
+  - Remaining candidates are scored on capability match and capacity
+  - The realized node's attested time-sync record is captured at placement
+  - The capability floor evaluation and exclusions are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: time-sync capability floor evaluated as an admission criterion
+  - domain: provider
+    interaction: providers with sufficient attested clock quality scored and reserved
+  - domain: audit
+    interaction: capability floor evaluation and node time-sync record captured
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:08.000000+00:00'
+tags:
+- capacity
+- placement
+- time-sync
+- capability-floor
+- attestation
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

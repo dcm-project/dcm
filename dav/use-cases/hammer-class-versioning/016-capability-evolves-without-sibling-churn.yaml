@@ -1,0 +1,59 @@
+uuid: uc-127dbcd8-6200-4e49-9ea6-05eef9371245
+handle: class-versioning/capability-evolves-without-sibling-churn
+version: 1.1.0
+scenario:
+  description: 'A provider serves both compute and storage capabilities. Its compute capability takes
+    a breaking contract change (an output shape changes) and majors — the version moves on that capability
+    alone, its capability_uuid frozen (ADR-051: the accreditation anchor survives the change; the new
+    revision''s digest is what re-attestation cites). The storage capability''s version, digest, and consumers
+    are completely untouched:
+    impact reaches exactly the consumers bound through the types the compute capability covers, and no
+    storage consumer sees a debt entry, a notification, or any version movement. The envelope does not
+    major — the capability set did not change.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Evolve one capability through a breaking change with impact scoped exactly to its bound consumers
+    and zero movement on sibling capabilities or the envelope
+  success_criteria:
+  - The breaking change majors the affected capability with its own version bump; its capability_uuid
+    is unchanged (frozen identity)
+  - The sibling capability's version and recorded digest are byte-identical before and after
+  - Impact entries appear only for consumers bound through the affected capability's covers_types
+  - 'The envelope version does not major — set semantics: no capability was added or removed'
+  - The provider definition version bumps (the whole-surface pin reflects any change) without carrying
+    capability-level meaning
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: capability-plane versioning isolates the change
+  - domain: data
+    interaction: covers_types computes the exact consumer blast radius
+  - domain: policy
+    interaction: classification routes to the capability, not the envelope
+  - domain: audit
+    interaction: the capability's version movement and scoped impact are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T01:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- two-plane
+- capability-plane
+- blast-radius

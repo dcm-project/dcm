@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-019
+handle: peer-dcm/dev-peer-disconnect-recovery-sandbox
+scenario:
+  description: A dev-profile scenario deliberately drops the peer connection mid-operation to exercise the disconnect-and-recover
+    path in a sandbox — confirming the local DCM holds the operation, preserves state, and retries on reconnect,
+    without production governance in the way.
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+  intent: Exercise peer-disconnect recovery in a dev sandbox
+  success_criteria:
+  - A dev sandbox federates with a peer, then drops the connection
+  - The local DCM records the simulated peer disconnect
+  - The operation is held and local state preserved
+  - On reconnect, the operation retries and completes
+  - The recovery behavior is validated in the sandbox
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: no_governance
+    failure_mode: peer_dcm_disconnect
+  profile: dev
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the sandbox peer connection is dropped and restored
+  - domain: policy
+    interaction: recovery policy holds and retries; no production governance
+  - domain: audit
+    interaction: the simulated disconnect + recovery recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- dev
+- disconnected
+- recovery
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Dev profile; a sandbox peer connection can be dropped
+  postconditions:
+  - The disconnect-and-recover path is validated in the sandbox
+  note: batch=peer-dcm-2026-07-23

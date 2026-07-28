@@ -1,0 +1,64 @@
+uuid: uc-hammer-day0-day2-ops-008
+handle: day0-day2-ops/scale-out-add-members-resource-exhaustion
+scenario:
+  description: An application team scales out a composite service by adding four worker constituents;
+    each new worker must be provisioned and then configured by a bound Automation.Job before it joins
+    the service. Two workers provision, but the provider runs out of capacity for the remaining two —
+    resource_exhaustion. The service must integrate the two configured workers, surface the two that could
+    not be placed, and not falsely report the new members as ready when their configure process never
+    ran.
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - sre
+    - provider-owner
+  intent: Scale out a composite by adding and configuring new members, handling capacity exhaustion
+  success_criteria:
+  - Each new worker is provisioned then configured by a bound Automation.Job before joining
+  - A member is only reported ready after its configure process reaches COMPLETED
+  - The two placed-and-configured workers join the composite
+  - The two unplaced workers are surfaced as resource_exhaustion, not silently dropped
+  - No unconfigured worker is falsely counted as an active member
+  - The composite records its new constituent set and the shortfall
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: resource_exhaustion
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provisions new workers until capacity is exhausted, runs configure jobs on the placed
+      ones
+  - domain: policy
+    interaction: enforces the cross-domain constraint that gates membership on successful configure
+  - domain: data
+    interaction: updates the composite constituent set and records the placement shortfall
+  - domain: audit
+    interaction: records the scale-out attempt, exhaustion, and final member set
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- scale-out
+- resource_exhaustion
+- composite
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The composite service is realized and scalable
+  - A member-configure job is registered
+  postconditions:
+  - Two members added and configured
+  - Two flagged unplaced; composite reports the shortfall
+  note: batch=day0-day2-ops-2026-07-22

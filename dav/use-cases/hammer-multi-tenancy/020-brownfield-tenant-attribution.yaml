@@ -1,0 +1,56 @@
+uuid: uc-hammer-tenancy-020
+handle: tenancy/brownfield-tenant-attribution
+scenario:
+  description: 'A platform engineer ingests a brownfield estate discovered from a shared substrate where
+    resources were never tenant-labeled. Ingestion must attribute each discovered resource to the correct
+    owning tenant using available evidence (network segment, naming, provider account), flag ambiguous
+    resources for human adjudication rather than guessing, and never place a resource into the wrong tenant''s
+    isolated scope. This tests whether brownfield ingestion can establish tenant ownership as a first-class
+    attribute on pre-existing resources, and how it handles unattributable ones.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Attribute discovered brownfield resources to the correct tenant during ingestion
+  success_criteria:
+  - Each discovered resource is evaluated for tenant ownership from available evidence
+  - Confidently-attributed resources are placed in the correct tenant scope
+  - Ambiguous resources are flagged for adjudication, not guessed into a tenant
+  - No resource is silently placed in the wrong tenant's isolated scope
+  - Attribution evidence and confidence are recorded per ingested resource
+  - Unattributed resources are held in a quarantine scope pending decision
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered resources attributed to tenants; ambiguous ones held in quarantine scope
+  - domain: policy
+    interaction: attribution validation flags low-confidence resources for adjudication
+  - domain: audit
+    interaction: attribution evidence and confidence recorded per resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- brownfield
+- ingestion
+- attribution
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

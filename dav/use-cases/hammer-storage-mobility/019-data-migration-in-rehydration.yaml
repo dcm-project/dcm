@@ -1,0 +1,60 @@
+uuid: uc-hammer-storage-mobility-019
+handle: storage-mobility/data-migration-in-rehydration
+scenario:
+  description: 'After a site loss, a platform engineer rehydrates a full stack from stored intent. Unlike
+    a stateless rebuild, the storage resources must not come back empty: each Storage.Volume and Storage.Dataset
+    must be re-realized and then have its data restored from the most recent DR replica or snapshot before
+    dependent services are started. The system must sequence rehydration so that data migration is a step
+    within each storage resource''s rebuild — provision, then hydrate data, then release dependents. This
+    stresses whether rehydration models stateful data restoration as part of the plan or assumes empty
+    re-provisioning.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Rehydrate a stack and restore each storage resource's data before dependents start
+  success_criteria:
+  - Rehydration plan re-realizes storage resources from stored intent
+  - Each storage resource includes a data-hydration step, not just empty provisioning
+  - Data is restored from the most recent DR replica or snapshot per resource
+  - Dependent services start only after their storage is hydrated
+  - Volume and dataset UUIDs are preserved across the rehydration
+  - Post-rehydration data content matches the last replicated point, and this is verifiable
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: stored intent read; per-resource data hydration sequenced before dependents
+  - domain: provider
+    interaction: storage re-realized then data restored from replica or snapshot
+  - domain: policy
+    interaction: orchestration ordering gates dependents on completed data hydration
+  - domain: audit
+    interaction: rehydration arc with per-resource data restoration recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- rehydration
+- data-migration
+- dr
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

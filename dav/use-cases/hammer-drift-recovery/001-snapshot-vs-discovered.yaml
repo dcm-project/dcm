@@ -1,0 +1,62 @@
+uuid: uc-hammer-drift-recovery-001
+handle: drift-recovery/snapshot-vs-discovered
+scenario:
+  description: 'An SRE triggers a scheduled reconciliation pass over a realized web service. The engine
+    reads the immutable Realized snapshot recorded at last successful dispatch and runs a fresh Discovery
+    against the live provider, then diffs the two field-by-field. In this pass every discovered value
+    matches the snapshot, so the engine must conclude no drift, record a clean reconciliation result,
+    and take no remediation action. This validates the baseline detection mechanism: Realized-vs-Discovered
+    comparison as the source of truth for drift.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Run a reconciliation pass and confirm the resource has not drifted
+  success_criteria:
+  - Reconciliation reads the immutable Realized snapshot and does not mutate it
+  - A fresh Discovery is executed against the live provider
+  - Discovered state is diffed field-by-field against the Realized snapshot
+  - The engine concludes no drift because all fields match
+  - No remediation or re-dispatch is triggered
+  - A clean reconciliation result with timestamp is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: immutable Realized snapshot read; fresh Discovered state captured and compared
+  - domain: provider
+    interaction: provider queried for current live state, no write issued
+  - domain: audit
+    interaction: clean reconciliation result recorded with timestamp
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- reconciliation
+- discovery
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource is realized with an immutable Realized snapshot on record
+  - Provider is reachable for discovery
+  postconditions:
+  - No drift detected; no remediation taken
+  - Realized snapshot unchanged
+  - Clean reconciliation result recorded
+  note: batch=framework-hammer-2026-07-16
