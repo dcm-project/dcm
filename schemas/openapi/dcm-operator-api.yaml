@@ -1,0 +1,621 @@
+openapi: "3.1.0"
+
+info:
+  title: DCM Operator Interface — Services API
+  version: "1.0.0"
+  description: |
+    The DCM Services API is the contract between the DCM control plane and Service Provider
+    operators. DCM calls this API to create, update, discover, and decommission resources.
+    The operator implements this API; DCM is the client.
+
+    **Conformance levels:** Operators implement one of five conformance levels. Higher levels
+    unlock additional DCM capabilities. See `dcm-operator-interface-spec.md` for the full
+    conformance model.
+
+    | Level | Minimum endpoints required |
+    |-------|---------------------------|
+    | Level 0 | Label-based passive discovery only — no API required |
+    | Level 1 | POST /create, GET /list, GET /{id}, DELETE /{id}, POST /health |
+    | Level 2 | Level 1 + PUT /{id} (update), POST /capacity, POST /discover |
+    | Level 3 | Level 2 + lifecycle callbacks, decommission_confirmation |
+    | Level 4 | Level 3 + streaming status, dependency graph, rehydration support |
+
+    **Authentication:** DCM uses mTLS for all operator interactions. Every request presents
+    a valid DCM-issued certificate. Operators must validate the certificate chain against the
+    DCM CA registered at provider registration time.
+
+    **Idempotency:** All mutating operations include a `request_id` (DCM request UUID). Operators
+    must implement idempotency: a second request with the same `request_id` must return the same
+    result without performing the operation again.
+
+    **Callback pattern:** For long-running operations (create, update, decommission), the operator
+    responds immediately with `PROVISIONING`/`UPDATING`/`DECOMMISSIONING` status and later
+    calls the DCM Callback API to report completion or failure. Level 1 operators may alternatively
+    block until completion.
+
+
+
+    **AEP Alignment:** This API follows [AEP](https://aep.dev) conventions:
+    custom methods use colon syntax (`POST /resources/{name}:suspend`),
+    async operations return an `Operation` resource (AEP-136 LRO),
+    and list pagination uses `page_size`/`page_token` parameters.
+
+  contact:
+    name: DCM Project
+    url: https://github.com/dcm-project
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://{operator-host}/api/v1/{service_type}
+    description: Operator endpoint (DCM is the client; operator implements this API)
+    variables:
+      operator-host:
+        description: Operator base URL declared at provider registration
+        default: operator.namespace.svc
+      service_type:
+        description: Resource type path segment (e.g., compute.virtualmachine)
+        default: compute.virtualmachine
+
+security:
+  - MutualTLS: []
+
+tags:
+  - name: resources
+    description: Resource CRUD operations (Level 1+)
+  - name: discovery
+    description: Active discovery of existing resources (Level 2+)
+  - name: capacity
+    description: Capacity reporting for placement engine (Level 2+)
+  - name: lifecycle
+    description: Lifecycle callback endpoints DCM calls for state transitions (Level 3+)
+  - name: health
+    description: Provider health endpoint (all levels)
+  - name: registration
+    description: Provider self-registration with DCM
+
+paths:
+
+  /health:
+    get:
+      tags: [health]
+      operationId: healthCheck
+      summary: Provider health check (all conformance levels)
+      description: |
+        DCM polls this endpoint on the configured interval. Operators must respond within
+        the `failure_threshold` timeout or DCM will record a failed health check.
+      security: []
+      servers:
+        - url: https://{operator-host}
+          variables:
+            operator-host:
+              default: operator.namespace.svc
+      responses:
+        "200":
+          description: Provider health status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthResponse" }
+
+  /:
+    post:
+      tags: [resources]
+      operationId: createResource
+      summary: Create a resource (Level 1+)
+      description: |
+        DCM dispatches a Requested State payload. The operator naturalizes it to the
+        provider-native format and initiates resource creation.
+
+        **Response contract:** Return immediately with `PROVISIONING` status (Level 1 may block
+        to REALIZED, but this is discouraged for resources taking >30s). Report completion via
+        the DCM Callback API or via the next discovery cycle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateRequest" }
+      responses:
+        "202":
+          description: Request accepted; resource creation initiated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateResponse" }
+        "200":
+          description: Resource realized synchronously (Level 1 blocking response)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RealizedStatePayload" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Resource already exists with this request_id (idempotency)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateResponse" }
+        "422":
+          description: Capacity insufficient or validation failure
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DenialResponse" }
+
+    get:
+      tags: [resources]
+      operationId: listResources
+      summary: List all resources managed by this operator (Level 1+)
+      parameters:
+        - name: page_size
+          in: query
+          schema: { type: integer, default: 100, maximum: 1000 }
+        - name: page_token
+          in: query
+          schema: { type: string }
+        - name: lifecycle_state
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourceList" }
+
+  /{resource_id}:
+    get:
+      tags: [resources]
+      operationId: getResource
+      summary: Get current state of a specific resource (Level 1+)
+      parameters:
+        - { $ref: "#/components/parameters/resource_id" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RealizedStatePayload" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    put:
+      tags: [resources]
+      operationId: updateResource
+      summary: Apply a delta update to a resource (Level 2+)
+      description: |
+        DCM sends the delta (changed fields only). The operator applies the changes and
+        responds immediately with the current lifecycle state. Reports completion via callback.
+      parameters:
+        - { $ref: "#/components/parameters/resource_id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateRequest" }
+      responses:
+        "202": { description: Update accepted and initiated }
+        "200":
+          description: Update applied synchronously
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RealizedStatePayload" }
+        "409": { description: Idempotent response — update already applied }
+
+    delete:
+      tags: [resources]
+      operationId: decommissionResource
+      summary: Decommission and remove a resource (Level 1+)
+      description: |
+        DCM sends a decommission request. The operator initiates removal and responds
+        immediately with `DECOMMISSIONING` status. Reports completion via callback.
+
+        At Level 3+, DCM first sends a `decommission_confirmation` callback to allow
+        lifecycle policies (retain data, notify stakeholders) to run before deletion proceeds.
+      parameters:
+        - { $ref: "#/components/parameters/resource_id" }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DecommissionRequest" }
+      responses:
+        "200":
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Operation" }
+        "409": { description: Resource already decommissioned }
+
+  /discover:
+    post:
+      tags: [discovery]
+      operationId: discoverResources
+      summary: Trigger active discovery of all resources (Level 2+)
+      description: |
+        DCM calls this on the configured schedule to discover the current state of all
+        resources managed by this operator. The operator returns a complete snapshot of
+        all currently realized resources in DCM Unified Data Model format.
+
+        This is the mechanism for drift detection — DCM compares Discovered State
+        (returned here) against Realized State (stored by DCM after last realization).
+      servers:
+        - url: https://{operator-host}/api/v1/{service_type}
+          variables:
+            operator-host: { default: operator.namespace.svc }
+            service_type:  { default: compute.virtualmachine }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoverRequest" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoverResponse" }
+        "202":
+          description: Discovery initiated asynchronously; results will be pushed to DCM Callback API
+
+  /capacity:
+    post:
+      tags: [capacity]
+      operationId: reportCapacity
+      summary: Report current capacity for placement engine queries (Level 2+)
+      description: |
+        DCM calls this when evaluating provider placement for a new request.
+        The operator reports current available, reserved, and committed capacity.
+        DCM uses this to select the best provider and to avoid over-committing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CapacityQueryRequest" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CapacityReport" }
+
+# ─── COMPONENTS ────────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    MutualTLS:
+      type: mutualTLS
+      description: |
+        All DCM → Operator interactions use mTLS. DCM presents its certificate; the
+        operator must validate the certificate chain against the DCM CA registered at
+        provider registration time. Operators must also present a valid certificate
+        to DCM on the reverse check.
+
+  parameters:
+    resource_id:
+      name: resource_id
+      in: path
+      required: true
+      schema: { type: string }
+      description: Operator-assigned resource ID (stable identifier; different from DCM entity UUID)
+
+  responses:
+    BadRequest:
+      description: Malformed request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/OperatorError" }
+    Forbidden:
+      description: mTLS certificate not trusted or insufficient permissions
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/OperatorError" }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/OperatorError" }
+
+  schemas:
+
+    HealthResponse:
+      type: object
+      required: [status, version]
+      additionalProperties: false
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version: { type: string }
+        capabilities_available:
+          type: array
+          items: { type: string }
+        conformance_level:
+          type: integer
+          minimum: 1
+          maximum: 4
+        details:
+          type: object
+          additionalProperties: true
+          description: Provider-specific; DCM treats as opaque
+
+    CreateRequest:
+      type: object
+      required: [request_id, dcm_entity_uuid, tenant_uuid, resource_type, spec]
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: DCM request UUID — idempotency key; operators must deduplicate on this
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+          description: DCM-assigned entity UUID; must be echoed back in all responses and callbacks
+        tenant_uuid:
+          type: string
+          format: uuid
+        resource_type_uuid:
+          type: string
+          format: uuid
+        resource_type_name:
+          type: string
+          description: FQN (e.g., Compute.VirtualMachine)
+        spec:
+          type: object
+          additionalProperties: true
+          description: |
+            DCM Unified Data Model fields for this resource. Field names match the
+            Resource Type Specification schema registered for this resource type.
+            All fields carry provenance metadata where applicable.
+        relationships:
+          type: array
+          items:
+            type: object
+            properties:
+              relation: { type: string }
+              target_entity_uuid: { type: string, format: uuid }
+              target_resource_type: { type: string }
+        callback_url:
+          type: string
+          format: uri
+          description: DCM Callback API URL for reporting async completion
+        override_controls:
+          type: object
+          additionalProperties: true
+          description: Field-level override constraints (Level 3+)
+        scheduled_at:
+          type: string
+          format: date-time
+          description: For scheduled/deferred requests — when to start execution
+
+    CreateResponse:
+      type: object
+      required: [resource_id, dcm_request_id, lifecycle_state]
+      additionalProperties: false
+      properties:
+        resource_id:
+          type: string
+          description: Operator-assigned stable resource ID
+        dcm_request_id:
+          type: string
+          format: uuid
+          description: Echoed from request
+        lifecycle_state:
+          type: string
+          enum: [PROVISIONING, REALIZED, FAILED]
+        estimated_ready_at:
+          type: string
+          format: date-time
+        provider_reference:
+          type: object
+          description: Provider-native reference (e.g., Kubernetes namespace/name for CRs)
+          additionalProperties: true
+
+    UpdateRequest:
+      type: object
+      required: [request_id, delta_fields]
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+        delta_fields:
+          type: object
+          additionalProperties: true
+          description: Changed fields only — not a full replacement
+        callback_url:
+          type: string
+          format: uri
+
+    DecommissionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        retain_data:
+          type: boolean
+          default: false
+          description: If true, operator should retain underlying data (e.g., PVC retention)
+        callback_url:
+          type: string
+          format: uri
+
+    RealizedStatePayload:
+      type: object
+      required: [resource_id, dcm_entity_uuid, lifecycle_state, realized_at, spec]
+      additionalProperties: false
+      description: |
+        The Realized State of a resource in DCM Unified Data Model format.
+        This is what the operator sends back to DCM after realization, and what
+        DCM stores in the Realized State Store. All provider-native identifiers
+        should be included in `provider_metadata` — the `spec` must be in DCM format.
+      properties:
+        resource_id:
+          type: string
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+        dcm_request_id:
+          type: string
+          format: uuid
+        lifecycle_state:
+          type: string
+          enum: [PROVISIONING, REALIZED, OPERATIONAL, DEGRADED, FAILED, DECOMMISSIONING, DECOMMISSIONED]
+        realized_at:
+          type: string
+          format: date-time
+        spec:
+          type: object
+          additionalProperties: true
+          description: Realized field values in DCM Unified Data Model format
+        provider_metadata:
+          type: object
+          additionalProperties: true
+          description: Provider-native metadata (opaque to DCM; stored for operator use)
+        failure_reason:
+          type: string
+          description: Present when lifecycle_state is FAILED
+
+    DenialResponse:
+      type: object
+      required: [request_id, denial_reason, denial_timestamp]
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        denial_reason:
+          type: string
+          enum: [INSUFFICIENT_RESOURCES, VALIDATION_FAILED, POLICY_REJECTED, UNSUPPORTED_CONFIGURATION]
+        denial_timestamp:
+          type: string
+          format: date-time
+        resource_type_uuid:
+          type: string
+          format: uuid
+        estimated_available_at:
+          type: string
+          format: date-time
+        details:
+          type: string
+
+    DiscoverRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        scope:
+          type: string
+          enum: [full, delta]
+          default: full
+        since:
+          type: string
+          format: date-time
+          description: For delta discovery — only return resources changed since this time
+
+    DiscoverResponse:
+      type: object
+      required: [discovery_timestamp, resources]
+      additionalProperties: false
+      properties:
+        discovery_timestamp:
+          type: string
+          format: date-time
+        resources:
+          type: array
+          items: { $ref: "#/components/schemas/RealizedStatePayload" }
+        pagination:
+          type: object
+          properties:
+            page_token:     { type: string }
+            has_more:   { type: boolean }
+
+    CapacityQueryRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        resource_type_name:   { type: string }
+        requested_spec:       { type: object, additionalProperties: true }
+        tenant_uuid:          { type: string, format: uuid }
+
+    CapacityReport:
+      type: object
+      required: [provider_id, report_timestamp, capacity]
+      additionalProperties: false
+      properties:
+        provider_id:
+          type: string
+          format: uuid
+        report_timestamp:
+          type: string
+          format: date-time
+        next_report_at:
+          type: string
+          format: date-time
+        capacity:
+          type: object
+          required: [available_units, reserved_units, committed_units]
+          additionalProperties: false
+          properties:
+            available_units:  { type: integer, minimum: 0 }
+            reserved_units:   { type: integer, minimum: 0 }
+            committed_units:  { type: integer, minimum: 0 }
+            unit_definition:  { type: string, description: "What one 'unit' means (e.g., '1 vCPU + 2GB RAM')" }
+            confidence:       { type: string, enum: [high, medium, low], default: high }
+        can_fulfill:
+          type: boolean
+          description: Whether the requested_spec (if provided) can be fulfilled
+
+    OperatorError:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:    { type: string }
+            message: { type: string }
+
+    Operation:
+      type: object
+      description: |
+        AEP-136 Long-Running Operation returned by async create/update/decommission responses.
+        DCM polls this until done is true.
+      required: [name, done]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Stable operation resource path
+        done:
+          type: boolean
+          default: false
+        metadata:
+          type: object
+          properties:
+            resource_id:    { type: string }
+            resource_type:  { type: string }
+            operation_type: { type: string, enum: [create, update, decommission] }
+        response:
+          type: object
+          description: Present when done=true and successful. Contains RealizedStatePayload.
+        error:
+          $ref: "#/components/schemas/OperatorError"
+          description: Present when done=true and failed.
+
+    ResourceList:
+      type: object
+      description: List of discovered resources returned by the discover endpoint.
+      required: [resources]
+      additionalProperties: false
+      properties:
+        resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/RealizedStatePayload"
+        total_count:
+          type: integer
+          description: Total number of resources discovered

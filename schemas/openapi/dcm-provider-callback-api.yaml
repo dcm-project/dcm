@@ -1,0 +1,868 @@
+openapi: "3.1.0"
+
+info:
+  title: DCM Provider Callback API
+  version: "1.0.0"
+  description: |
+    The DCM Provider Callback API defines the endpoints that the DCM control plane exposes
+    for Service Provider operators to call. Operators use these endpoints to:
+
+    - Register with DCM and declare their capabilities
+    - Report capacity for placement engine decisions
+    - Push realized state after resource creation or update (the Denaturalization step)
+    - Report interim progress on long-running operations
+    - Notify DCM of authorized provider-side state changes
+    - Report lifecycle events (health changes, unsanctioned changes, maintenance windows)
+
+    **Authentication — Two-Layer Model** (see `43-provider-callback-auth.md` for full specification):
+
+    - **Layer 1 — mTLS:** Every connection requires the provider's registered certificate.
+      DCM validates the certificate chain against the CA registered at provider activation.
+      Proves transport-level identity.
+
+    - **Layer 2 — Provider Callback Credential:** Every call requires an `Authorization: Bearer`
+      header containing the provider's active callback credential. This credential is a
+      `dcm_interaction` type credential issued by DCM's credential management system at activation time.
+      It is scoped to the specific `provider_uuid` and a set of allowed operations. It is
+      short-lived (profile-governed: PT15M for fsi/sovereign, PT1H for standard) and must be
+      rotated before expiry. DCM initiates rotation automatically.
+
+    - **Entity-level authorization** is checked per call independent of credential validity:
+      DCM verifies that the calling provider is the provider that was dispatched to for the
+      specific entity. A valid credential does not grant access to entities hosted at other
+      providers or entities the provider was not dispatched to.
+
+    - **Registration calls** use a registration token (single-use, admin-issued) rather than
+      the callback credential — no callback credential exists until activation completes.
+
+    **Idempotency:** All mutating operations are idempotent. Use the same `request_id` or
+    `notification_uuid` to safely retry without side effects.
+
+    **Direction:** This is the reverse of the Operator Interface Services API. The Operator
+    Interface defines endpoints operators implement (DCM calls them). This document defines
+    endpoints DCM implements (operators call them).
+
+    **Conformance level requirements** are noted per endpoint. Level 1 operators only need
+    registration and realized state push. Level 2+ add capacity, events, and update notifications.
+
+
+
+    **AEP Alignment:** This API follows [AEP](https://aep.dev) conventions:
+    custom methods use colon syntax (`POST /resources/{name}:suspend`),
+    async operations return an `Operation` resource (AEP-136 LRO),
+    and list pagination uses `page_size`/`page_token` parameters.
+
+  contact:
+    name: DCM Project
+    url: https://github.com/dcm-project
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://{dcm-host}/
+    description: DCM Control Plane
+    variables:
+      dcm-host:
+        description: Hostname of the DCM control plane
+        default: dcm.example.com
+
+security:
+  - ProviderCredential: []
+
+tags:
+  - name: registration
+    description: Provider registration and capacity reporting (Level 1+)
+  - name: realized-state
+    description: Realized state push — the Denaturalization step (Level 1+)
+  - name: interim-status
+    description: Interim progress updates for long-running operations (Level 1+, optional)
+  - name: update-notifications
+    description: Provider-initiated authorized state change notifications (Level 2+)
+  - name: lifecycle-events
+    description: Resource lifecycle and health event reporting (Level 2+)
+
+paths:
+
+  # ─── REGISTRATION ─────────────────────────────────────────────────────────
+
+  /api/v1/providers:
+    post:
+      tags: [registration]
+      operationId: registerProvider
+      summary: Register or update a provider registration with DCM (Level 1+)
+      description: |
+        Called by the operator on startup to register with DCM. Registration is idempotent —
+        re-registering with the same `name` updates the existing registration rather than
+        creating a duplicate. Safe to call on every operator restart.
+
+        On first registration, DCM creates a new provider record in SUBMITTED status and
+        routes it through the approval pipeline. On re-registration with the same name,
+        DCM updates the version, capabilities, and endpoints without re-triggering approval
+        (unless the sovereignty declaration changes).
+
+        **Timing:** Call after the operator's HTTP server is ready to receive requests.
+        Retry with exponential backoff on failure. Registration failure does not block
+        operator startup — the operator functions normally for Kubernetes consumers.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProviderRegistrationRequest" }
+      responses:
+        "200":
+          description: Registration updated (existing provider)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderRegistrationResponse" }
+        "201":
+          description: New registration created; pending approval
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderRegistrationResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409":
+          description: Registration conflict — name already registered with different sovereignty declaration
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderError" }
+
+  /api/v1/providers/{provider_id}/capacity:
+    post:
+      tags: [registration]
+      operationId: reportCapacity
+      summary: Push capacity report to DCM for placement engine decisions (Level 2+)
+      description: |
+        Operators push capacity reports on a scheduled interval (declared at registration).
+        DCM uses this data to make placement decisions and to avoid over-committing resources.
+
+        Reports are also accepted on-demand when capacity changes significantly (e.g., after
+        a node is added or removed). Providers should not push more than once per minute
+        unless responding to a significant capacity event.
+      parameters:
+        - { $ref: "#/components/parameters/provider_id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CapacityReport" }
+      responses:
+        "202":
+          description: Capacity report accepted
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429":
+          description: Rate limit exceeded — capacity reports accepted max once per 60 seconds
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderError" }
+
+  # ─── REALIZED STATE ───────────────────────────────────────────────────────
+
+  /api/v1/instances/{resource_id}/status:
+    put:
+      tags: [realized-state]
+      operationId: pushRealizedState
+      summary: Push realized or terminal state to DCM — the Denaturalization step (Level 1+)
+      description: |
+        Called by the operator's reconciliation loop when a resource reaches a terminal
+        lifecycle state (OPERATIONAL, FAILED, DEGRADED, DECOMMISSIONED) or when the
+        operator needs to report a provider-native state transition.
+
+        This is the **Denaturalization** step: the operator translates Kubernetes-native
+        CR status into DCM Unified Data Model format and pushes it here. DCM stores the
+        result as a Realized State record in the append-only Realized State Store.
+
+        **Idempotency:** Use the same `dcm_request_id` to safely retry. DCM will not
+        create duplicate Realized State records for the same `dcm_request_id` + terminal state.
+
+        **Required for decommission:** When a resource is fully removed, the operator must
+        push a payload with `lifecycle_state: DECOMMISSIONED`. This closes the entity's
+        lifecycle in DCM and releases any held allocations or relationships.
+
+        **Level 3 — provenance required:** Level 3 conformance requires `field_provenance`
+        to be populated for all realized fields. This enables full audit chain.
+      parameters:
+        - { $ref: "#/components/parameters/resource_id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RealizedStatePush" }
+      responses:
+        "200":
+          description: Realized state accepted and stored
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RealizedStateAck" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: resource_id not recognized by DCM — provider may need to re-register
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderError" }
+        "409":
+          description: |
+            Idempotent response — this request_id + terminal state already recorded.
+            The response body contains the existing Realized State record UUID.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RealizedStateAck" }
+
+  # ─── INTERIM STATUS ───────────────────────────────────────────────────────
+
+  /api/v1/provider/entities/{entity_uuid}/status:
+    post:
+      tags: [interim-status]
+      operationId: pushInterimStatus
+      summary: Push interim progress update for a long-running operation (Level 1+, optional)
+      description: |
+        Operators may push interim status updates for long-running operations (provisioning
+        complex resources, composite service constituents) to give DCM — and therefore
+        consumers — live visibility into multi-step operations without waiting for terminal state.
+
+        DCM uses interim status to:
+        - Update `current_step` and progress fields in the request status response
+        - Publish `request.progress_updated` event (info urgency) to the Message Bus
+        - Deliver live updates to consumers via SSE stream
+
+        **Rate limit:** Maximum one update per 10 seconds per `entity_uuid`. DCM rate-limits
+        interim status calls and will return 429 if the limit is exceeded.
+
+        **Not a replacement for terminal state:** Interim status supplements the realized
+        state push. Operators must still call `PUT /api/v1/instances/{resource_id}/status`
+        to report terminal state.
+
+        **For Composite Service requests:** Include `constituent_status` to give
+        visibility into each constituent's progress independently.
+      parameters:
+        - { $ref: "#/components/parameters/entity_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InterimStatusPush" }
+      responses:
+        "202":
+          description: Interim status accepted; consumers and SSE stream updated
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429":
+          description: Rate limit exceeded — max one interim status per 10 seconds per entity
+          headers:
+            Retry-After:
+              schema: { type: integer }
+              description: Seconds until the rate limit resets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderError" }
+
+  # ─── UPDATE NOTIFICATIONS ─────────────────────────────────────────────────
+
+  /api/v1/provider/entities/{entity_uuid}/update-notification:
+    post:
+      tags: [update-notifications]
+      operationId: submitUpdateNotification
+      summary: Notify DCM of an authorized provider-initiated state change (Level 2+)
+      description: |
+        Called when the provider has made an authorized state change to a resource
+        outside of a DCM-initiated request (e.g., auto-scaling, auto-healing, maintenance).
+
+        **Key principle:** Providers never write directly to DCM's Realized State. They
+        submit a notification here; DCM processes it through the governance pipeline
+        (Policy Engine evaluation); DCM writes the Realized State only if approved.
+
+        **Distinct from drift:** A provider submitting an update notification is asserting
+        that the change was authorized by a pre-existing policy or operational agreement.
+        Drift is detected through discovery and represents an unauthorized or untracked change.
+
+        **Pre-authorization declarations:** Providers may declare categories of updates
+        they routinely make at registration time, enabling organizations to pre-authorize
+        them in policy rather than reviewing each one. Pre-authorized notification types
+        receive `AUTO_APPROVED` status immediately.
+
+        **Idempotency:** Use the same `notification_uuid` to safely retry. DCM will not
+        create duplicate Realized State records for the same `notification_uuid`.
+      parameters:
+        - { $ref: "#/components/parameters/entity_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateNotificationRequest" }
+      responses:
+        "202":
+          description: Notification accepted; processing begun
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateNotificationAccepted" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Idempotent — notification_uuid already processed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateNotificationAccepted" }
+
+  /api/v1/provider/notifications/{notification_uuid}:
+    get:
+      tags: [update-notifications]
+      operationId: getNotificationStatus
+      summary: Poll the processing status of a submitted update notification (Level 2+)
+      description: |
+        Allows providers to check whether a submitted update notification has been
+        approved, rejected, or is still awaiting consumer approval.
+
+        Providers should poll with backoff rather than polling at high frequency.
+        Alternatively, subscribe to the `provider_update.*` event domain via webhook
+        for push notification of decision outcomes.
+      parameters:
+        - { $ref: "#/components/parameters/notification_uuid" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateNotificationStatus" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # ─── LIFECYCLE EVENTS ─────────────────────────────────────────────────────
+
+  /api/v1/instances/{resource_id}/events:
+    post:
+      tags: [lifecycle-events]
+      operationId: reportLifecycleEvent
+      summary: Report a resource lifecycle or health event to DCM (Level 2+)
+      description: |
+        Called by operators to notify DCM of events affecting the operational status of
+        a managed resource. DCM receives the event, evaluates it through the Policy Engine,
+        and determines the appropriate response (notify consumer, trigger recovery, escalate).
+
+        DCM acts as the Tenant advocate — it does not expose raw infrastructure events to
+        consumers directly. It applies policy, filters urgency, and routes notifications
+        to the appropriate audience based on the governance model.
+
+        **Idempotency:** Use the same `event_uuid` to safely retry. DCM will not create
+        duplicate records for the same `event_uuid`.
+
+        **UNSANCTIONED_CHANGE:** When the provider detects a CR was modified without a
+        corresponding DCM request ID (i.e., someone modified Kubernetes resources directly),
+        report this as `UNSANCTIONED_CHANGE`. DCM will flag this as drift, notify the Tenant,
+        and fire the appropriate Recovery Policy.
+      parameters:
+        - { $ref: "#/components/parameters/resource_id" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LifecycleEventReport" }
+      responses:
+        "202":
+          description: Event accepted; DCM policy evaluation initiated
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: Idempotent — event_uuid already recorded
+
+# ─── COMPONENTS ────────────────────────────────────────────────────────────────
+
+components:
+
+  securitySchemes:
+    ProviderCredential:
+      type: http
+      scheme: bearer
+      description: |
+        Short-lived provider interaction credential issued by DCM at registration time.
+        Scoped to the specific provider UUID. Must be rotated before expiry. Rotation
+        is managed via the credential management system integration declared at registration.
+
+  parameters:
+
+    provider_id:
+      name: provider_id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: DCM-assigned provider UUID
+
+    resource_id:
+      name: resource_id
+      in: path
+      required: true
+      schema: { type: string }
+      description: Operator-assigned resource ID (as returned in CreateResponse)
+
+    entity_uuid:
+      name: entity_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: DCM entity UUID (provided by DCM in the CreateRequest)
+
+    notification_uuid:
+      name: notification_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+      description: Provider-assigned notification UUID (from UpdateNotificationRequest)
+
+  responses:
+
+    BadRequest:
+      description: Malformed request payload
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProviderError" }
+
+    Forbidden:
+      description: Invalid or expired provider credential, or credential scoped to different provider
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProviderError" }
+
+    NotFound:
+      description: Resource or notification not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ProviderError" }
+
+  schemas:
+
+    ProviderError:
+      type: object
+      required: [error]
+      additionalProperties: false
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          additionalProperties: false
+          properties:
+            code:       { type: string }
+            message:    { type: string }
+            request_id: { type: string, format: uuid }
+
+    ProviderRegistrationRequest:
+      type: object
+      required: [name, display_name, conformance_level, endpoint, version, service_types]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Unique provider name — natural key for idempotent re-registration
+          pattern: "^[a-z0-9][a-z0-9-_/]*[a-z0-9]$"
+        display_name:    { type: string, maxLength: 256 }
+        conformance_level:
+          type: integer
+          minimum: 1
+          maximum: 4
+        endpoint:
+          type: string
+          format: uri
+          description: Base URL of the operator's DCM Services API
+        version:
+          type: string
+          pattern: "^\\d+\\.\\d+\\.\\d+$"
+        service_types:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [service_type, service_type_uuid, operations_supported]
+            additionalProperties: false
+            properties:
+              service_type:
+                type: string
+                description: DCM Resource Type FQN (e.g., Storage.Database)
+                pattern: "^[A-Z][a-zA-Z0-9]+\\.[A-Z][a-zA-Z0-9]+$"
+              service_type_uuid:
+                type: string
+                format: uuid
+              crd_reference:
+                type: object
+                description: Kubernetes CRD reference (Kubernetes operators only)
+                additionalProperties: false
+                properties:
+                  group:   { type: string }
+                  version: { type: string }
+                  kind:    { type: string }
+              operations_supported:
+                type: array
+                items:
+                  type: string
+                  enum: [CREATE, READ, UPDATE, DELETE, DISCOVER]
+              field_mapping_ref:
+                type: string
+                format: uri
+                description: URL or reference to the field mapping declaration (Level 2+)
+        kubernetes:
+          type: object
+          description: Kubernetes-specific registration metadata (Kubernetes operators only)
+          additionalProperties: false
+          properties:
+            cluster_id:         { type: string }
+            cluster_endpoint:   { type: string, format: uri }
+            namespace_strategy:
+              type: string
+              enum: [per_tenant, shared, per_resource]
+        sovereignty_declaration:
+          type: object
+          description: Where this provider operates and which jurisdictions it is subject to
+          additionalProperties: false
+          properties:
+            operating_jurisdictions:
+              type: array
+              items: { type: string, pattern: "^[A-Z]{2}$" }
+            data_residency_zones:
+              type: array
+              items: { type: string }
+            regulatory_frameworks:
+              type: array
+              items: { type: string }
+        update_capabilities:
+          type: array
+          description: Pre-authorization declarations for provider-initiated updates (Level 2+)
+          items:
+            type: object
+            required: [notification_type, affected_fields]
+            additionalProperties: false
+            properties:
+              notification_type:
+                type: string
+                enum: [authorized_change, maintenance_change, auto_scale, auto_heal]
+              affected_fields:
+                type: array
+                items: { type: string }
+              max_change_magnitude: { type: string }
+              typical_trigger:      { type: string }
+        cancellation_capabilities:
+          type: object
+          description: Request cancellation support declaration (Level 2+)
+          additionalProperties: false
+          properties:
+            supports_cancellation: { type: boolean }
+            cancellation_supported_during:
+              type: array
+              items: { type: string, enum: [DISPATCHED, PROVISIONING] }
+            partial_rollback_possible: { type: boolean }
+            cancellation_response_time_seconds: { type: integer }
+
+    ProviderRegistrationResponse:
+      type: object
+      required: [provider_id, name, status, conformance_level_accepted]
+      additionalProperties: false
+      properties:
+        provider_id:
+          type: string
+          format: uuid
+          description: DCM-assigned provider UUID — stable across re-registrations
+        name:                   { type: string }
+        status:
+          type: string
+          enum: [registered, updated, pending_approval]
+        conformance_level_accepted: { type: integer }
+        capabilities_enabled:
+          type: array
+          items: { type: string }
+        credential_ref:
+          type: string
+          description: Reference to the provider interaction credential (retrieve via credential management system)
+        credential_expires_at:
+          type: string
+          format: date-time
+
+    CapacityReport:
+      type: object
+      required: [provider_id, report_timestamp, capacity_by_service_type]
+      additionalProperties: false
+      properties:
+        provider_id:
+          type: string
+          format: uuid
+        report_timestamp:
+          type: string
+          format: date-time
+        next_report_at:
+          type: string
+          format: date-time
+          description: When the provider will send the next scheduled report
+        capacity_by_service_type:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [service_type_uuid, available_units, reserved_units, committed_units]
+            additionalProperties: false
+            properties:
+              service_type_uuid:  { type: string, format: uuid }
+              available_units:    { type: integer, minimum: 0 }
+              reserved_units:     { type: integer, minimum: 0 }
+              committed_units:    { type: integer, minimum: 0 }
+              unit_definition:
+                type: string
+                description: What one unit represents (e.g., "1 database cluster", "1 vCPU")
+              kubernetes_resources:
+                type: object
+                description: Raw Kubernetes resource availability (Kubernetes operators only)
+                additionalProperties: false
+                properties:
+                  available_cpu_millicores: { type: integer }
+                  available_memory_bytes:   { type: integer }
+                  available_storage_bytes:  { type: integer }
+                  node_count:               { type: integer }
+
+    RealizedStatePush:
+      type: object
+      required: [resource_id, dcm_entity_uuid, lifecycle_state, realized_at, spec]
+      additionalProperties: false
+      description: |
+        The Denaturalization payload — provider-native state translated into DCM Unified
+        Data Model format. DCM stores this in the append-only Realized State Store.
+      properties:
+        resource_id:
+          type: string
+          description: Operator-assigned resource ID
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+          description: DCM entity UUID (provided by DCM in the CreateRequest)
+        dcm_request_id:
+          type: string
+          format: uuid
+          description: DCM request UUID (idempotency key — provide for all non-spontaneous state changes)
+        lifecycle_state:
+          type: string
+          enum: [PROVISIONING, REALIZED, OPERATIONAL, DEGRADED, FAILED, DECOMMISSIONING, DECOMMISSIONED]
+        realized_at:
+          type: string
+          format: date-time
+        spec:
+          type: object
+          additionalProperties: true
+          description: All realized field values in DCM Unified Data Model format
+        field_provenance:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              source_type:  { type: string, enum: [provider, operator, kubernetes_status] }
+              source_uuid:  { type: string, format: uuid }
+              timestamp:    { type: string, format: date-time }
+          description: Per-field provenance. Required for Level 3 conformance.
+        provider_metadata:
+          type: object
+          additionalProperties: true
+          description: Provider-native metadata stored by DCM but treated as opaque
+        kubernetes_reference:
+          type: object
+          description: Kubernetes CR reference (Kubernetes operators only)
+          additionalProperties: false
+          properties:
+            namespace:        { type: string }
+            name:             { type: string }
+            uid:              { type: string }
+            resource_version: { type: string }
+        relationships:
+          type: array
+          description: Any relationships created or discovered during realization
+          items:
+            type: object
+            properties:
+              relation:    { type: string }
+              target_entity_uuid:   { type: string, format: uuid }
+        failure_reason:
+          type: string
+          description: Required when lifecycle_state is FAILED
+
+    RealizedStateAck:
+      type: object
+      required: [realized_state_uuid, entity_uuid, lifecycle_state]
+      additionalProperties: false
+      properties:
+        realized_state_uuid:  { type: string, format: uuid }
+        entity_uuid:          { type: string, format: uuid }
+        lifecycle_state:      { type: string }
+        recorded_at:          { type: string, format: date-time }
+
+    InterimStatusPush:
+      type: object
+      required: [request_id, lifecycle_state]
+      additionalProperties: false
+      properties:
+        request_id:
+          type: string
+          format: uuid
+          description: DCM request UUID this status update corresponds to
+        lifecycle_state:
+          type: string
+          enum: [PROVISIONING, UPDATING, DECOMMISSIONING]
+          description: Current non-terminal state
+        progress:
+          type: object
+          additionalProperties: false
+          properties:
+            step_current:          { type: integer, minimum: 1 }
+            step_total:            { type: integer, minimum: 1 }
+            step_label:            { type: string }
+            step_started_at:       { type: string, format: date-time }
+            estimated_completion:  { type: string, format: date-time }
+        constituent_status:
+          type: array
+          description: Per-constituent status for Composite Service requests
+          items:
+            type: object
+            required: [ref, status]
+            additionalProperties: false
+            properties:
+              ref:          { type: string, description: "Constituent identifier (matches the Composite Service composition declaration's component_id)" }
+              status:       { type: string, enum: [PENDING, PROVISIONING, REALIZED, FAILED] }
+              completed_at: { type: string, format: date-time }
+              started_at:   { type: string, format: date-time }
+        notes:
+          type: string
+          maxLength: 512
+          description: Optional human-readable detail for consumer display
+
+    UpdateNotificationRequest:
+      type: object
+      required: [provider_uuid, notification_uuid, notification_type, changed_fields, effective_at]
+      additionalProperties: false
+      properties:
+        provider_uuid:
+          type: string
+          format: uuid
+        notification_uuid:
+          type: string
+          format: uuid
+          description: Provider-assigned idempotency key — must be unique per change event
+        notification_type:
+          type: string
+          enum: [authorized_change, maintenance_change, auto_scale, auto_heal]
+          description: |
+            authorized_change: explicitly authorized by policy.
+            maintenance_change: result of a maintenance window.
+            auto_scale: automatic scaling action.
+            auto_heal: automatic healing/recovery action.
+        changed_fields:
+          type: object
+          additionalProperties:
+            type: object
+            required: [previous_value, new_value]
+            additionalProperties: false
+            properties:
+              previous_value:       { description: "Value before the change" }
+              new_value:            { description: "Value after the change" }
+              change_reason:        { type: string }
+              authorizing_policy_ref:
+                oneOf: [{ type: string, format: uuid }, { type: "null" }]
+                description: UUID of the DCM policy that pre-authorizes this change type
+        effective_at:
+          type: string
+          format: date-time
+          description: When the change took effect on the provider side
+        provider_evidence_ref:
+          type: string
+          description: Provider-side reference (e.g., Kubernetes event UID, cloud audit log ID)
+
+    UpdateNotificationAccepted:
+      type: object
+      required: [notification_uuid, status, entity_uuid]
+      additionalProperties: false
+      properties:
+        notification_uuid:       { type: string, format: uuid }
+        entity_uuid:             { type: string, format: uuid }
+        status:
+          type: string
+          enum: [processing, auto_approved, pending_consumer_approval, pending_admin_approval]
+        realized_state_uuid:
+          oneOf: [{ type: string, format: uuid }, { type: "null" }]
+          description: Set immediately when status is auto_approved
+        notification_status_url:
+          type: string
+          format: uri
+          description: URL to poll for status updates
+
+    UpdateNotificationStatus:
+      type: object
+      required: [notification_uuid, status, entity_uuid]
+      additionalProperties: false
+      properties:
+        notification_uuid:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, approved, auto_approved, pending_approval, rejected]
+        entity_uuid:           { type: string, format: uuid }
+        realized_state_uuid:
+          oneOf: [{ type: string, format: uuid }, { type: "null" }]
+        consumer_approval_required: { type: boolean }
+        consumer_notified_at:
+          oneOf: [{ type: string, format: date-time }, { type: "null" }]
+        resolved_at:
+          oneOf: [{ type: string, format: date-time }, { type: "null" }]
+        rejection_reason:
+          oneOf: [{ type: string }, { type: "null" }]
+
+    LifecycleEventReport:
+      type: object
+      required: [event_uuid, event_type, provider_id, resource_id, dcm_entity_uuid, event_timestamp, severity]
+      additionalProperties: false
+      properties:
+        event_uuid:
+          type: string
+          format: uuid
+          description: Provider-assigned idempotency key
+        event_type:
+          type: string
+          enum:
+            - ENTITY_HEALTH_CHANGE
+            - DEGRADATION
+            - MAINTENANCE_SCHEDULED
+            - MAINTENANCE_STARTED
+            - MAINTENANCE_COMPLETED
+            - UNSANCTIONED_CHANGE
+            - CAPACITY_CHANGE
+            - DECOMMISSION_NOTICE
+            - PROVIDER_DEGRADATION
+        provider_id:
+          type: string
+          format: uuid
+        resource_id:
+          type: string
+        dcm_entity_uuid:
+          type: string
+          format: uuid
+        event_timestamp:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [INFO, WARNING, CRITICAL]
+        requires_immediate_action: { type: boolean, default: false }
+        details:
+          type: object
+          additionalProperties: true
+          description: |
+            Event-type-specific detail. Common patterns:
+
+            For UNSANCTIONED_CHANGE:
+              changed_fields: [{field_path, previous_value, new_value}]
+              change_source: "direct_kubernetes_edit" | "external_tool"
+
+            For DEGRADATION:
+              degraded_components: [{component, status, detail}]
+              impact_on_consumers: "none" | "reduced_performance" | "partial_outage"
+
+            For MAINTENANCE_SCHEDULED:
+              maintenance_window: {start_at, end_at, window_type}
+              expected_impact: "none" | "brief_unavailability" | "full_unavailability"
+
+            For CAPACITY_CHANGE:
+              previous_available_units: integer
+              new_available_units: integer
+              change_reason: string
+        related_request_id:
+          oneOf: [{ type: string, format: uuid }, { type: "null" }]
+          description: DCM request UUID if this event is related to an in-progress operation
