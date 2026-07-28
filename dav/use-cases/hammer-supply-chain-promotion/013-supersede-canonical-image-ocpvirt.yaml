@@ -1,0 +1,62 @@
+uuid: uc-hammer-supply-chain-promotion-013
+handle: supply-chain-promotion/supersede-canonical-image-ocpvirt
+scenario:
+  description: 'A platform engineer promotes version N+1 of an existing base container image for
+    Compute.Container.OCPVirt. The new version passes all gates and, on canonicalization, is marked as
+    superseding the prior canonical image, which is deprecated but retained for reference. Consumers are
+    not forcibly rebuilt: existing realized workloads continue on version N, and the estate picks up
+    N+1 on their next converge. The scenario validates version supersession semantics and orderly
+    consumer migration in the controlled repo.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Promote a new image version that supersedes and deprecates the prior canonical one
+  success_criteria:
+  - Version N+1 passes all promotion gates and is admitted to canonical
+  - The prior canonical version N is marked deprecated but retained for reference
+  - N+1 is recorded as superseding N in the controlled repo lineage
+  - Existing realized Compute.Container.OCPVirt workloads are not forcibly rebuilt
+  - Consumers adopt N+1 on their next converge rather than immediately
+  - 'Supersession relationship and deprecation of N are recorded'
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: gates pass and supersession policy deprecates the prior canonical version
+  - domain: data
+    interaction: N+1 canonical, N deprecated-retained, supersedes edge recorded in lineage
+  - domain: provider
+    interaction: Compute.Container.OCPVirt consumers migrate to N+1 on next converge
+  - domain: audit
+    interaction: supersession and deprecation transition recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-container
+- supersede
+- versioning
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - A prior canonical version N of the image line exists with active consumers
+  - Version N+1 is a clean, gate-passing successor
+  postconditions:
+  - N+1 canonical and superseding; N deprecated-retained
+  - Consumers migrate on next converge with no forced rebuild
+  note: batch=supply-chain-promotion-2026-07-22

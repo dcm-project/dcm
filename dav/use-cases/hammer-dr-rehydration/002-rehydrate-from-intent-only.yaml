@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-002
+handle: dr-rehydration/rehydrate-from-intent-only
+scenario:
+  description: 'A disaster wipes not only the realized resources but also the requested and realized state
+    stores; only the declared intent survives in an off-site copy. An SRE rehydrates from intent alone,
+    forcing the system to re-derive requested configuration and placement from first principles rather
+    than replaying captured realized facts. The system must treat the absence of realized UUIDs as expected
+    for this source and mint or preserve identifiers per the faithful contract. This probes whether intent
+    is genuinely sufficient as the single source of truth, or whether rehydration secretly depends on
+    realized-state artifacts.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+    - provider-owner
+    - security-officer
+  intent: Rebuild the environment from surviving intent when realized state is lost
+  success_criteria:
+  - Rehydration proceeds using intent state as the sole surviving source
+  - Requested configuration is re-derived from intent, not read from a lost store
+  - Missing realized facts do not abort the rebuild
+  - Validation policies are re-evaluated against the re-derived requested state
+  - All resources are re-realized in correct dependency order from intent alone
+  - The rebuild explicitly records that it ran from intent-only with no realized-state input
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent read as sole source; requested state re-derived, not replayed
+  - domain: policy
+    interaction: validation policies re-evaluated against re-derived requested state
+  - domain: provider
+    interaction: providers re-realize each resource from intent-derived requests
+  - domain: audit
+    interaction: rebuild records intent-only provenance and identifier handling
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- intent-only
+- source-of-truth
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Realized and requested state stores are lost; only intent survives
+  - Resources are destroyed
+  postconditions:
+  - Environment rebuilt from intent alone
+  - Provenance records intent-only source
+  - Four-state stores repopulated from the rebuild
+  note: batch=framework-hammer-2026-07-16

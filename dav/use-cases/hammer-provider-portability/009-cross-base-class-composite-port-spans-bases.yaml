@@ -1,0 +1,57 @@
+uuid: uc-hammer-provider-portability-009
+handle: provider-portability/cross-base-class-composite-port-spans-bases
+scenario:
+  description: A three-tier service is a composite whose constituents span three Base Classes — Compute (the tiers),
+    Storage (a volume), and Network (a virtual network). Re-porting the composite re-realizes each constituent against
+    the target, crossing all three Base Classes in one ordered flow driven by the dependency graph.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Port a composite service whose constituents span Compute, Storage and Network Base Classes
+  success_criteria:
+  - The composite's constituents are re-realized in dependency order
+  - Compute, Storage and Network Base-Class requirements each re-realize
+  - The dependency graph supplies the correct order across Bases
+  - Cross-Base realized payloads (IP, volume handle) feed dependents
+  - The composite re-realizes as a coherent whole
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: orders the cross-Base re-realization via the dependency graph
+  - domain: provider
+    interaction: compute, storage and network providers each realize their constituent
+  - domain: data
+    interaction: cross-Base realized payloads recorded and passed downstream
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-base-class
+- portability
+- composite-service
+- compute-storage-network
+- dependency-graph
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The composite spans Compute, Storage and Network Base Classes
+  postconditions:
+  - The composite re-realizes across all three Base Classes
+  note: batch=portability-enrich-2026-07-22

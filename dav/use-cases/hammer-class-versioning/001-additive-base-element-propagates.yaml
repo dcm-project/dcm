@@ -1,0 +1,54 @@
+uuid: uc-19483bb1-4335-4042-9115-a5149ac82de8
+handle: class-versioning/additive-base-element-propagates
+version: 1.1.0
+scenario:
+  description: A registry maintainer adds an OPTIONAL element to a Base Class. Recompilation regenerates
+    every downstream Type Class, Provider Class, and generated flat spec in the same change; each regenerated
+    artifact keeps its identity uuid, takes a compatible version bump under the publish law, and lands
+    a new digest row in the pin manifest (ADR-051); the deterministic gates (fuzz, compat, catalog, identity
+    integrity) re-prove every descendant automatically. Downstream organizations pinned to earlier versions
+    are untouched until they re-pin — nothing propagates into an estate implicitly.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Evolve a Base Class additively and have every derived artifact regenerate, re-verify, and re-version
+    in one atomic registry change
+  success_criteria:
+  - The Base Class change and every regenerated descendant land in one atomic change set
+  - Every regenerated artifact keeps its identity uuid and carries a version bump the compat gate accepts
+    as sufficient, with its new (version, digest) row appended to the pin manifest
+  - The change record lists the standing gate suite that re-proved every regenerated spec (no per-change test authoring appears anywhere in the change)
+  - Every pin in the consumer manifests still resolves to its pre-change revision — the recorded (version,
+    digest) rows are append-only, so no pinned consumer's resolved bytes change
+  - The change record enumerates every regenerated artifact (the blast radius is explicit, not discovered)
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: class graph recompiles; every descendant re-versions atomically with digests recomputed
+  - domain: policy
+    interaction: compat gate classifies the change additive and accepts the declared bumps
+  - domain: provider
+    interaction: provider classes inherit the new optional element without redeclaration
+  - domain: audit
+    interaction: the change set records the full regeneration manifest
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- base-class
+- additive
+- recompilation

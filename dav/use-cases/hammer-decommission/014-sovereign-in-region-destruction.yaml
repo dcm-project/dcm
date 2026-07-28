@@ -1,0 +1,60 @@
+uuid: uc-hammer-decommission-014
+handle: decommission/sovereign-in-region-destruction
+scenario:
+  description: 'Under a data-sovereignty mandate, a security-officer decommissions a resource holding
+    regulated data that by law must be destroyed inside the jurisdiction where it lived. The teardown
+    must dispatch the destroy to an in-region provider, produce a jurisdiction-scoped certificate of destruction,
+    and refuse any path that would move or process the data out of region on the way to being destroyed
+    — including a cross-border admin plane. This probes whether sovereignty constraints bind the destroy
+    path, not just the create path.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - sovereignty-authority
+  intent: Decommission regulated data with destruction proven to occur in-region
+  success_criteria:
+  - The resource's residency jurisdiction is resolved from the data model
+  - The destroy is dispatched only to an in-region provider
+  - No teardown step moves or processes the data out of its jurisdiction
+  - A jurisdiction-scoped certificate/proof of destruction is produced
+  - A destroy path that would breach residency is refused
+  - The in-region destruction and its proof are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: residency jurisdiction resolved for the resource being destroyed
+  - domain: policy
+    interaction: sovereignty constraint binds the destroy to an in-region provider
+  - domain: provider
+    interaction: in-region provider executes destroy and emits proof of destruction
+  - domain: audit
+    interaction: in-region destruction and certificate recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- sovereignty
+- residency
+- proof-of-destruction
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,64 @@
+uuid: uc-hammer-recent-model-004
+handle: recent-model/provider-class-element-survives-modification
+scenario:
+  description: "A tenant admin modifies an existing Compute.VM.OCPVirt instance to resize memory. The\
+    \ instance\n    carries a Provider-Class SharedDataElement (a placement_group_ref) that is untouched\
+    \ by the resize.\n    The modification path must preserve the custodied element byte-for-byte across\
+    \ the change and must not\n    round-trip it through any provider-native representation, since the\
+    \ substrate has no schema for the\n    provider's internal form. This stresses that a defined Provider-Class\
+    \ element is durable across\n    lifecycle mutations and remains opaque-but-custodied, distinct from\
+    \ the retired provider_extensions\n    free-bag approach."
+  actor:
+    persona: tenant-admin
+    profile: dev
+  perspectives:
+    - provider-owner
+    - tenancy-authority
+  intent: Resize an OCPVirt VM while preserving its custodied Provider-Class placement_group_ref unchanged
+  success_criteria:
+  - The memory resize is applied to the entity
+  - The placement_group_ref SharedDataElement is unchanged after the modification
+  - The element is never round-tripped through a provider-native representation during the change
+  - The element remains a defined Provider-Class element, not a free-form extension bag
+  - The realized record after resize still exposes the element for query
+  - Audit shows the resize touched memory only and left the custodied element intact
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: data
+    interaction: the placement_group_ref element is carried through the modification unchanged
+  - domain: policy
+    interaction: system defaults validate the resize without touching the custodied element
+  - domain: provider
+    interaction: the OCPVirt provider applies the resize and leaves its element semantics at the edge
+  - domain: audit
+    interaction: the modification scope and element stability are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- provider-class-element
+- shared-data-element
+- modification
+- custody-stability
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - The VM already carries a defined placement_group_ref element
+  - provider_extensions is retired; the element is a defined SharedDataElement
+  postconditions:
+  - The VM has new memory and an unchanged placement_group_ref
+  - No provider-native round-trip of the element occurred
+  note: batch=recent-model-2026-07-22

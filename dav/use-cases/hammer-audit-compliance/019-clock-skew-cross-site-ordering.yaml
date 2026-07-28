@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-019
+handle: audit/clock-skew-cross-site-ordering
+scenario:
+  description: 'Two sites in a federation each append to a shared logical audit history, and their wall
+    clocks disagree by several seconds. A forensic reconstruction must place events in their true causal
+    order even though timestamps alone would misorder cross-site events. The architecture must derive
+    ordering structurally — from the hash chain and causal links, not from clock values — so that a later
+    event with an earlier timestamp is still ordered correctly. This directly tests the principle that
+    audit ordering is structural, not clock-based, and is a likely gap if ordering leans on timestamps.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Reconstruct correct causal audit order across sites despite clock skew
+  success_criteria:
+  - Events from both sites are merged into one ordered history
+  - Ordering is derived from hash-chain and causal links, not wall-clock values
+  - A later event bearing an earlier timestamp is still ordered after its cause
+  - Clock skew between sites does not reorder causally dependent events
+  - The reconstruction is deterministic and reproducible
+  - Any events that are genuinely concurrent are marked as unordered, not falsely ordered
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: causal order derived structurally from the hash chain across sites
+  - domain: data
+    interaction: concurrent events marked unordered rather than forced into a false sequence
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- ordering
+- clock-skew
+- structural-ordering
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

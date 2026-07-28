@@ -1,0 +1,63 @@
+uuid: uc-hammer-day0-day2-ops-018
+handle: day0-day2-ops/sovereign-airgap-patch-attest
+scenario:
+  description: 'A security officer applies a day-2 security patch to workloads in an air-gapped sovereign
+    enclave. There is no outbound network: a signed patch bundle is imported across the boundary, its
+    signature and provenance verified, then an Automation.Job bound to the target workloads applies it
+    entirely in-boundary. A governance matrix enforces which roles may import, verify, and apply, and
+    every step must be attested so the whole patch is provably in-boundary and authorized.'
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Apply an imported signed patch inside an air-gapped enclave under governance-matrix control
+  success_criteria:
+  - The signed patch bundle is imported across the boundary and its signature/provenance verified before
+    use
+  - The patch job runs entirely in-boundary with no outbound network dependency
+  - A governance matrix enforces distinct roles for import, verify, and apply
+  - The patch job is bound to the target workloads and reaches a terminal outcome
+  - Every step is attested so the patch is provably in-boundary and authorized
+  - The import, verification, apply, and attestation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: enforces the governance matrix over import/verify/apply roles and in-boundary constraint
+  - domain: audit
+    interaction: attests and records every step of the in-boundary patch
+  - domain: provider
+    interaction: applies the verified patch bundle in-boundary to the bound workloads
+  - domain: data
+    interaction: records the verified bundle and its binding to the target workloads
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- sovereign
+- air-gap
+- attestation
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The enclave is air-gapped with a controlled import path
+  - A signed patch bundle and governance matrix exist
+  postconditions:
+  - The patch is applied in-boundary and attested
+  - The full arc is auditable within the enclave
+  note: batch=day0-day2-ops-2026-07-22

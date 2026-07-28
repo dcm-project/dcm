@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-004
+handle: peer-dcm/connected-cross-dcm-dependency-spanning-boundary
+scenario:
+  description: 'A resource requested in the local DCM depends on a resource that is realized and owned in a peer
+    DCM. The dependency graph spans the federation boundary: the local resource''s criteria derive from the peer
+    resource''s realized facts, passed across the boundary as a realized payload.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+  intent: Resolve a dependency where a resource depends on one realized in a peer DCM
+  success_criteria:
+  - The dependency graph includes a cross-boundary edge to the peer-owned resource
+  - The peer resource's realized facts are passed across as a payload
+  - The local resource's criteria resolve from the peer's realized facts
+  - The cross-DCM dependency is recorded with the peer owner
+  - Ordering respects the cross-boundary dependency
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: peer realized facts cross the boundary as a payload
+  - domain: policy
+    interaction: local criteria resolve from the peer's realized facts
+  - domain: provider
+    interaction: the peer owns the depended-on resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- cross-dependency
+- dependency-graph
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - A depended-on resource is realized and owned in a peer DCM
+  postconditions:
+  - The local resource resolves against the peer-owned dependency
+  note: batch=peer-dcm-2026-07-23

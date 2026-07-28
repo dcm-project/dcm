@@ -1,0 +1,65 @@
+uuid: uc-hammer-policy-override-019
+handle: policy-override/cross-tenant-matrix-denied
+scenario:
+  description: 'A tenant-admin in tenant A declares a dependency on a resource owned by tenant B — for
+    instance mounting tenant B''s shared dataset into a tenant A workload. Neither resource is denied
+    on its own, but the governance matrix governs the cross-tenant interaction and denies it absent an
+    explicit sharing grant. The engine must recognize the two resources belong to different tenants, consult
+    the cross-tenant cell of the governance matrix, and deny the dependency. The mechanism under test
+    is the governance matrix enforcing tenant isolation at the interaction level, catching a cross-tenant
+    leak that per-resource policies would miss.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - security-officer
+    - tenancy-authority
+  intent: Declare a dependency on another tenant's resource without a sharing grant
+  success_criteria:
+  - The two resources are identified as belonging to different tenants
+  - Each resource individually passes its own in-scope policies
+  - The governance matrix cross-tenant cell is consulted for the interaction
+  - The dependency is denied absent an explicit cross-tenant sharing grant
+  - No cross-tenant attachment is realized
+  - The denial names the two tenants and the missing sharing grant
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency resolved across two distinct tenant owners
+  - domain: policy
+    interaction: governance matrix denies the cross-tenant interaction
+  - domain: audit
+    interaction: cross-tenant denial recorded with both tenants and missing grant
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- governance-matrix
+- cross-tenant
+- isolation
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A dependency crosses two tenant ownership boundaries
+  - No cross-tenant sharing grant exists
+  postconditions:
+  - The cross-tenant dependency is denied by the governance matrix
+  note: batch=framework-hammer-2026-07-16

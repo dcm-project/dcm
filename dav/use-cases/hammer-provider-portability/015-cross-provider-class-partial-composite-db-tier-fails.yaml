@@ -1,0 +1,60 @@
+uuid: uc-hammer-provider-portability-015
+handle: provider-portability/cross-provider-class-partial-composite-db-tier-fails
+scenario:
+  description: A three-tier application is re-ported across Provider Classes. The web and app tiers — portable at
+    the Type Class — re-realize cleanly. The database tier depends on a provider-specific replication element with
+    no equivalent on the target; that tier is not re-realized, and the composite is reported as partially fulfilled
+    with the DB tier surfaced.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: A three-tier re-port partially fulfills when the DB tier's provider-specific replication does not carry
+  success_criteria:
+  - Web and app tiers re-realize on the target Provider Class
+  - The DB tier's provider-specific replication has no target equivalent
+  - The DB tier is not re-realized
+  - The composite is reported partially fulfilled
+  - The unfulfilled DB tier is surfaced for a decision
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: evaluates each tier's portability against the target
+  - domain: provider
+    interaction: web/app tiers realize; DB tier's replication has no equivalent
+  - domain: data
+    interaction: composite recorded partially fulfilled with the DB tier surfaced
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- partial-fulfillment
+- composite-service
+- three-tier
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The DB tier carries a provider-specific replication element
+  postconditions:
+  - Web/app tiers ported; DB tier surfaced as unfulfilled
+  note: batch=portability-enrich-2026-07-22

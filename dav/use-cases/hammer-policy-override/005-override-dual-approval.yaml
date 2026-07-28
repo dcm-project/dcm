@@ -1,0 +1,66 @@
+uuid: uc-hammer-policy-override-005
+handle: policy-override/override-dual-approval
+scenario:
+  description: 'A platform-engineer requests a time-bounded override of a soft-enforcement policy that
+    restricts placing a regulated workload on a shared-tenancy provider. Because the policy is classified
+    high-risk, its override eligibility declares dual-approval: two distinct authorized approvers from
+    separate roles (e.g. a security-officer and a compliance-owner) must both grant before the override
+    takes effect. A single approval must leave the override pending, not active. The mechanism under test
+    is an override eligibility rule that requires an approval quorum, and the correct sequencing of a
+    pending-to-active transition only on the second grant.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - security-officer
+    - tenancy-authority
+  intent: Obtain a dual-approved override of a high-risk soft policy
+  success_criteria:
+  - The policy's override eligibility declares a two-approver quorum across distinct roles
+  - The first approval leaves the override in a pending state, not active
+  - The second approval by a distinct authorized role activates the override
+  - The two approvers must be different principals in different roles
+  - The override is scoped in time and narrowed to the specific matched request
+  - Both approval events and the activation are recorded and audit-linked
+  - Policy evaluations honor the override only after both approvals land
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: override eligibility requires a two-role approval quorum
+  - domain: policy
+    interaction: pending-to-active transition gated on the second distinct approval
+  - domain: data
+    interaction: override record stores both approvers, scope, and duration
+  - domain: audit
+    interaction: both approvals and activation linked for review
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- dual-approval
+- quorum
+- human-in-loop
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A high-risk soft policy declares dual-approval override eligibility
+  postconditions:
+  - Override activates only after two distinct-role approvals
+  - Scope, duration, and both approvers are recorded
+  note: batch=framework-hammer-2026-07-16

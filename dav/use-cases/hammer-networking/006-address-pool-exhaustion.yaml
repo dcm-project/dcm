@@ -1,0 +1,57 @@
+uuid: uc-hammer-networking-006
+handle: networking/address-pool-exhaustion
+scenario:
+  description: 'A batch of 40 VMs is provisioned into a segment whose DHCP scope / address pool has only
+    12 free addresses left. Partway through the run the pool exhausts. The system must detect exhaustion,
+    fail the affected allocations cleanly with a specific "pool exhausted" reason, leave the already-allocated
+    addresses owned and intact, and not hand out an out-of-range or duplicate address to force progress.
+    This tests graceful degradation at a hard resource limit rather than silent corruption of the address
+    space.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Provision more addresses than the pool can satisfy and observe clean exhaustion handling
+  success_criteria:
+  - Allocations proceed until the pool's free set is empty
+  - Exhaustion is detected and reported with a specific pool-exhausted reason
+  - Requests beyond capacity fail rather than receiving out-of-range or duplicate addresses
+  - Already-allocated addresses remain owned, intact, and unaffected
+  - No partial resource is left in an ambiguous half-allocated state
+  - The exhaustion event and the count satisfied vs denied are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: pool free set tracked; exhaustion boundary recorded
+  - domain: provider
+    interaction: DHCP/pool provider reports it can no longer satisfy allocations
+  - domain: audit
+    interaction: satisfied vs denied counts and exhaustion recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- address-pool
+- exhaustion
+- failure
+- quota
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

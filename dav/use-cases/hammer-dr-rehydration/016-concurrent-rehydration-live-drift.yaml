@@ -1,0 +1,65 @@
+uuid: uc-hammer-dr-rehydration-016
+handle: dr-rehydration/concurrent-rehydration-live-drift
+scenario:
+  description: 'A rehydration is mid-flight when an out-of-band actor mutates a resource that has already
+    been re-realized — an operator hotfixes a config, or an autoscaler resizes an instance, while later
+    resources in the plan are still being rebuilt. The rehydration engine now faces live drift on resources
+    it believed it had just restored to intent. The system must detect that a just-rehydrated resource
+    no longer matches the state it wrote, avoid blindly clobbering the concurrent change or completing
+    the plan on a stale assumption, and reconcile the conflict — either re-converging to intent or flagging
+    the drift for the operator. This tests rehydration under concurrency and may expose a race where the
+    final state is inconsistent.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Rehydrate while a concurrent actor drifts already-restored resources
+  success_criteria:
+  - Rehydration proceeds while an out-of-band actor mutates an already-restored resource
+  - The engine detects that a just-rehydrated resource no longer matches what it wrote
+  - It does not complete the plan on a stale assumption about that resource's state
+  - The concurrent change is reconciled (re-converged to intent or flagged), not blindly clobbered
+  - The final environment state is internally consistent, not a torn mix of plan and drift
+  - The detected drift, the reconciliation decision, and timing are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: post-write realized state re-read; concurrent drift detected against plan
+  - domain: policy
+    interaction: recovery/reconciliation policy decides re-converge versus flag
+  - domain: provider
+    interaction: provider re-queried; concurrent change reconciled rather than clobbered
+  - domain: audit
+    interaction: drift, reconciliation decision, and timing recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- concurrency
+- live-drift
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A rehydration plan is executing across multiple resources
+  - An out-of-band actor mutates a resource already re-realized by the plan
+  postconditions:
+  - Concurrent drift detected and reconciled
+  - Final state internally consistent; conflict recorded
+  note: batch=framework-hammer-2026-07-16

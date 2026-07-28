@@ -1,0 +1,63 @@
+uuid: uc-hammer-recent-model-011
+handle: recent-model/reentrant-policy-reconverges-on-injection
+scenario:
+  description: "A platform engineer modifies a composite service; an enrichment policy injects a derived\
+    \ tier\n    label, and that injected value is itself an input to a placement policy, which in turn\
+    \ injects an\n    affinity zone that a third policy reads. The evaluator must be re-entrant: each\
+    \ injected/enriched\n    value triggers re-evaluation of the policies that depend on it, iterating\
+    \ until the value set stops\n    changing (a fixpoint). The scenario is well-founded and converges\
+    \ in a few passes. This probes that\n    policy re-converges on mutated inputs and settles deterministically\
+    \ at a fixpoint."
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - provider-owner
+  intent: Re-evaluate policies to a stable fixpoint as each injected value feeds the next policy
+  success_criteria:
+  - An enrichment policy injects a derived tier label into the evaluation state
+  - Policies depending on the injected value are re-evaluated, not left stale
+  - Injection cascades (tier -> placement -> affinity) trigger further re-evaluation
+  - Iteration continues until the value set stops changing (fixpoint reached)
+  - The final decision reflects the converged value set, not an intermediate pass
+  - The number of passes and the converged values are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: policies re-evaluate on each injected value until a fixpoint is reached
+  - domain: data
+    interaction: injected and enriched values are written back into the evaluation state each pass
+  - domain: provider
+    interaction: the converged decision drives placement across the eligible set
+  - domain: audit
+    interaction: the pass count and converged value set are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- reentrant-fixpoint
+- fixpoint
+- reconvergence
+- enrichment
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - Enrichment, placement, and affinity policies form a well-founded dependency chain
+  - The composite service has multiple placeable components
+  postconditions:
+  - The evaluation reached a fixpoint
+  - Placement reflects the converged values
+  note: batch=recent-model-2026-07-22

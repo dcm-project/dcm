@@ -1,0 +1,58 @@
+uuid: uc-hammer-networking-012
+handle: networking/network-provider-failure-midprovision
+scenario:
+  description: 'A stack requests a VLAN, a gateway, and two IPAddress bindings. After the VLAN is realized,
+    the network provider fails mid-flight while realizing the gateway (SDN controller returns an error
+    / times out). The system must halt cleanly, not proceed to bind addresses onto a segment whose gateway
+    does not exist, record which resources are realized versus pending, and leave the environment in a
+    recoverable state so a retry resumes rather than duplicates. This tests partial-failure handling within
+    a single network provisioning arc.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Survive a network-provider failure partway through a multi-resource network provision
+  success_criteria:
+  - The already-realized VLAN is preserved and marked realized
+  - Gateway realization failure is detected and reported with a specific reason
+  - Downstream address bindings that depend on the gateway are not dispatched
+  - Realized-vs-pending state is recorded accurately for every resource in the arc
+  - No duplicate or orphaned segment/gateway is created by the failure
+  - Retry resumes from the failed step rather than re-realizing completed resources
+  - The failure and recovery state are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: network provider fails realizing the gateway; error surfaced
+  - domain: data
+    interaction: realized-vs-pending recorded per resource; no orphans
+  - domain: audit
+    interaction: partial failure and recoverable state recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- provider-failure
+- partial-failure
+- recovery
+- gateway
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

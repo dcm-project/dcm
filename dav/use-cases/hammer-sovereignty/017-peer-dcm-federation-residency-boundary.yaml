@@ -1,0 +1,71 @@
+uuid: uc-hammer-sovereignty-017
+handle: sovereignty/peer-dcm-federation-residency-boundary
+scenario:
+  description: 'A platform engineer submits a request whose capacity can only be satisfied by delegating
+    placement to a peer DCM in another domain via federation. The resource, however, carries a sovereign
+    residency constraint, and the peer DCM operates in a jurisdiction that would violate the mandate.
+    The architecture must recognize that although federation to the peer is the only path to capacity,
+    the sovereignty constraint forbids delegating this resource across the residency boundary — and must
+    refuse the cross-domain delegation rather than hand the residency obligation to a peer that cannot
+    honor it. This probes whether sovereignty constraints are preserved across federation boundaries and
+    whether a peer''s jurisdiction is checked before delegation.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - federation-peer-operator
+    - sovereignty-authority
+  intent: Satisfy capacity via a peer DCM without crossing a residency boundary
+  success_criteria:
+  - The request is identified as satisfiable only by delegating to a peer DCM
+  - The peer DCM's operating jurisdiction is evaluated against the residency constraint
+  - The cross-domain delegation is refused because the peer cannot honor the mandate
+  - The residency obligation is not handed off to a non-compliant peer
+  - The request is surfaced as blocked-by-residency rather than silently delegated
+  - The blocked delegation, peer jurisdiction, and mandate are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: peer_dcm_disconnect
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty constraint evaluated against the peer DCM's jurisdiction before delegation
+  - domain: provider
+    interaction: peer DCM's jurisdiction resolved; cross-domain delegation refused
+  - domain: data
+    interaction: request left blocked; residency obligation retained, not delegated
+  - domain: audit
+    interaction: blocked delegation and peer jurisdiction recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- federation
+- peer-dcm
+- residency-boundary
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Only a peer DCM can satisfy the capacity
+  - The peer's jurisdiction violates the residency constraint
+  postconditions:
+  - Cross-domain delegation refused
+  - Request blocked-by-residency and recorded
+  note: batch=framework-hammer-2026-07-16

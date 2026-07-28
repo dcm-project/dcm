@@ -1,0 +1,56 @@
+uuid: uc-hammer-peer-dcm-003
+handle: peer-dcm/connected-federated-placement-across-peers
+scenario:
+  description: A portable request is evaluated for placement across a mixed landscape — the local DCM's providers
+    plus several federated peers. Placement scores each candidate by requirements, advertised capability, and policy,
+    and selects the best fit, which may be local or a peer.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+  intent: Place a workload by evaluating providers across the local DCM and multiple peers
+  success_criteria:
+  - Placement enumerates local and federated-peer candidates
+  - Each candidate is scored by requirements, capability, and policy
+  - The best-fitting candidate is selected (local or peer)
+  - If a peer wins, realization dispatches across the boundary
+  - The placement decision and the candidate set are audited
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: scores mixed local+peer candidates by requirements and capability
+  - domain: provider
+    interaction: the selected candidate (local or peer) realizes the workload
+  - domain: audit
+    interaction: the candidate set and decision are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- placement
+- mixed-landscape
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - The local DCM and several peers all advertise eligible providers
+  postconditions:
+  - The workload runs on the best-fitting candidate across the federation
+  note: batch=peer-dcm-2026-07-23

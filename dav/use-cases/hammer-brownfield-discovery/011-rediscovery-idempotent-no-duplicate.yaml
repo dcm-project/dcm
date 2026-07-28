@@ -1,0 +1,56 @@
+uuid: uc-hammer-brownfield-011
+handle: brownfield-discovery/rediscovery-idempotent-no-duplicate
+scenario:
+  description: 'A discovery source re-scans on its normal cadence and reports the same host it reported
+    last cycle, with no attribute changes. The system must recognize the observation as a re-discovery
+    of an existing entity (via correlation_ids), update last-seen, and produce no new entity, no drift
+    record, and no state churn. This is the discovery-side idempotency guarantee — steady-state scanning
+    of an unchanged estate must be a no-op beyond refreshing liveness. A simple happy-path baseline against
+    which the drift and correlation edge cases are measured.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Re-scan an unchanged host and confirm idempotent no-op discovery
+  success_criteria:
+  - The re-scan resolves to the existing entity via correlation_ids
+  - No duplicate entity is created
+  - last-seen is refreshed while first-seen is preserved
+  - No drift record is raised for an unchanged observation
+  - No managed state churn or provider dispatch results from the re-scan
+  - The re-discovery is recorded as a liveness refresh in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery source re-emits an unchanged observation
+  - domain: data
+    interaction: observation resolved to existing entity; last-seen refreshed, no duplicate
+  - domain: audit
+    interaction: liveness refresh recorded, no drift
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- rediscovery
+- idempotent
+- no-op
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,49 @@
+uuid: uc-multi-cluster-001
+handle: multi-cluster/provision-spoke-via-hub
+version: 1.0.0
+scenario:
+  description: "A platform engineer requests a new cluster through the fleet's hub: the hub (hosted-control-planes\
+    \ capable) provisions the spoke and hosts its control plane. The request binds on the hub's realized\
+    \ outputs (hub_ready) before dispatch; the resulting spoke is contained_by the hub \u2014 the hub\
+    \ has lifecycle authority, and shutdown ordering tears spokes down before the hub. This stresses the\
+    \ hub-provisioned topology end to end: intent against Platform.Hub, a Compute.Cluster realized under\
+    \ it, the containment edge authored by realization."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Provision a hosted-control-plane spoke cluster through a Platform.Hub and verify containment
+    ordering and output binding
+  success_criteria:
+  - The provisioning request binds on the hub's hub_ready output, contract-checked
+  - The realized spoke carries contained_by -> the hub (lifecycle authority)
+  - Shutdown order derives spokes-before-hub with no additional authoring
+  - The hub's managed_cluster_count output reflects the new spoke at next reconciliation
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the containment edge and hub outputs are the authored/published record
+  - domain: policy
+    interaction: validation confirms the hub is admitted for cluster provisioning
+  - domain: provider
+    interaction: the multi-cluster provider (OCM/CAPI-class) realizes the spoke under the hub
+  - domain: audit
+    interaction: provisioning path and binding resolution are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: multi-cluster-2026-07-24
+  timestamp: '2026-07-24T21:00:00.000000+00:00'
+tags:
+- multi-cluster
+- platform-hub
+- hosted-control-planes
+- binding

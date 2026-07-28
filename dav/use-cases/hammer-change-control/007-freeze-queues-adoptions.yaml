@@ -1,0 +1,53 @@
+uuid: uc-e7242d14-123c-4e77-8e40-d8d3de9f919f
+handle: change-control/freeze-queues-adoptions
+version: 1.0.0
+scenario:
+  description: 'A regulated estate declares a change freeze for its audit period: all adoptions, including
+    additive auto-adoptions, are suspended. Upstream changes accumulate as queued, ordered debt; auto-adoption
+    resumes when the freeze lifts and drains the queue in arrival order under the normal per-class gates.
+    During the freeze an adoption attempt is refused citing the freeze; the debt list distinguishes frozen-queued
+    from ordinary lag.'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Have a declared freeze suspend all adoptions with upstream changes queued as ordered, distinguishable
+    debt that drains under normal gates when the freeze lifts
+  success_criteria:
+  - The freeze is a dated policy clause; while active, every adoption path (including automatic) is suspended
+  - Adoption attempts during the freeze are refused citing the freeze clause and its end date
+  - Accumulated changes appear as queued debt, ordered and distinguished from ordinary pin-behind lag
+  - When the freeze lifts, the queue drains in arrival order, each item under its own change class gates
+  - The freeze period itself is part of the estate's audit trail — silence is provably policy, not neglect
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the freeze clause suspends adoption; per-class gates resume on lift
+  - domain: data
+    interaction: queued debt is typed distinctly from ordinary lag
+  - domain: audit
+    interaction: the freeze window and refused attempts are recorded
+  - domain: provider
+    interaction: the post-freeze drain is one orchestrated, ordered run
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- freeze
+- queued-adoption
+- regulated

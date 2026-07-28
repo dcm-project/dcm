@@ -1,0 +1,64 @@
+uuid: uc-hammer-policy-override-018
+handle: policy-override/shadow-divergence-gates-activation
+scenario:
+  description: 'A security-officer moves a shadow-mode policy toward activation. During its shadow run
+    the policy would have blocked a material fraction of recent requests that the active set allowed —
+    a divergence between shadow and enforced verdicts. The engine must surface this divergence and gate
+    activation behind an explicit acknowledgement of the would-block blast radius, rather than flipping
+    the policy to enforcing silently. This connects shadow evaluation to a safe-activation control: activation
+    is a governed transition informed by measured divergence, not a bare toggle. The mechanism under test
+    is divergence-gated activation of a policy lifecycle state.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Activate a shadow policy only after acknowledging its measured divergence
+  success_criteria:
+  - Shadow verdicts are compared against enforced verdicts over recent requests
+  - The divergence (would-block-but-was-allowed rate) is computed and surfaced
+  - Activation is gated behind an explicit acknowledgement of the blast radius
+  - The policy is not flipped to enforcing silently on a bare toggle
+  - The acknowledged divergence figure is recorded with the activation event
+  - Post-activation, the policy enforces and its verdicts are no longer shadow-only
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: shadow-vs-enforced divergence computed to inform activation
+  - domain: data
+    interaction: divergence figure and acknowledgement stored with the activation
+  - domain: audit
+    interaction: governed activation recorded with the acknowledged blast radius
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- shadow-mode
+- activation-gate
+- divergence
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A shadow policy has accumulated verdicts diverging from the enforced set
+  postconditions:
+  - Activation proceeds only after divergence is acknowledged and recorded
+  note: batch=framework-hammer-2026-07-16

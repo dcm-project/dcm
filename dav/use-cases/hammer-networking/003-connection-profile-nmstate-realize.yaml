@@ -1,0 +1,55 @@
+uuid: uc-hammer-networking-003
+handle: networking/connection-profile-nmstate-realize
+scenario:
+  description: 'A platform engineer declares a Network.ConnectionProfile (NMstate/NetworkManager form)
+    for a host: a named connection that pins an interface to a VLAN, sets its IPv4 method to manual with
+    a declared address, and sets DNS. The system must persist the profile as intent and realize it onto
+    the host via the NetworkManager provider, producing the corresponding NMstate on the box. This tests
+    that host connectivity configuration is a declarative, ownable record rather than an imperative script
+    run once and forgotten.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Realize a declarative NMstate connection profile onto a host
+  success_criteria:
+  - Network.ConnectionProfile record is created with a stable UUID
+  - Profile references the target interface, VLAN, and IP method (manual/auto)
+  - NetworkManager provider applies the profile, producing matching NMstate on the host
+  - Realized state reflects the active connection (address, gateway, dns) as declared
+  - Re-applying the unchanged profile converges to a no-op
+  - Profile application is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: Network.ConnectionProfile intent recorded referencing interface and VLAN
+  - domain: provider
+    interaction: NetworkManager provider realizes NMstate on the host
+  - domain: audit
+    interaction: profile application recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- connection-profile
+- nmstate
+- networkmanager
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

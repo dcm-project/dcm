@@ -1,0 +1,55 @@
+uuid: uc-hammer-peer-dcm-018
+handle: peer-dcm/dev-peer-federation-smoke-test
+scenario:
+  description: 'In a dev profile, an engineer federates with a local test peer DCM to smoke-test the cross-boundary
+    realization path end to end: dispatch, peer realize, handle return, and reference recording. Lightweight validation
+    with a single gating check, not production governance.'
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - federation-peer-operator
+  intent: Validate cross-DCM realization against a local test peer in the dev profile
+  success_criteria:
+  - A dev-profile DCM federates with a local test peer
+  - A cross-DCM realization is dispatched to the test peer
+  - The test peer realizes and returns a handle
+  - The local reference to the peer resource is recorded
+  - The end-to-end federation path is validated
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the local test peer realizes the resource
+  - domain: policy
+    interaction: a single gating check, not full production governance
+  - domain: data
+    interaction: the peer reference is recorded for validation
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- dev
+- smoke-test
+- connected
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Dev profile; a local test peer DCM is federated
+  postconditions:
+  - The cross-DCM realization path is validated end to end
+  note: batch=peer-dcm-2026-07-23

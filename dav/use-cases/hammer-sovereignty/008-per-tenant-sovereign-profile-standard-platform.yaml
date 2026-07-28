@@ -1,0 +1,69 @@
+uuid: uc-hammer-sovereignty-008
+handle: sovereignty/per-tenant-sovereign-profile-standard-platform
+scenario:
+  description: 'A standard multi-tenant platform hosts mostly commercial tenants under the standard profile,
+    but one tenant is bound to a sovereign profile that mandates in-jurisdiction data-at-rest and disclosed
+    sub-processors. A tenant admin for the sovereign tenant provisions a composite service on the shared
+    platform. The architecture must apply the sovereign tenant''s governance matrix to that tenant''s
+    request only — enforcing residency and disclosure for it — while leaving other tenants on standard
+    governance, all on the same platform. This probes whether per-tenant sovereign profiles compose correctly
+    inside an otherwise-standard platform without leaking the strict policy onto other tenants or relaxing
+    it for the sovereign one.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: sovereign
+  perspectives:
+    - security-officer
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Enforce a sovereign profile for one tenant inside a standard shared platform
+  success_criteria:
+  - The sovereign tenant's request is evaluated under its sovereign governance matrix
+  - Residency and sub-processor-disclosure policies apply to the sovereign tenant's resources
+  - Other tenants on the same platform remain under standard governance, unaffected
+  - The sovereign tenant's service is realized only on providers satisfying its mandate
+  - No sovereign policy is applied to non-sovereign tenants (no strictness leak)
+  - The per-tenant profile resolution and applied matrix are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: per-tenant governance matrix resolved; sovereign policies applied only to the sovereign
+      tenant
+  - domain: provider
+    interaction: sovereign tenant's service placed only on mandate-satisfying providers
+  - domain: data
+    interaction: tenant-to-profile binding and applied matrix read from the model
+  - domain: audit
+    interaction: per-tenant profile resolution and enforcement recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- per-tenant-profile
+- multi-tenancy
+- governance-matrix
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Platform hosts standard tenants plus one sovereign-profile tenant
+  - Sovereign tenant is bound to a residency + disclosure mandate
+  postconditions:
+  - Sovereign tenant's resources enforced under its mandate
+  - Other tenants unaffected by the sovereign policy
+  note: batch=framework-hammer-2026-07-16

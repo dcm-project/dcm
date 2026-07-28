@@ -1,0 +1,62 @@
+uuid: uc-hammer-brownfield-012
+handle: brownfield-discovery/discovered-orphan-no-owner
+scenario:
+  description: 'Discovery finds a running VM on a managed hypervisor that belongs to no known tenant —
+    an orphan with a clear host dependency but no owning organization. The system must ingest it as a
+    Discovered entity, record the resolved dependency on its hypervisor, and flag it as owner-unknown
+    so it cannot be chargeback-attributed or governed until an owner is assigned. It must not be auto-assigned
+    to the hypervisor''s owner by inference. This probes whether the model tolerates a dependency-bearing
+    entity with a null owning tenant and surfaces ownership as an explicit gap.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - finance-analyst
+    - tenancy-authority
+  intent: Ingest an owner-unknown discovered VM and surface the missing ownership as a gap
+  success_criteria:
+  - The orphan VM is ingested as a Discovered entity with its hypervisor dependency resolved
+  - The entity carries an owner-unknown marker and a null owning tenant
+  - Ownership is not inferred or auto-assigned from the hosting hypervisor
+  - The entity is excluded from chargeback attribution until an owner is assigned
+  - The missing-owner condition is surfaced as a finding to governance
+  - The orphan discovery and its dependency edge are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: hypervisor information provider reports a VM with no tenant tag
+  - domain: data
+    interaction: entity ingested with resolved host dependency and null owning tenant
+  - domain: policy
+    interaction: ownership-required policy excludes the entity from chargeback and flags it
+  - domain: audit
+    interaction: orphan discovery and missing-owner finding recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- orphan
+- owner-unknown
+- chargeback
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,53 @@
+uuid: uc-hammer-decommission-010
+handle: decommission/audit-retention-past-decommission
+scenario:
+  description: 'A compliance-auditor must be able to prove, years after a resource is gone, that it once
+    existed, who authorized its teardown, and when it was destroyed. When a resource is decommissioned
+    the system must retire and clear the realized state but PRESERVE the intent record and the audit trail
+    under a retention policy — the decommission destroys the resource, not its history. This probes whether
+    the architecture separates resource lifetime from record lifetime, so teardown never erases the evidence
+    of the resource having existed.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives: []
+  intent: Confirm audit and intent history survive after a resource is decommissioned
+  success_criteria:
+  - After teardown, realized state is cleared but the intent record is retained (marked retired, not deleted)
+  - The full decommission audit trail — who authorized, what was destroyed, when — is preserved
+  - Retention policy governs how long the retired intent and audit records persist
+  - The auditor can retrieve the retired resource's history after the resource itself is gone
+  - The resource UUID remains resolvable to its history and is never reused
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: single_no_deps
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: realized state cleared, intent retained under retention policy
+  - domain: policy
+    interaction: retention policy governs record lifetime independent of resource lifetime
+  - domain: audit
+    interaction: full decommission history preserved and retrievable post-teardown
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- audit-retention
+- compliance
+- records
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

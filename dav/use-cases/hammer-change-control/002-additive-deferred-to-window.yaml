@@ -1,0 +1,51 @@
+uuid: uc-c4ffe64b-6716-42c0-bd6c-4123428df66a
+handle: change-control/additive-deferred-to-window
+version: 1.0.0
+scenario:
+  description: The same additive Compute Base element reaches a production estate whose change-management
+    policy allows class re-pins only inside a weekly maintenance window. The change lands upstream mid-week;
+    the estate's debt list shows the pending adoption immediately; nothing changes until the window opens,
+    when the orchestrated adoption job re-pins, regenerates downstream Compute.* records, and closes the
+    debt entry — all inside the window.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives: []
+  intent: Have a compatible class change adopted only inside the estate's declared maintenance window,
+    with the wait visible as debt rather than silent lag
+  success_criteria:
+  - The pending adoption appears on the estate's debt list the moment the upstream change is classified
+  - No estate artifact changes before the declared window opens
+  - The adoption job starts and completes inside the window, or defers whole to the next window — never
+    straddles
+  - Downstream Compute.* records regenerate in the same windowed run
+  - The adoption record carries the window identity and the policy that scheduled it
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: debt enumeration reflects the pending adoption before any change occurs
+  - domain: policy
+    interaction: the window policy gates when the re-pin may execute
+  - domain: provider
+    interaction: the windowed adoption job orchestrates re-pin plus downstream regeneration
+  - domain: audit
+    interaction: window identity and scheduling policy are part of the adoption record
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- change-window
+- maintenance-window
+- additive

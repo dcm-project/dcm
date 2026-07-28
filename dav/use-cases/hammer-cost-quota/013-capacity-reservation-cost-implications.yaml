@@ -1,0 +1,65 @@
+uuid: uc-hammer-cost-quota-013
+handle: cost-quota/capacity-reservation-cost-implications
+scenario:
+  description: 'A platform-engineer reserves a block of GPU capacity for a tenant ahead of a seasonal
+    workload. The reservation commits capacity — and therefore cost — whether or not it is consumed. The
+    pipeline must debit the reserved capacity against the tenant''s quota and budget at reservation time,
+    not at consumption time, and keep accruing while the reservation is idle. The mechanism under test
+    is whether the architecture models a reservation as a cost-bearing, quota- consuming intent distinct
+    from realized usage — reserved-but-idle cost is a classic showback blind spot.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - finance-analyst
+    - provider-owner
+    - tenancy-authority
+  intent: Reserve capacity and account its cost from reservation, not consumption
+  success_criteria:
+  - A capacity reservation is created as intent distinct from realized usage
+  - Reserved capacity is debited against quota at reservation time
+  - Reserved cost accrues against budget while the reservation sits idle
+  - Reserved and consumed cost are reported as separate lines, not merged
+  - Releasing the reservation stops accrual and restores quota
+  - The reservation, its accrual, and its release are recorded in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: reservation recorded as intent; quota debited independent of usage
+  - domain: policy
+    interaction: reservation validation commits cost and quota at reserve time
+  - domain: provider
+    interaction: capacity held against the reservation
+  - domain: audit
+    interaction: reservation, idle accrual, and release recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- reservation
+- capacity
+- accrual
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A tenant has quota and budget headroom for a reservation
+  postconditions:
+  - Reserved capacity accrues cost while idle
+  - Release restores quota and stops accrual
+  note: batch=framework-hammer-2026-07-16

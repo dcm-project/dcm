@@ -1,0 +1,54 @@
+uuid: uc-929229bc-6257-4ed7-9033-80f13bf68b0c
+handle: class-versioning/historical-chain-reconstruction
+version: 1.1.0
+scenario:
+  description: 'An auditor must answer, for a resource definition as it stood at an arbitrary past revision:
+    which Base, Type, and Provider class revisions — and which layer revisions — produced it? Both
+    families resolve exactly (ADR-051): an immutable record is fetched by its identity uuid (a record
+    never changes); a mutable definition''s past revision is fetched by (handle, version), with the pin
+    manifest''s recorded digest verifying the bytes (the publish law froze that pair; git history is the
+    revision store). Because every generated artifact declares its compilation provenance, the answer is
+    a mechanical walk: fetch the past artifact revision, read its provenance block, resolve each named
+    input revision. The full historical chain reconstructs for any revision that ever existed, with no
+    reliance on memory, logs, or the current state of anything.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Reconstruct the complete class and layer chain of any historical artifact revision mechanically
+    from the revision store
+  success_criteria:
+  - Any past artifact revision is fetchable from the revision store — records by identity uuid, definitions
+    by (handle, version) with the recorded digest verifying the bytes
+  - Its provenance block names its input revisions, each itself fetchable the same way
+  - The reconstruction is purely mechanical — no logs, memory, or current-state consultation
+  - 'The walk terminates with the complete chain: classes, layers, schemas, generator version'
+  - Two auditors performing the walk independently obtain identical chains
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: immutable revisions + declared provenance make history a database
+  - domain: audit
+    interaction: historical reconstruction is deterministic and independently repeatable
+  - domain: policy
+    interaction: compliance queries about past contracts resolve without privileged knowledge
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T23:30:00Z'
+tags:
+- hammer
+- class-versioning
+- provenance
+- historical-provenance
+- reconstruction

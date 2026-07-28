@@ -1,0 +1,61 @@
+uuid: uc-hammer-federation-019
+handle: federation/cross-peer-policy-conflict
+scenario:
+  description: 'A shared order spans two peer DCMs whose governing policies conflict: the local estate''s
+    residency policy forbids placing data outside its region, while the peer that must realize part of
+    the order enforces a policy that would place it elsewhere. Neither peer may unilaterally override
+    the other. The system must detect the cross-domain policy conflict up front, refuse to proceed on
+    an unsatisfiable intersection, and surface exactly which two policies collide — rather than letting
+    one side''s policy silently win. This tests conflict detection when governance is split across federation
+    peers.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - federation-peer-operator
+    - sovereignty-authority
+  intent: Detect and refuse a federation order where two peers' policies conflict
+  success_criteria:
+  - The order requires realization spanning two peers with governing policies
+  - The system computes the intersection of both peers' applicable policies
+  - The residency conflict is detected before any realization occurs
+  - Neither peer's policy silently overrides the other
+  - The order is refused as unsatisfiable, naming the two colliding policies
+  - The conflict finding and refusal are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: both peers' policies intersected; residency conflict detected; order refused
+  - domain: provider
+    interaction: no realization occurs on the unsatisfiable intersection
+  - domain: audit
+    interaction: named policy collision and refusal recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- policy-conflict
+- residency
+- governance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

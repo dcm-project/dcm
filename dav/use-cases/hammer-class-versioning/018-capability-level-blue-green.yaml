@@ -1,0 +1,56 @@
+uuid: uc-7efe8e18-d034-47b5-a645-454a79cb5f0f
+handle: class-versioning/capability-level-blue-green
+version: 1.0.0
+scenario:
+  description: 'A provider needs to roll a breaking v2 of its compute capability without touching its
+    storage service. The v2 runs green under the standard promotion contract: the same intent corpus realizes
+    dry-run under compute-capability v1 (blue) and v2 (green), declared typed outputs diff, and promotion
+    of the capability re-pin happens only on a clean-or-approved diff — while the storage capability serves
+    live traffic on its current version throughout, unaware anything happened. Realization provenance
+    records which capability revision governed each realization, so the transition window is fully reconstructible.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Promote one capability's breaking version through blue/green while sibling capabilities serve
+    untouched, with capability revisions in realization provenance
+  success_criteria:
+  - 'Blue/green runs at capability granularity: the same corpus realizes under capability v1 and v2, outputs
+    diffed'
+  - Promotion of the capability re-pin requires a clean-or-approved diff (the standard evidence gate,
+    unwaived)
+  - Sibling capabilities serve on their current versions throughout, with no movement
+  - Realization provenance records the capability revision governing each realization across the transition
+  - A dirty diff refuses the capability promotion and routes the contradicted claim upstream — scoped
+    to the capability
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: capability-scoped blue/green — staged provider evolution without whole-provider upgrades
+  - domain: data
+    interaction: typed-output diff at capability scope is the promotion gate
+  - domain: policy
+    interaction: the evidence gate applies unchanged at the finer granularity
+  - domain: audit
+    interaction: capability revisions in provenance make the transition reconstructible
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T01:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- two-plane
+- blue-green
+- capability-plane

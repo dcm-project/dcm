@@ -1,0 +1,61 @@
+uuid: uc-hammer-capacity-005
+handle: capacity/sovereign-no-in-zone-capacity
+scenario:
+  description: 'Under a strict sovereign mandate, a tenant requests placement but the only providers with
+    free capacity sit outside the mandated zones, while every in-zone provider is exhausted. The engine
+    must NOT relax the sovereignty constraint to satisfy capacity; it must fail closed with no placement.
+    This probes the collision of two hard constraints (residency and capacity) and confirms the architecture
+    never trades sovereignty for availability — a scenario that may return unsupported if no fail-closed
+    path exists.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Place under a sovereign mandate when only out-of-zone capacity exists
+  success_criteria:
+  - In-zone providers are queried and all report exhausted capacity
+  - Out-of-zone providers with capacity are identified but excluded by the mandate
+  - The sovereignty constraint is never relaxed to obtain capacity
+  - The request fails closed with no reservation held anywhere
+  - The resource is not realized outside the mandated zones
+  - The dual-constraint conflict and fail-closed decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereign mandate held firm against capacity pressure
+  - domain: provider
+    interaction: in-zone exhausted, out-of-zone excluded, no reservation made
+  - domain: audit
+    interaction: dual-constraint conflict and fail-closed outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:05.000000+00:00'
+tags:
+- capacity
+- sovereignty
+- exhaustion
+- fail-closed
+- constraint-conflict
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

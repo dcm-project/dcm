@@ -1,0 +1,60 @@
+uuid: uc-8abcaeb0-79ce-4345-8152-845ef42394cc
+handle: architecture/solution-architecture-decomposition
+version: 1.0.0
+scenario:
+  description: >-
+    A solution-architect takes a whole architecture — a multi-tier application with its compute,
+    storage, network, and data dependencies — and decomposes it into typed, portable resource
+    requests with the dependency edges between them preserved. The output is not a diagram but an
+    intent: an ordered, dependency-aware set of resources the platform can realize, portable across
+    providers because nothing in it names a provider's native form. The architect's demand is that
+    the decomposition survives the round trip — the dependency structure they drew is the dependency
+    graph the platform realizes and orders against, and the same decomposition places onto any
+    eligible provider without a rewrite.
+  actor:
+    persona: solution-architect
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - cloud-operator
+    - provider-owner
+  intent: >-
+    Decompose a whole architecture into typed, portable resource requests with their dependency
+    edges preserved — an ordered intent the platform realizes and can place across providers without
+    a rewrite
+  success_criteria:
+  - The architecture decomposes into typed resources, each with its declared dependency edges
+  - The dependency structure the architect drew is the graph the platform orders realization against
+  - The decomposition is portable — nothing in it names a provider's native form
+  - The same decomposition is eligible to place onto any provider that satisfies the requirements
+  - The whole is realized as an ordered, dependency-aware set, not a flat list
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: full_stack
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the architecture becomes typed resources plus the dependency edges between them
+  - domain: policy
+    interaction: the dependency graph drives realization ordering; portability is validated
+  - domain: provider
+    interaction: the decomposition is eligible for any provider satisfying the requirements; none is named in it
+  - domain: audit
+    interaction: the decomposition, its dependency graph, and the realization order are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- architecture
+- solution-architect
+- decomposition
+- dependency-graph
+- portability

@@ -1,0 +1,64 @@
+uuid: uc-hammer-dr-rehydration-003
+handle: dr-rehydration/uuid-preservation-across-rebuild
+scenario:
+  description: 'A tenant-admin destroys and faithfully rebuilds a small application composed of a web
+    tier that hard-depends on a database. Downstream systems (DNS records, monitoring targets, IAM bindings)
+    reference the resources by their stable UUIDs, so rehydration must reproduce the exact same identifiers
+    rather than mint new ones. The system re-realizes both resources in dependency order and reconciles
+    each newly realized resource back to its original UUID from the data model. This validates that identity
+    is a property of intent, not of a provider''s per-instance handle that changes on every rebuild.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Rebuild an app while preserving resource UUIDs for downstream references
+  success_criteria:
+  - Both resources are re-realized in correct dependency order (database before web tier)
+  - Each resource's original UUID is reattached to its rebuilt realization
+  - No new UUIDs are minted for resources that existed before the rebuild
+  - Downstream references keyed on UUID remain valid after rehydration
+  - Realized state matches original intent for both resources
+  - UUID continuity is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: original UUIDs read from intent and reattached to rebuilt resources
+  - domain: provider
+    interaction: provider re-realizes both resources; realized handles reconciled to stored UUIDs
+  - domain: audit
+    interaction: UUID continuity across destroy/rebuild recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- uuid-preservation
+- identity
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A two-resource app was realized with stable UUIDs and is now destroyed
+  - Downstream systems reference the resources by UUID
+  postconditions:
+  - Both resources rebuilt with original UUIDs preserved
+  - Downstream UUID references remain valid
+  - Audit trail records UUID continuity
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,56 @@
+uuid: uc-hammer-storage-mobility-008
+handle: storage-mobility/volume-online-resize
+scenario:
+  description: 'An application team grows an existing 500 GiB Storage.Volume to 1 TiB while it is attached
+    and in use by a running service. The system must treat this as a modification of the existing volume
+    (not a new resource), validate the new size against pool free space and tenant quota, dispatch an
+    online-expand to the provider, and preserve the volume UUID and any dependent attachments. This exercises
+    the day-2 resize path and idempotent size reconvergence.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Grow an in-use volume and preserve its identity and attachments
+  success_criteria:
+  - Resize is accepted as a modification of the existing volume
+  - New size is validated against pool free space and tenant quota
+  - Volume UUID is preserved (no reassignment)
+  - Dependent attachments remain bound across the resize
+  - Realized size matches the new intent size after expansion
+  - Re-applying the same target size produces a no-op
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: new size validated against pool free space and tenant quota
+  - domain: data
+    interaction: volume intent size updated, UUID and attachments preserved
+  - domain: provider
+    interaction: provider executes online volume expansion
+  - domain: audit
+    interaction: resize event recorded with old and new sizes
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- resize
+- day-2
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

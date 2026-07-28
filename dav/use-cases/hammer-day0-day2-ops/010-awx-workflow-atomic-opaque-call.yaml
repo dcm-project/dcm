@@ -1,0 +1,61 @@
+uuid: uc-hammer-day0-day2-ops-010
+handle: day0-day2-ops/awx-workflow-atomic-opaque-call
+scenario:
+  description: 'A platform engineer triggers a day-2 reconfiguration that the provider implements as an
+    AWX workflow of many internal jobs. From DCM''s view this is ONE atomic Automation.Workflow call bound
+    to the target resource: DCM dispatches it, waits, and receives a single terminal outcome. DCM does
+    not sequence or see the internal jobs — the internal fan-out is opaque and owned by the provider.
+    This is the atomic-vs-composite boundary: opaque provider orchestration is one call, not a DCM-sequenced
+    composite.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Invoke a provider AWX workflow as a single opaque atomic process call
+  success_criteria:
+  - DCM dispatches the AWX workflow as one atomic Automation.Workflow call
+  - DCM receives a single terminal outcome for the whole call
+  - The provider's internal jobs are opaque to DCM and not individually sequenced by DCM
+  - DCM does not model or gate the internal fan-out steps
+  - The single call is bound to the target resource it operates on
+  - The atomic call outcome is recorded against the resource in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: runs the AWX workflow internally and returns one terminal outcome
+  - domain: data
+    interaction: records the single atomic call bound to the resource
+  - domain: policy
+    interaction: validates the single day-2 call against the standard change policy
+  - domain: audit
+    interaction: records the atomic call and its terminal outcome
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- atomic-process
+- opaque
+- awx
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The AWX workflow is registered as a single Automation entity
+  - The target resource is realized
+  postconditions:
+  - The workflow runs as one opaque call
+  - DCM records a single terminal outcome, no internal steps
+  note: batch=day0-day2-ops-2026-07-22

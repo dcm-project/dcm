@@ -1,0 +1,69 @@
+uuid: uc-hammer-recent-model-014
+handle: recent-model/rehydration-rebuild-new-uuid-pending-review
+scenario:
+  description: "The original provider that realized a sovereign service is permanently offline, so an\
+    \ SRE must\n    rebuild from intent on a peer DCM. Rebuild-from-intent replays the original intent\
+    \ to create a NEW\n    entity with a NEW UUID (the old Realized record cannot be restored in place).\
+    \ Sovereignty and tenancy\n    are re-evaluated under CURRENT policy, which has tightened since the\
+    \ original request, so the rebuilt\n    entity lands in PENDING_REVIEW rather than auto-completing.\
+    \ This stresses the rebuild branch of\n    RHY-005: new provider, new identity, and a current-policy\
+    \ re-check that gates the outcome."
+  actor:
+    persona: sre
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - provider-owner
+    - federation-peer-operator
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Rebuild a sovereign service from intent on a peer DCM, minting a new UUID and landing in PENDING_REVIEW
+    under tightened policy
+  success_criteria:
+  - The original provider is confirmed permanently offline, forcing rebuild-from-intent
+  - Rebuild replays the original intent rather than restoring the Realized record
+  - The rebuilt entity is created with a NEW UUID, distinct from the original
+  - Sovereignty and tenancy are re-evaluated under current (tightened) policy
+  - The tightened policy places the rebuilt entity in PENDING_REVIEW rather than auto-complete
+  - The rebuild path, new UUID, and PENDING_REVIEW gating are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: partial_fulfillment
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: a peer DCM rebuilds the service from intent because the original provider is gone
+  - domain: data
+    interaction: a new entity with a new UUID is created; the original Realized record is not reused
+  - domain: policy
+    interaction: current sovereignty policy re-evaluates and routes the rebuild to PENDING_REVIEW
+  - domain: audit
+    interaction: the rebuild path, new UUID, and review gating are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- rehydration-restore-rebuild
+- rhy-005
+- rebuild-from-intent
+- new-uuid
+- pending-review
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - The original provider is permanently offline
+  - Sovereignty policy has tightened since the original request
+  postconditions:
+  - A new entity with a new UUID exists
+  - The rebuilt entity is held in PENDING_REVIEW pending current-policy sign-off
+  note: batch=recent-model-2026-07-22

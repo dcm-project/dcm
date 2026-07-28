@@ -1,0 +1,68 @@
+uuid: uc-hammer-recent-model-010
+handle: recent-model/firewall-ingress-admission-redact-high-assurance
+scenario:
+  description: "Data arriving from a lower-assurance discovery source must be admitted into a high-assurance\n\
+    \    sovereign zone. The information-firewall performs ingress mediation: after the data comes in,\
+    \ an\n    admission/integrity check validates provenance and structure, and a cross-domain guard transforms\
+    \ the\n    payload by redacting fields that are not permitted in the high-assurance zone before the\
+    \ data is\n    persisted. Records that pass are admitted in redacted form; records failing the integrity\
+    \ check are\n    quarantined. This stresses ingress admission/integrity control and a guard that transforms/redacts\
+    \ on\n    the inbound side, the mirror of egress mediation."
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Admit lower-assurance inbound data into a high-assurance zone through an integrity-checked,
+    redacting guard
+  success_criteria:
+  - Ingress mediation runs after the data enters and before it is persisted
+  - An admission/integrity check validates provenance and structure of each inbound record
+  - A cross-domain guard redacts fields not permitted in the high-assurance zone
+  - Records passing the check are admitted in redacted form
+  - Records failing the integrity check are quarantined rather than admitted
+  - Both admissions and quarantines are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: sovereignty_enforced
+    failure_mode: partial_fulfillment
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: ingress admission checks integrity and the guard redacts disallowed fields
+  - domain: data
+    interaction: admitted records are persisted in redacted form; failed records are quarantined
+  - domain: provider
+    interaction: the discovery provider supplies the lower-assurance inbound payload
+  - domain: audit
+    interaction: admissions and quarantines are both recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- policy-firewall
+- ingress-admission
+- integrity
+- redaction-transform
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - Inbound data originates from a lower-assurance source
+  - The sovereign zone forbids certain fields at rest
+  postconditions:
+  - Admitted records are stored redacted
+  - Integrity-failing records are quarantined, yielding partial admission
+  note: batch=recent-model-2026-07-22

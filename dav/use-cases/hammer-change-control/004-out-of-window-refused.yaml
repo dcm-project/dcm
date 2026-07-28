@@ -1,0 +1,48 @@
+uuid: uc-8577b7d3-a4ae-455d-a675-3a365f97f0ed
+handle: change-control/out-of-window-refused
+version: 1.0.0
+scenario:
+  description: 'An operator attempts to re-pin a production estate to a new Compute Base revision on a
+    Tuesday afternoon, outside the estate''s declared maintenance window, with no expedite authorization.
+    The change-management policy refuses: typed (window violation), actionable (names the policy, the
+    window, and the expedite path), and recorded. The estate is untouched.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Have an out-of-window adoption attempt refused with the window, the policy, and the expedite
+    path named
+  success_criteria:
+  - The re-pin attempt outside the window is refused before any artifact changes
+  - The refusal is typed as a window violation and names the governing policy clause and the next window
+  - The refusal names the expedite path (what authorization would permit an out-of-window change)
+  - The refused attempt is recorded with actor, time, and target revision
+  - An identical attempt inside the window proceeds under the normal gates
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the window clause refuses out-of-window execution
+  - domain: audit
+    interaction: the refused attempt is recorded with full context
+  - domain: data
+    interaction: no estate artifact changes on the refused path
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T20:00:00Z'
+tags:
+- hammer
+- change-control
+- change-window
+- must-reject

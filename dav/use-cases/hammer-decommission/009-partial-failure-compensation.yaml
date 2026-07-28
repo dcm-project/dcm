@@ -1,0 +1,60 @@
+uuid: uc-hammer-decommission-009
+handle: decommission/partial-failure-compensation
+scenario:
+  description: 'A platform engineer tears down a multi-resource environment; three of five resources destroy
+    cleanly, then the fourth provider call fails hard mid-teardown. The system must not leave the environment
+    in a torn, ambiguous half-state. It must halt the cascade, mark the environment COMPENSATION_IN_PROGRESS,
+    and drive a compensation policy — retry the failed destroy, and hold the already-destroyed resources
+    as terminal while the remainder is neither abandoned nor blindly forced. This probes partial-failure
+    handling and whether decommission is compensating rather than best-effort.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Handle a mid-teardown provider failure without leaving an ambiguous half-state
+  success_criteria:
+  - Three resources destroy cleanly and their realized state is cleared
+  - The fourth destroy fails and the cascade halts rather than continuing blindly
+  - Environment state transitions to COMPENSATION_IN_PROGRESS
+  - Recovery policy retries the failed destroy and does not report overall success while it is pending
+  - Already-destroyed resources are not re-created or double-destroyed on retry (idempotent compensation)
+  - The partial failure, the halt, and every compensation step are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: fourth destroy fails hard mid-cascade
+  - domain: policy
+    interaction: recovery policy halts cascade and drives compensating retry
+  - domain: data
+    interaction: environment marked COMPENSATION_IN_PROGRESS, destroyed resources held terminal
+  - domain: audit
+    interaction: partial failure and compensation steps recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- partial-failure
+- compensation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,55 @@
+uuid: uc-hammer-provider-portability-007
+handle: provider-portability/cross-type-class-container-to-vm-kernel-requirement
+scenario:
+  description: A container workload needs a capability a shared kernel cannot provide (a custom kernel module).
+    The org re-realizes it from Compute.Container to Compute.VM — a cross-Type-Class move under Compute Base. The
+    portable Base requirements carry; the VM gains the full-isolation Type elements the container lacked.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - tenancy-authority
+  intent: Promote a Compute.Container workload to a Compute.VM for a kernel-level requirement
+  success_criteria:
+  - The Base requirements carry from Container to VM
+  - The workload re-realizes as a Compute.VM
+  - The VM satisfies the kernel-level requirement the container could not
+  - The cross-Type move is recorded with its rationale
+  - The portable network intent is preserved
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: re-scopes Base requirements from Compute.Container to Compute.VM
+  - domain: provider
+    interaction: a VM provider realizes the workload with full isolation
+  - domain: data
+    interaction: records the cross-Type promotion and rationale
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-type-class
+- portability
+- compute-container
+- compute-vm
+- promotion
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The container workload requires a custom kernel module
+  postconditions:
+  - The workload runs as a Compute.VM satisfying the kernel requirement
+  note: batch=portability-enrich-2026-07-22

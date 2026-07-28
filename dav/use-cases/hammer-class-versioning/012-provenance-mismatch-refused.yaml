@@ -1,0 +1,51 @@
+uuid: uc-8b804009-80a2-41e5-83cf-e997bd1c65c1
+handle: class-versioning/provenance-mismatch-refused
+version: 1.0.0
+scenario:
+  description: 'A generated flat spec''s provenance block claims it was compiled from a set of class revisions
+    — but recompiling from exactly those revisions does not reproduce the artifact (the artifact was hand-edited
+    after generation, or the block was not updated with a regeneration). The gate refuses: a provenance
+    claim that does not reproduce its artifact is integrity failure, typed, naming the divergence. Provenance
+    is only worth carrying if it is verified — an unverified compiled-from block is provenance theater.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Have a generated artifact whose declared provenance does not reproduce it refused at the gate
+    as an integrity failure
+  success_criteria:
+  - Recompiling from the block's named input revisions must reproduce the artifact byte-comparably
+  - A mismatch (hand-edit after generation, stale block) is refused, typed as provenance integrity failure
+  - 'The refusal names the divergence: which sections differ from the faithful recompilation'
+  - The check runs in CI on every change touching generated artifacts — verification, not trust
+  - A matching artifact passes with the verification recorded
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: provenance verification is recompile-and-compare, deterministic
+  - domain: policy
+    interaction: unverifiable provenance refuses at the gate
+  - domain: audit
+    interaction: verification outcomes are recorded with the change
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T23:30:00Z'
+tags:
+- hammer
+- class-versioning
+- provenance
+- provenance-integrity
+- must-reject

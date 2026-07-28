@@ -1,0 +1,59 @@
+uuid: uc-hammer-capacity-014
+handle: capacity/dependent-criteria-from-parent-reserved-facts
+scenario:
+  description: 'A composite request has a child resource whose placement criteria cannot be known until
+    its parent is placed — the child must land in the same zone and on capacity adjacent to the parent''s
+    reserved node, using facts (zone, rack, provider id) that only exist once the parent''s reservation
+    resolves. The engine must thread the parent''s reserved facts into the child''s placement criteria
+    (fulfillment sourced from the provider), rather than requiring all criteria up front. This tests provider-fulfilled,
+    dependency-derived placement.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Derive a child's placement criteria from its parent's reserved facts
+  success_criteria:
+  - The parent resource is placed and its reserved facts (zone, node, provider) captured
+  - The child's placement criteria are populated from the parent's reserved facts
+  - The child is not placed until the parent's reservation resolves
+  - The child reserves capacity consistent with the derived criteria
+  - Both resources realize with the parent-child placement relationship intact
+  - The fact-threading from parent reservation to child criteria is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: parent reservation yields facts consumed by child placement (fulfillment provider)
+  - domain: data
+    interaction: parent reserved facts threaded into child criteria payload
+  - domain: audit
+    interaction: parent-to-child fact threading recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:14.000000+00:00'
+tags:
+- capacity
+- placement
+- dependency-derived
+- fulfillment-provider
+- cross-dependency
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,60 @@
+uuid: uc-2f4e1dfa-7159-415a-b9c6-330aec525284
+handle: osac/cloud-provider-registration
+version: 1.0.0
+scenario:
+  description: >-
+    A cloud-operator stands up a sovereign cloud (OSAC) and registers it with the platform as a
+    provider. Registration is a declaration in portable terms: the cloud's capabilities (which
+    resource kinds it can realize), its advertised capacity, and — because it is sovereign — its
+    residency and jurisdiction guarantees. The platform does not learn the cloud's native API; it
+    records the declared capability and sovereignty surface as data, so that later placement routes
+    intent to this cloud on capability, not on hard-coded knowledge of it. Building a new cloud
+    provider is therefore an additive act: the substrate is unchanged, a new placement target
+    appears, and the cloud remains swappable because it will naturalize intent at its own edge.
+  actor:
+    persona: cloud-operator
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - provider-owner
+    - security-officer
+    - sovereignty-authority
+  intent: >-
+    Register a sovereign cloud as a provider by declaring its capabilities, capacity, and
+    residency/jurisdiction guarantees as portable data — so the platform can place intent onto it
+    by capability without knowing its native form
+  success_criteria:
+  - The cloud's capabilities are recorded as declared data, not inferred — placement will match on them
+  - The advertised capacity is carried as data the platform can route against
+  - The residency and jurisdiction guarantees are declared and bound to the provider, not asserted out of band
+  - Registration adds a placement target without any change to the substrate or existing providers
+  - The cloud's native format is nowhere in the substrate — naturalization is reserved to its edge
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: composite_service
+    policy_complexity: multi_validation
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: the provider's capability, capacity, and sovereignty guarantees are recorded as declared data
+  - domain: policy
+    interaction: registration is validated against the provider contract and the sovereignty declaration is admitted
+  - domain: provider
+    interaction: the cloud is the provider; it declares its surface and will naturalize intent at its edge (T9 / ADR-023)
+  - domain: audit
+    interaction: the registration, its declared capabilities, and the sovereignty binding are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- osac
+- cloud-operator
+- provider-registration
+- sovereignty
+- capability

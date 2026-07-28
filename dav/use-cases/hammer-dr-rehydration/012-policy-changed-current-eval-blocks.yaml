@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-012
+handle: dr-rehydration/policy-changed-current-eval-blocks
+scenario:
+  description: 'Per RHY-001 (rehydration re-evaluates current policy rather than replaying a pinned snapshot),
+    a compliance auditor rehydrates a service that was legally realized months ago under a policy that
+    has since tightened. The governing validation policy now forbids the resource''s original configuration
+    — for example an encryption tier or a data-class handling rule that was later mandated. Rehydration
+    must re-evaluate the current policy and refuse to faithfully reproduce a now-non-compliant resource,
+    even though it faithfully matches stored intent. The system must make the intent-versus-current-policy
+    conflict explicit rather than resurrecting a violation. This likely returns unsupported or compliance-gated
+    by design.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Rehydrate a resource whose original config now violates tightened policy
+  success_criteria:
+  - Rehydration re-evaluates the current governing policy, not a pinned snapshot (RHY-001)
+  - The current policy is detected as stricter than the one in force at original realization
+  - The faithful rebuild is blocked because it would reproduce a now-non-compliant resource
+  - The conflict between stored intent and current policy is stated explicitly
+  - No non-compliant resource is realized on any provider
+  - The blocked outcome, the offending policy, and the delta are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    governance_context: compliance_gated
+    provider_landscape: single_eligible
+    failure_mode: provider_failure
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: stored intent read; original config compared to current policy
+  - domain: policy
+    interaction: current tightened policy re-evaluated and blocks the faithful rebuild
+  - domain: provider
+    interaction: no dispatch; non-compliant resource never realized
+  - domain: audit
+    interaction: policy delta, conflict, and blocked outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- policy-drift
+- rhy-001
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource was compliant under the policy in force at original realization
+  - The governing policy has since tightened
+  postconditions:
+  - Faithful rebuild blocked under current policy
+  - Policy delta and conflict recorded
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,59 @@
+uuid: uc-hammer-cost-quota-012
+handle: cost-quota/external-metering-no-cost-model
+scenario:
+  description: 'A finance-analyst asks DAV to compute the dollar cost of a running workload directly from
+    the UDLM model. But UDLM deliberately carries no pricing, rate-card, or metering data — cost is an
+    external metering concern. The system must recognize it can supply the workload''s resource footprint
+    and ownership (the join keys a metering system needs) but cannot itself compute a monetary cost, and
+    must say so rather than fabricate a number. The mechanism under test is honest boundary-drawing: the
+    architecture should return unsupported for monetary calculation while still exposing the footprint
+    an external meter joins against.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives: []
+  intent: Compute a workload's monetary cost from the model alone
+  success_criteria:
+  - The workload's resource footprint and ownership are resolved from the model
+  - No pricing, rate-card, or metering data is found in the model
+  - The system declines to compute a monetary cost rather than fabricating one
+  - The footprint and join keys an external meter would need are exposed
+  - The verdict names cost calculation as an external-metering responsibility
+  - The unsupported determination and the exposed join keys are recorded in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: footprint and ownership resolved; no pricing data present in the model
+  - domain: audit
+    interaction: unsupported monetary-cost verdict and exposed join keys recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- metering
+- external
+- boundary
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - The model carries footprint and ownership but no pricing data
+  postconditions:
+  - Monetary cost is declined as external-metering scope
+  - Footprint join keys are exposed for an external meter
+  note: batch=framework-hammer-2026-07-16

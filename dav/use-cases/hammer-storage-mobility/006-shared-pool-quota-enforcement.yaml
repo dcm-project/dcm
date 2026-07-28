@@ -1,0 +1,59 @@
+uuid: uc-hammer-storage-mobility-006
+handle: storage-mobility/shared-pool-quota-enforcement
+scenario:
+  description: 'Two tenants share a single Storage.Pool, each granted a capacity quota (tenant-a: 2 TiB,
+    tenant-b: 1 TiB) against a 3 TiB pool. Tenant-a requests a new 800 GiB volume that fits within the
+    pool''s free space but would exceed tenant-a''s remaining quota. The system must reject the allocation
+    on the per-tenant quota even though raw pool capacity is available. This exercises quota accounting
+    layered above physical capacity on a shared pool and the distinction between pool-level and tenant-level
+    limits.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - tenancy-authority
+  intent: Allocate a volume that fits the pool but violates the tenant's quota
+  success_criteria:
+  - Pool free space and per-tenant quota are tracked as distinct quantities
+  - Requested allocation is checked against tenant quota, not just pool free space
+  - Allocation is rejected because tenant quota would be exceeded
+  - Rejection cites the tenant quota, not physical capacity
+  - No partial or reserved allocation is left behind after rejection
+  - Other tenants' quota accounting is unaffected by the rejected request
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: per-tenant quota policy evaluated above pool capacity check
+  - domain: data
+    interaction: pool capacity and tenant quota accounting read and reconciled
+  - domain: audit
+    interaction: quota-based rejection recorded with the limiting dimension
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- quota
+- shared-pool
+- multi-tenancy
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

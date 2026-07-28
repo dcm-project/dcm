@@ -1,0 +1,69 @@
+uuid: uc-hammer-drift-recovery-016
+handle: drift-recovery/remediation-blocked-by-sovereignty
+scenario:
+  description: 'A security officer on a sovereign profile reconciles a residency-pinned dataset that drifted
+    when a provider replicated it to an out-of-jurisdiction cache. The obvious remediation — re-dispatch
+    the original intent — would itself require touching the non-compliant region to tear down the errant
+    replica, but the sovereignty policy forbids any operation that acts on data in that region. The engine
+    must detect the drift, attempt remediation, find that the corrective action is itself blocked by sovereignty,
+    and escalate to a human rather than either leaving the violation live or breaching residency to fix
+    it. This probes the tension when the remedy conflicts with a hard constraint.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - sovereignty-authority
+  intent: Remediate a residency drift where the corrective action is itself blocked by sovereignty
+  success_criteria:
+  - Drift detected as an out-of-jurisdiction replica of a residency-pinned dataset
+  - The engine selects remediation to remove the errant replica
+  - Sovereignty policy blocks the corrective action because it operates in the forbidden region
+  - The engine does not breach residency to perform the fix
+  - The unremediable violation is escalated to a human owner with full context
+  - Drift, blocked remediation, and escalation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: out-of-jurisdiction replica detected against the residency-pinned Realized snapshot
+  - domain: policy
+    interaction: recovery policy selects a fix that sovereignty then blocks; escalation raised
+  - domain: provider
+    interaction: corrective dispatch withheld to avoid operating in the forbidden region
+  - domain: audit
+    interaction: drift, blocked remediation, and human escalation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- sovereignty
+- blocked-remediation
+- escalation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Residency-pinned dataset realized in-jurisdiction
+  - A provider created an out-of-jurisdiction replica (drift)
+  postconditions:
+  - Remediation blocked by sovereignty; residency not breached
+  - Violation escalated to a human
+  - Full arc recorded
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,66 @@
+uuid: uc-hammer-policy-override-008
+handle: policy-override/compliance-revalidate-assembled-payload
+scenario:
+  description: 'A compliance-auditor''s profile requires that a compliance-class policy validate not the
+    raw intent but the fully assembled provider payload — after defaults are applied, dependencies are
+    resolved, and placement fills in the concrete provider, region, and image. A request that passed intent-time
+    validation could still violate compliance once the placement engine picks a non-conforming region
+    or a defaulted-in public endpoint. The engine must re-run the compliance-class validation against
+    the assembled payload immediately before dispatch and deny if the resolved concrete values violate
+    it. The mechanism under test is a late, payload-level re-validation gate distinct from intent-time
+    checks.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - provider-owner
+  intent: Re-validate the assembled provider payload against compliance before dispatch
+  success_criteria:
+  - Intent-time validation passes on the raw request
+  - Placement resolves concrete provider, region, and image into the payload
+  - The compliance-class policy re-validates the assembled payload, not the intent
+  - A non-conforming resolved value (e.g. region) is caught at the payload gate
+  - Dispatch is denied when the assembled payload violates compliance
+  - Both the intent-time pass and the payload-time denial are recorded distinctly
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: provider
+    interaction: placement assembles concrete payload with resolved region and image
+  - domain: policy
+    interaction: compliance-class validation re-runs against the assembled payload
+  - domain: data
+    interaction: intent-time pass and payload-time denial stored as separate gates
+  - domain: audit
+    interaction: late payload denial recorded with the offending resolved value
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- compliance
+- payload-revalidation
+- pre-dispatch-gate
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A compliance-class policy validates the assembled payload, not just intent
+  - Placement can resolve a value that violates compliance
+  postconditions:
+  - Non-conforming assembled payload is denied before dispatch
+  - Both validation gates are auditable
+  note: batch=framework-hammer-2026-07-16

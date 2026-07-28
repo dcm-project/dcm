@@ -1,0 +1,86 @@
+uuid: uc-seed-bfi-001
+handle: cross-domain/ansible-inventory-brownfield-ingestion
+scenario:
+  description: An operations team manages an existing estate (bare metal, VMs,
+    hypervisors, appliances, network gear) through configuration-management
+    inventory (e.g. Ansible) - hosts, groups, per-host variables, and embedded
+    credentials. They migrate management to DCM by ingesting that inventory as
+    brownfield entities WITHOUT recreating or moving any running resource.
+    Inventory groups become DCMGroups; host definitions become resource
+    entities with their attributes; embedded plaintext credentials become
+    vault-backed credential resources; and telemetry collection is
+    auto-established for every ingested entity per the provider contract
+    observability obligation. The inventory remains authoritative during a
+    coexistence window - ingestion is additive and reversible until cutover.
+  actor:
+    persona: platform-operator
+    profile: standard
+  perspectives:
+    - sre
+    - security-officer
+  intent: Adopt an existing configuration-management inventory into DCM as
+    first-class entities, groups, and credentials - in place, with zero
+    resource recreation and no management gap during transition
+  success_criteria:
+  - Every inventory host is ingested as a resource entity with its attributes
+    (vars) preserved and its provenance recorded as brownfield
+  - Inventory groups (including nested groups) map to DCMGroups with
+    membership preserved, so group-scoped policy and observability apply
+    immediately (OBS-008)
+  - Resources are ADOPTED in place - no resource is recreated, restarted, or
+    migrated as a side effect of ingestion (adopt-not-recreate)
+  - Embedded plaintext credentials are detected, converted to vault-backed
+    credential resources, and flagged for rotation; no plaintext credential
+    survives ingestion into entity definitions
+  - Telemetry collection is established for every ingested entity per the
+    provider-contract observability obligation (PRV-007) without per-entity
+    manual configuration
+  - During coexistence, changes made via the legacy inventory are detected as
+    drift against the ingested entities rather than silently diverging
+  - Ingestion is reversible before cutover - removing DCM management leaves
+    the estate exactly as found
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: cross_dependency_payload
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: inventory hosts/groups/vars ingested as entities, DCMGroups,
+      and attributes with brownfield provenance
+  - domain: provider
+    interaction: configuration-management system acts as an information
+      provider for discovery; credential conversion via credential resources
+  - domain: policy
+    interaction: ingestion scope, credential-handling, and coexistence drift
+      rules policy-evaluated
+  - domain: audit
+    interaction: every adopted entity, group mapping, and credential
+      conversion recorded with before/after provenance
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude-opus-4-8
+  prompt_version: seed-1.0
+  timestamp: '2026-06-07T21:30:00.000000+00:00'
+tags:
+- brownfield
+- ingestion
+- ansible
+- inventory
+- migration
+- dcmgroup
+- credentials
+- adopt-in-place
+- coexistence
+- standard-profile
+version: 1.0.0
+metadata:
+  admitted_at: '2026-06-07T21:30:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt

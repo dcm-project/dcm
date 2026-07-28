@@ -1,0 +1,59 @@
+uuid: uc-hammer-capacity-013
+handle: capacity/reservation-reconcile-stalemate
+scenario:
+  description: 'After a reservation is placed, the provider''s out-of-band view of capacity diverges from
+    the engine''s reservation ledger: the provider reports the capacity as free while the engine believes
+    it is held, and repeated reconcile passes fail to converge. The engine must detect a RESERVATION_RECONCILE_STALEMATE,
+    stop retrying, and escalate to a human rather than looping or silently double-allocating. This probes
+    whether the architecture bounds reconciliation and has a defined stalemate exit — likely unsupported
+    if reconcile assumes eventual convergence.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+  intent: Resolve a reservation-vs-provider reconcile that will not converge
+  success_criteria:
+  - A divergence between the reservation ledger and provider-reported capacity is detected
+  - Reconcile passes are bounded rather than retried indefinitely
+  - The engine raises RESERVATION_RECONCILE_STALEMATE after the bound is hit
+  - No silent double-allocation of the disputed capacity occurs
+  - The stalemate is escalated to a human operator for adjudication
+  - The divergence, bounded retries, and escalation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: human_escalation_required
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provider-reported capacity diverges from the reservation ledger
+  - domain: policy
+    interaction: bounded reconcile with human-escalation on stalemate
+  - domain: audit
+    interaction: divergence, bounded retries, and escalation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:13.000000+00:00'
+tags:
+- capacity
+- reservation
+- reconcile-stalemate
+- data-inconsistency
+- escalation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

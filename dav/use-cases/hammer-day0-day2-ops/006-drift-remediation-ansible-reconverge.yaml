@@ -1,0 +1,62 @@
+uuid: uc-hammer-day0-day2-ops-006
+handle: day0-day2-ops/drift-remediation-ansible-reconverge
+scenario:
+  description: 'Continuous drift detection finds that a managed web host has drifted from its declared
+    intent: a sysctl and a firewall rule were changed out of band. The detected drift binds an Automation.AnsiblePlaybook
+    to that host to re-converge it back to declared intent. The playbook runs to a COMPLETED terminal
+    outcome and the host''s realized state is re-reconciled to match intent — the process operates on
+    the resource, it does not replace or contain it.'
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+    - security-officer
+  intent: Re-converge a drifted resource to declared intent via a bound remediation playbook
+  success_criteria:
+  - Drift is detected as a delta between declared intent and realized state
+  - A remediation Automation.AnsiblePlaybook is bound to the drifted host
+  - The playbook runs to a COMPLETED terminal outcome
+  - Post-run realized state matches declared intent (drift closed)
+  - The remediation operates on the existing resource; no new resource is created
+  - The drift event and its remediation are linked in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: computes the intent-vs-realized delta and reconciles realized state after remediation
+  - domain: policy
+    interaction: selects the recovery/remediation policy for the detected drift
+  - domain: provider
+    interaction: runs the bound re-converge playbook against the host
+  - domain: audit
+    interaction: links the drift detection event to its remediation run
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- drift_detection
+- remediation
+- reconverge
+- ansible
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The host has a declared intent baseline
+  - A drift-remediation playbook is registered
+  postconditions:
+  - The host realized state matches intent again
+  - Drift event and remediation are linked in audit
+  note: batch=day0-day2-ops-2026-07-22

@@ -1,0 +1,57 @@
+uuid: uc-hammer-credentials-013
+handle: credentials/unscoped-interaction-403
+scenario:
+  description: 'A provider receives an interaction request carrying a credential that is valid but scoped
+    to a different provider or a different interaction (e.g., a deploy-scoped credential used to attempt
+    a delete). The provider must reject the request with a 403 rather than honoring it, and the system
+    must record the scope-violation attempt. This tests the participate/expose trust-plane boundary: possession
+    of a valid credential is not sufficient — scope must match the interaction.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - compliance-auditor
+    - security-officer
+  intent: Use a valid but out-of-scope credential and confirm the provider refuses it
+  success_criteria:
+  - The credential is confirmed valid but scoped to a different provider/interaction
+  - The provider rejects the interaction with a 403 (scope violation)
+  - The requested action does not occur
+  - The scope mismatch is detected from credential metadata, not the secret value
+  - The refused attempt is surfaced as a security-relevant event
+  - The 403 and scope-violation reason are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: scope check compares credential scope to the requested interaction
+  - domain: provider
+    interaction: provider returns 403 and performs no action
+  - domain: audit
+    interaction: scope-violation attempt recorded as security-relevant
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- scope
+- authorization
+- forbidden
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

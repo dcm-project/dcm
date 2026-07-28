@@ -1,0 +1,59 @@
+uuid: uc-375a39b1-9e71-4a23-ad09-ced55a0356db
+handle: class-versioning/organization-pin-honored-with-visible-debt
+version: 1.1.0
+scenario:
+  description: 'A downstream organization pins its estate to a specific Base Class revision — thing@version,
+    or thing@sha256:<hex> where the profile demands byte-exactness (ADR-051; the publish law makes the
+    version pin exact, the pin manifest resolves it to its recorded digest, and the digest pin verifies
+    the bytes) — while the registry moves ahead. The pin is honored completely: compilation
+    and realization in that estate use the pinned revision; nothing upstream propagates implicitly. The
+    cost is visibility, not capability: the version distance appears as enumerated debt (per class, per
+    pinned artifact) in the estate''s validation output, and a registry-ref bump deliberately re-opens
+    the list. Pinning behind is legal; being silently behind is not.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Pin an organization's estate to a specific class revision and retain full control with the drift
+    visible as enumerated debt
+  success_criteria:
+  - The estate's compilation and realization resolve the pinned revision — the manifest-recorded digest
+    for a @version pin, the named bytes for a @sha256 pin — not the registry head
+  - A digest pin is verified against the pin manifest before use; a version/digest mismatch is refused
+    with the digest authoritative
+  - No registry change alters the estate's behavior until the organization re-pins
+  - The version distance is enumerated per pinned artifact in the estate's own validation output
+  - The debt list re-opens automatically when the estate's registry ref advances
+  - Every estate artifact's compiled-against revision (version + digest) is present in the estate's validation
+    output as a record field
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: '@version and @digest pins resolve immutable published revisions deterministically'
+  - domain: policy
+    interaction: pin-behind is classified legal debt, never silent drift
+  - domain: provider
+    interaction: realization in the pinned estate uses the pinned class surface
+  - domain: audit
+    interaction: pin provenance is reconstructible per artifact
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- pinning
+- organizational-control
+- burn-down

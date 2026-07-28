@@ -1,0 +1,72 @@
+uuid: uc-e48ffd64-64e0-4310-9dbc-97e4baf9f756
+handle: must-reject/masked-projection-write-refused
+version: 1.0.0
+scenario:
+  description: 'An application-team member''s policy scope excludes a compliance-classified
+    field (a residency attribute) on a resource they otherwise administer. They request a
+    projection that includes the excluded field, then attempt to write the resource back
+    through the surface the projection returned. The read half must behave as a guard, not a
+    binary gate: the response omits or masks the excluded field AND states that the
+    projection was reduced by policy — a silently-shrunk projection is a failure, because
+    the consumer would treat absence as ground truth (a reconciler that reads a silently
+    reduced projection and writes it back would erase the field). The write half is the
+    must-reject: an update arriving through that masked surface — whether it attempts to
+    set the excluded field or to clear it by omission-round-trip — is refused, not merged.
+    The refusal is typed as a scope violation on the named field, actionable (names the
+    scope that excludes it), non-leaking (the masked value appears in neither the reduced
+    read nor the write refusal), and both the reduced read and the refused write are
+    audited.'
+  actor:
+    persona: application-team-member
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - security-officer
+    - sovereignty-authority
+  intent: Read a projection that policy scope reduces, then write back through the masked
+    surface, and receive a disclosed reduction on read and a typed refusal on write
+  success_criteria:
+  - The projection response omits or masks the excluded field and explicitly states it was
+    reduced by policy, without revealing the masked value
+  - A write through the masked surface that targets the excluded field is refused with a
+    typed scope violation naming the field and the excluding scope
+  - A write that would clear the excluded field by round-tripping the reduced projection is
+    refused or field-ignored-with-notice — never silently merged as a deletion
+  - The masked value appears nowhere in the read response, the write refusal, or their
+    error payloads
+  - Audit records exist for both halves — the reduced projection served and the refused
+    write — each naming the field and the governing scope, values excluded
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the guard reduces the projection on read and refuses the write through
+      the masked surface — one scope, both directions
+  - domain: data
+    interaction: the reduction is disclosed as metadata so absence is never mistaken for
+      ground truth
+  - domain: provider
+    interaction: no realization of the refused write reaches any provider
+  - domain: audit
+    interaction: both the reduced read and the refused write are recorded with field and
+      scope, values excluded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: must-reject-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- must-reject
+- refusal-contract
+- projection
+- information-firewall
+- field-granular-scope

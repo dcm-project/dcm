@@ -1,0 +1,59 @@
+uuid: uc-hammer-cost-quota-007
+handle: cost-quota/cost-follows-ownership-stake-edge
+scenario:
+  description: 'A shared database service is owned by a platform team but consumed under a stake edge
+    by an application team. When the application team''s stake is re-pointed to a different owning service,
+    the cost attribution must follow the stake edge, not the resource''s static creator. A finance-analyst
+    validates that after the re-point, accrued cost lands on the current stakeholder. The mechanism under
+    test is whether cost attribution traverses the live ownership/stake relationship in the graph rather
+    than a frozen creation record.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives: []
+  intent: Ensure cost attribution follows the current stake edge, not the creator
+  success_criteria:
+  - The resource, its creator, and its current stakeholder are distinguished
+  - Cost is attributed to the entity on the current stake edge
+  - After the stake edge is re-pointed, new accrual follows the new stakeholder
+  - Historical accrual remains attributed to the prior stakeholder for its window
+  - The attribution change and its effective boundary are recorded in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: stake edge resolved and re-pointed; cost attribution keyed to the live edge
+  - domain: policy
+    interaction: attribution constraint binds cost to the current stakeholder
+  - domain: audit
+    interaction: attribution change and its effective boundary recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- attribution
+- stake-edge
+- ownership
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A resource has a creator distinct from its current stakeholder
+  postconditions:
+  - New accrual follows the re-pointed stake edge
+  - Historical attribution is preserved per window
+  note: batch=framework-hammer-2026-07-16

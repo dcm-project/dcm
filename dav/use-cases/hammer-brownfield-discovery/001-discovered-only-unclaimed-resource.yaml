@@ -1,0 +1,59 @@
+uuid: uc-hammer-brownfield-001
+handle: brownfield-discovery/discovered-only-unclaimed-resource
+scenario:
+  description: 'A scan of a rack turns up a powered, cabled server that no team has ever declared. The
+    provider (a hardware-inventory information provider) emits a Discovered-state record with serial,
+    BMC address, and firmware, but there is NO corresponding Intent and no owning tenant. The system must
+    persist this as a first-class Discovered entity that carries brownfield provenance and a management_authority
+    of legacy, without inventing an Intent it does not have and without treating the absence of Intent
+    as an error. This probes whether the four-state model tolerates a Discovered-only entity — realized
+    reality with no declared intent — as a legitimate, queryable state.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - information-provider-owner
+    - compliance-auditor
+    - tenancy-authority
+  intent: Record a scanned, undeclared server as a Discovered-only entity with no Intent
+  success_criteria:
+  - The scanned resource is persisted as an entity in Discovered state
+  - The entity carries brownfield provenance and management_authority = legacy
+  - No Intent state is fabricated; the entity is valid with intent absent
+  - The entity is queryable and reportable as unclaimed (no owning tenant)
+  - A stable Entity UUID is assigned at discovery and does not change on re-scan
+  - The discovery event is recorded in the audit trail with source and timestamp
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: hardware-inventory information provider emits a Discovered-state record
+  - domain: data
+    interaction: Discovered-only entity persisted with brownfield provenance and stable UUID
+  - domain: audit
+    interaction: discovery event recorded with source, serial, and timestamp
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- discovered-state
+- unclaimed
+- no-intent
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

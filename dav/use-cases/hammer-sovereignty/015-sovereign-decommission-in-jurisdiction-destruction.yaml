@@ -1,0 +1,66 @@
+uuid: uc-hammer-sovereignty-015
+handle: sovereignty/sovereign-decommission-in-jurisdiction-destruction
+scenario:
+  description: 'A compliance auditor decommissions a resource that was placed under a sovereign mandate.
+    The mandate requires that data destruction happen within the mandated jurisdiction and that a destruction
+    attestation be produced as proof. The architecture must, on decommission, drive the provider to destroy
+    the data in-jurisdiction, obtain the destruction attestation, and only then consider the resource
+    decommissioned — recording the attestation. A decommission that tears down the resource without an
+    in-jurisdiction destruction attestation must not be treated as complete. This probes whether sovereignty
+    obligations extend through the end of the lifecycle, not just placement.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Decommission a resource with proof of in-jurisdiction data destruction
+  success_criteria:
+  - Decommission triggers provider-side data destruction within the mandated jurisdiction
+  - A destruction attestation is obtained from the provider
+  - The resource is marked decommissioned only after the attestation is received
+  - A decommission lacking an in-jurisdiction destruction attestation is not treated as complete
+  - The destruction attestation and its jurisdiction are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provider destroys data in-jurisdiction and returns a destruction attestation
+  - domain: policy
+    interaction: decommission policy requires the in-jurisdiction attestation before completion
+  - domain: data
+    interaction: resource marked decommissioned only after attestation is recorded
+  - domain: audit
+    interaction: destruction attestation and jurisdiction recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- decommission
+- data-destruction
+- attestation
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource was placed under a sovereign mandate requiring in-jurisdiction destruction
+  postconditions:
+  - Resource decommissioned only after in-jurisdiction destruction attestation
+  - Attestation recorded
+  note: batch=framework-hammer-2026-07-16

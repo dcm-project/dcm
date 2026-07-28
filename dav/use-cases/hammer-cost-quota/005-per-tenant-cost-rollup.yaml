@@ -1,0 +1,63 @@
+uuid: uc-hammer-cost-quota-005
+handle: cost-quota/per-tenant-cost-rollup
+scenario:
+  description: 'A finance-analyst asks for a per-tenant cost rollup across a multi-tenant estate: total
+    committed and consumed cost for every tenant, decomposed by resource type. The system must walk the
+    ownership edges from each tenant to its realized resources, attach a per-resource cost, and aggregate
+    up the tenant boundary. The mechanism under test is whether cost is a queryable, attributable attribute
+    of realized resources in the data model — or whether cost lives entirely outside UDLM and the rollup
+    can only be partially derived from footprint counts.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+    - executive
+  intent: Produce a per-tenant cost rollup decomposed by resource type
+  success_criteria:
+  - Every tenant's owned resources are enumerated via ownership edges
+  - A per-resource cost is attached to each realized resource
+  - Costs aggregate correctly up to the tenant boundary
+  - The rollup decomposes each tenant total by resource type
+  - Resources with no cost attribute are surfaced as an unpriced remainder
+  - The rollup query and its coverage are recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: ownership edges walked and per-resource cost attributes aggregated by tenant
+  - domain: audit
+    interaction: rollup query, per-tenant totals, and unpriced remainder recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- chargeback
+- rollup
+- multi-tenant
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Multiple tenants own realized resources in the data model
+  postconditions:
+  - A per-tenant, per-type cost rollup is produced
+  - Unpriced resources are explicitly reported
+  note: batch=framework-hammer-2026-07-16

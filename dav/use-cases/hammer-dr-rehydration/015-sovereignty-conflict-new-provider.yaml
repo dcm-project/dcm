@@ -1,0 +1,69 @@
+uuid: uc-hammer-dr-rehydration-015
+handle: dr-rehydration/sovereignty-conflict-new-provider
+scenario:
+  description: 'A regional disaster takes out every in-jurisdiction provider for a residency-pinned dataset.
+    A platform engineer attempts a provider-portable rehydration, and the only surviving eligible providers
+    sit in a different, prohibited jurisdiction. Portable mode would normally re-place freely, but the
+    resource''s sovereignty constraint forbids relocating data-at-rest across the border. The system must
+    re-evaluate the sovereignty policy at rehydration time, detect that every available substitute violates
+    residency, and refuse to rehydrate onto a non-compliant provider — even at the cost of leaving the
+    resource down until in-jurisdiction capacity returns. This is the sharp DR-versus-sovereignty tension
+    and should return unsupported for the cross-border substitutes.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - sovereignty-authority
+  intent: Portably rehydrate a residency-pinned dataset when only cross-border providers survive
+  success_criteria:
+  - Sovereignty policy is re-evaluated against each surviving candidate provider at rehydration
+  - Every available substitute is detected to violate the residency constraint
+  - The system refuses to rehydrate the dataset onto any prohibited-jurisdiction provider
+  - Availability pressure does not override the sovereignty constraint
+  - The resource is left unrealized (down) rather than relocated non-compliantly
+  - The blocked outcome, offending jurisdictions, and constraint id are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    governance_context: sovereignty_enforced
+    provider_landscape: mixed
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: residency constraint on data-at-rest read from intent
+  - domain: policy
+    interaction: sovereignty policy re-evaluated; all cross-border substitutes denied
+  - domain: provider
+    interaction: no dispatch to any prohibited-jurisdiction provider
+  - domain: audit
+    interaction: blocked outcome, offending jurisdictions, and constraint id recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- sovereignty
+- residency
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - All in-jurisdiction providers are down after a regional disaster
+  - Surviving eligible providers are in a prohibited jurisdiction
+  postconditions:
+  - Rehydration refused onto cross-border providers
+  - Resource left down; sovereignty preserved and recorded
+  note: batch=framework-hammer-2026-07-16

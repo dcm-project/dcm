@@ -1,0 +1,56 @@
+uuid: uc-hammer-peer-dcm-014
+handle: peer-dcm/sovereign-peer-realized-residency-verified
+scenario:
+  description: A sovereign workload is realized on a compliant peer DCM. After realization, the peer reports the
+    resource's actual residency, which the local DCM verifies against the required residency and records on the
+    realized resource. A mismatch would trigger remediation; here it matches.
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - federation-peer-operator
+    - sovereignty-authority
+  intent: Verify the residency of a resource realized on a peer DCM
+  success_criteria:
+  - The workload realizes on a compliant peer DCM
+  - The peer reports the resource's actual residency
+  - The reported residency is verified against the required residency
+  - The satisfied residency is recorded on the realized resource
+  - The verification is audited
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the peer reports the realized resource's residency
+  - domain: policy
+    interaction: the reported residency is verified against the requirement
+  - domain: data
+    interaction: the satisfied residency recorded on the resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- sovereignty
+- residency-verification
+- sovereign-profile
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Sovereign profile; the workload realizes on a compliant peer
+  postconditions:
+  - The peer-realized resource's residency is verified and recorded
+  note: batch=peer-dcm-2026-07-23

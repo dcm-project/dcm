@@ -1,0 +1,56 @@
+uuid: uc-hammer-capacity-011
+handle: capacity/validate-and-reserve-hold
+scenario:
+  description: 'A platform engineer requests a multi-resource change where downstream steps must validate
+    before any capacity is committed. Per the validate-and-reserve model (ADR-011 — reservation precedes
+    realization so capacity is never oversubscribed), the engine must place a hold on provider capacity,
+    complete validation while the hold is live, and only then promote the reservation to an allocation.
+    This tests the two-phase reserve-then-commit boundary as an explicit, observable step.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+  intent: Hold capacity via reservation, then commit only after validation
+  success_criteria:
+  - A capacity reservation (hold) is placed before realization begins
+  - Validation runs against the reserved plan while the hold is live
+  - Held capacity is not counted as available to other requests
+  - On successful validation the reservation is promoted to an allocation
+  - No double-counting or oversubscription of provider capacity occurs
+  - The reserve, validate, and commit transitions are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: capacity held as a reservation, later promoted to allocation
+  - domain: policy
+    interaction: validate-and-reserve orchestration enforces reserve-before-commit
+  - domain: audit
+    interaction: reserve, validate, and commit transitions recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:11.000000+00:00'
+tags:
+- capacity
+- reservation
+- validate-and-reserve
+- adr-011
+- two-phase
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

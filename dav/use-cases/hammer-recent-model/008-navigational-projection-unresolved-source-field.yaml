@@ -1,0 +1,66 @@
+uuid: uc-hammer-recent-model-008
+handle: recent-model/navigational-projection-unresolved-source-field
+scenario:
+  description: "An SRE modifies a workload whose placement policy projects self.datacenter.residency,\
+    \ but the\n    workload's datacenter relation points at a DataCenter record whose residency field\
+    \ was never\n    populated. The navigational-coordinate dereference resolves the relation yet finds\
+    \ the target field\n    empty, so the projection yields no value. The pipeline must treat this as\
+    \ a data inconsistency: the\n    policy input is unresolved, so the evaluation cannot proceed to a\
+    \ trustworthy decision and must\n    surface the dangling field rather than substitute a default.\
+    \ This stresses the failure edge of\n    projection when the source field is unresolved."
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - provider-owner
+    - sovereignty-authority
+  intent: Detect that a self.datacenter.residency projection is unresolved because the source field is
+    empty
+  success_criteria:
+  - The datacenter relation resolves but the residency field is empty
+  - The projection yields no value and is marked unresolved
+  - The pipeline does not substitute a default for the missing projected field
+  - The policy evaluation halts as un-decidable on the unresolved input
+  - The dangling field path (self.datacenter.residency) is surfaced to the operator
+  - The data inconsistency is recorded with the entity and field path in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: the relation resolves but the residency field is found unpopulated
+  - domain: policy
+    interaction: the single validation cannot decide on an unresolved projected input and halts
+  - domain: audit
+    interaction: the unresolved projection and dangling field path are recorded
+  - domain: provider
+    interaction: no provider action is taken because the evaluation did not reach a decision
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- navigational-projection
+- unresolved-projection
+- dangling-relation
+- data-inconsistency
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - The workload's datacenter relation targets a DataCenter with no residency set
+  - The placement policy depends on the projected residency
+  postconditions:
+  - The modification is blocked pending residency resolution
+  - The dangling field path is reported as a data inconsistency
+  note: batch=recent-model-2026-07-22

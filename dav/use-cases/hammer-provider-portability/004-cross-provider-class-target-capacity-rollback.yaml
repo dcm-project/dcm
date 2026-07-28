@@ -1,0 +1,58 @@
+uuid: uc-hammer-provider-portability-004
+handle: provider-portability/cross-provider-class-target-capacity-rollback
+scenario:
+  description: A re-port to a new Provider Class begins, but the target provider reports insufficient capacity during
+    realization. Because realization is two-phase (validate-and-reserve, then commit), nothing on the target commits;
+    DCM rolls back the partial attempt and leaves the pre-re-port source state intact. The org is told the target
+    could not accept the workload.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Re-port rolls back when the target provider lacks capacity mid-realize
+  success_criteria:
+  - The re-port reserves against the target provider
+  - The target reports insufficient capacity before commit
+  - No target resource commits (two-phase barrier)
+  - The pre-re-port source state is left intact
+  - The rollback is recorded and the org notified
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: rollback_required
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: target reports insufficient capacity at reserve
+  - domain: policy
+    interaction: two-phase barrier prevents commit; rollback
+  - domain: data
+    interaction: source state preserved; rollback recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- rollback
+- capacity
+- two-phase
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The target Provider Class is capacity-constrained
+  postconditions:
+  - Source intact; no partial target state; rollback recorded
+  note: batch=portability-enrich-2026-07-22

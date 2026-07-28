@@ -1,0 +1,57 @@
+uuid: uc-hammer-capacity-010
+handle: capacity/anti-affinity-fault-domain-spread
+scenario:
+  description: 'An SRE declares a three-replica HA service that must be spread across distinct fault domains
+    via an anti-affinity rule, so no single provider or domain failure takes more than one replica. The
+    placement engine must reserve capacity for each replica in a different fault domain, refusing to collapse
+    two replicas onto one domain even if that domain has the most headroom. This tests anti-affinity as
+    a hard spread constraint over a composite service.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - provider-owner
+  intent: Spread HA replicas across distinct fault domains via anti-affinity
+  success_criteria:
+  - The anti-affinity rule and fault-domain topology are resolved for the service
+  - Each of the three replicas is reserved in a distinct fault domain
+  - No two replicas are co-located in the same domain despite headroom skew
+  - If fewer than three distinct domains have capacity, placement fails closed
+  - All replicas realize on their assigned domains
+  - The spread constraint and per-replica domain assignments are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: anti-affinity spread constraint evaluated over fault-domain topology
+  - domain: provider
+    interaction: one reservation per distinct fault domain
+  - domain: audit
+    interaction: spread constraint and per-replica domain assignments recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:10.000000+00:00'
+tags:
+- capacity
+- placement
+- anti-affinity
+- fault-domain
+- high-availability
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,51 @@
+uuid: uc-hammer-binding-surface-002
+handle: binding-surface/undeclared-output-binding-rejected
+version: 1.0.0
+scenario:
+  description: 'A service author wires a composite whose constituent binds to a field the producer type
+    never declared as an output (a typo, or an assumption imported from another provider''s shape). If
+    output declarations are absent or unenforced, the error surfaces as a runtime failure deep in realization.
+    This stresses the failure path: the gap must be caught at catalog/request validation with an error
+    naming the producer type, the missing output, and the declared alternatives.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Submit a composition binding to a nonexistent producer output and receive a validation-time
+    rejection that names the declared output surface
+  success_criteria:
+  - Validation fails before any provisioning is attempted
+  - The error names the producer type, the requested output, and the type's declared outputs
+  - A corrected binding to a declared output passes the same validation
+  - Types with legitimately empty outputs (non-realizable/knowledge families) are distinguishable from
+    types that merely forgot to declare
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the output declaration is the authority the rejection cites
+  - domain: policy
+    interaction: the validation policy enforces declaration-or-reject
+  - domain: provider
+    interaction: no provider is dispatched for an invalid binding
+  - domain: audit
+    interaction: the rejection and its cited authority are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: binding-surface-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- typed-outputs
+- binding-surface
+- validation
+- failure-mode

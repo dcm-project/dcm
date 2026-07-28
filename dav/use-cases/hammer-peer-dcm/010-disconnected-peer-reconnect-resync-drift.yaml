@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-010
+handle: peer-dcm/disconnected-peer-reconnect-resync-drift
+scenario:
+  description: A peer DCM returns after a period of disconnection. The local DCM re-checks the peer-owned resources
+    it references and finds the peer's discovered state has drifted from the last-known realized state during the
+    outage. The divergence is recorded as a data inconsistency and enters reconciliation.
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Reconcile peer-owned state after a peer returns from a disconnect
+  success_criteria:
+  - The peer returns after a disconnection window
+  - The local DCM re-checks the referenced peer-owned resources
+  - The peer's discovered state has drifted from last-known realized
+  - The divergence is recorded as a data inconsistency
+  - Reconciliation across the boundary is initiated
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the peer's state drifted during the outage
+  - domain: policy
+    interaction: drift across the boundary triggers reconciliation
+  - domain: audit
+    interaction: the post-reconnect drift is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- disconnected
+- reconnect
+- drift-detection
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - A peer returns after a disconnection window
+  postconditions:
+  - The cross-boundary drift is detected and reconciliation begins
+  note: batch=peer-dcm-2026-07-23

@@ -1,0 +1,63 @@
+uuid: uc-hammer-decommission-005
+handle: decommission/crypto-shred-kek-destroy
+scenario:
+  description: 'A security officer decommissions a departing tenant by crypto-shredding: the tenant''s
+    data volumes are encrypted under a per-tenant key-encryption-key (KEK), and destroying the KEK renders
+    every ciphertext permanently unrecoverable in one irreversible act. The system must treat the KEK
+    as a dependency root — every volume it protects becomes a dependent — refuse to shred while any volume
+    is still mounted or under legal hold, and record the shred as terminal. This probes whether the architecture
+    models a key as a resource whose destruction cascades meaning to its dependents, and whether it can
+    express irreversibility. It may well come back partially supported or unsupported.
+
+    '
+  actor:
+    persona: security-officer
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Crypto-shred a tenant by destroying its KEK and rendering all data unrecoverable
+  success_criteria:
+  - KEK is modeled as a resource with the tenant's encrypted volumes as dependents
+  - Every volume protected by the KEK is enumerated before the shred
+  - Shred is refused if any protected volume is still mounted or under active legal hold
+  - Destroying the KEK is recorded as terminal and irreversible (no rehydration path)
+  - After the shred, all dependent ciphertext is marked permanently unrecoverable in the data model
+  - The irreversible destruction is captured in the audit trail with the officer's authorization
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: KEK-to-volume dependency resolved, protected ciphertext marked unrecoverable
+  - domain: policy
+    interaction: mount and legal-hold guards evaluated before permitting an irreversible shred
+  - domain: provider
+    interaction: KMS provider destroys the key material terminally
+  - domain: audit
+    interaction: irreversible crypto-shred recorded with authorization
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- crypto-shred
+- kek
+- irreversible
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

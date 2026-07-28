@@ -1,0 +1,63 @@
+uuid: uc-3d4c61ef-81c3-4db8-8ce6-a0b83f11e39d
+handle: intent-fulfillment/operational-dependency-cascade
+version: 1.0.0
+scenario:
+  description: >-
+    A consumer declares an intent with a container that operationally depends on a PVC (an
+    operational dependency: a hard, directional, Realized-layer coupling — the container cannot
+    function without the volume). The PVC cannot realize now for a transient reason (no eligible
+    storage capacity). Because the dependency nature is operational, the container is blocked
+    while its dependency is unsatisfied — classified blocked-transient, not failed and never
+    realized dangling against a volume that is not there. The convergence window is open (w>0),
+    so the container waits and converges the moment the PVC realizes. Independent members of the
+    same intent (a ConfigMap, an unrelated service) proceed and realize — the operational block
+    is scoped to the directional chain, not the whole intent. Crucially the consumer is told: a
+    warning names the PVC as the root unsatisfied dependency, why (transient capacity), and that
+    the container will converge when the PVC does.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: >-
+    Hold a container blocked-transient while its operational PVC dependency is unrealized, let
+    independent members proceed, and converge the container when the PVC realizes — surfacing the
+    root dependency as an actionable warning
+  success_criteria:
+  - The container is classified blocked-transient while the PVC is unrealized — not failed, not realized dangling
+  - The PVC is classified as the root unsatisfied dependency, transiently unrealizable (converges later)
+  - Independent members with no dependency on the PVC realize (the operational block is scoped to the directional chain)
+  - When the PVC realizes, the container converges automatically via the reconciliation loop — no re-request
+  - The consumer receives a warning naming the PVC as the root, the reason, and the expected resolution — not only a structured field
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: none_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the operational (hard, directional) dependency edge makes the container's realization conditional on the PVC's
+  - domain: policy
+    interaction: operational nature blocks the dependent while unsatisfied; independents proceed; block is transient (converges)
+  - domain: provider
+    interaction: no eligible storage now; the reconciliation loop re-attempts the PVC, then the container
+  - domain: audit
+    interaction: the blocked-transient container, the root PVC, and the convergence are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- operational-dependency
+- convergence
+- surfacing

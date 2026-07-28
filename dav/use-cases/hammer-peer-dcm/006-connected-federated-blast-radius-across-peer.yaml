@@ -1,0 +1,58 @@
+uuid: uc-hammer-peer-dcm-006
+handle: peer-dcm/connected-federated-blast-radius-across-peer
+scenario:
+  description: A change or a discovered vulnerability in the local estate must be impact-analyzed across the federation.
+    Blast-radius reverse-walks the reference edges, including cross-boundary edges into peer DCMs, to enumerate
+    affected peer-owned resources — surfaced to the peer, not acted on directly.
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - federation-peer-operator
+    - compliance-auditor
+  intent: Reverse-walk impact across a peer boundary to find affected peer-owned resources
+  success_criteria:
+  - Blast-radius reverse-walks reference edges including cross-boundary edges
+  - Affected peer-owned resources are enumerated across the federation
+  - The impact set spanning peers is reported, not directly remediated
+  - The peer is surfaced the affected set within its estate
+  - The cross-boundary impact analysis is audited
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: cross_dependency_payload
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: reverse-walk crosses the federation boundary into peer edges
+  - domain: policy
+    interaction: impact is surfaced to the peer, not remediated across the boundary
+  - domain: audit
+    interaction: the cross-boundary impact analysis is recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- connected
+- blast-radius
+- impact
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Reference edges span into peer DCMs
+  postconditions:
+  - The federated impact set is enumerated and surfaced to peers
+  note: batch=peer-dcm-2026-07-23

@@ -1,0 +1,52 @@
+uuid: uc-process-migration-003
+handle: process-migration/automation-staged-promotion
+version: 1.0.0
+scenario:
+  description: "Automation is deployed like an application: a new version of a process definition (or\
+    \ its engine binding \u2014 an updated playbook, a new execution environment) promotes through environments\
+    \ with gates. The version realizes in dev, runs against dev targets, passes its verification; promotes\
+    \ to a test/staging fleet under the same gates; and reaches production targets only after each stage's\
+    \ typed-output evidence passes. Rollback is re-selecting the previous version. The application-deployment\
+    \ discipline \u2014 versioned artifact, staged rollout, gated promotion, rollback \u2014 applied verbatim\
+    \ to automation."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+  intent: Promote a new process-definition version through dev, test, and production stages with output-evidence
+    gates and version rollback, exactly as an application deploys
+  success_criteria:
+  - The process definition/binding is a versioned artifact; each stage pins the version it runs
+  - Promotion to the next stage is gated on the current stage's typed-output evidence
+  - Production targets never run a version that has not passed the prior stages
+  - Rollback is re-selection of the previous version, not a bespoke undo
+  - The promotion history is auditable end to end per version
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: versions and stage pins are records; promotion is a data operation
+  - domain: policy
+    interaction: stage gates are validation policies over typed-output evidence
+  - domain: provider
+    interaction: the engine realizes whichever version the stage pins
+  - domain: audit
+    interaction: per-version promotion history is the compliance story
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: process-migration-2026-07-25
+  timestamp: '2026-07-25T02:00:00.000000+00:00'
+tags:
+- process-migration
+- staged-deployment
+- promotion
+- automation-as-application

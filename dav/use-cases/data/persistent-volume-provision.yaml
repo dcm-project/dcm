@@ -1,0 +1,64 @@
+uuid: uc-seed-004a
+handle: data/persistent-volume-provision
+scenario:
+  description: A development team requests a new persistent block volume attached
+    to an existing VM in their tenant. The storage provider must allocate the volume
+    from the tenant's eligible storage class, enforce tenancy at the storage plane,
+    respect any data-residency constraints, and produce an auditable record including
+    capacity consumed against tenant quota.
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Provision a persistent block volume and attach it to an existing VM in
+    the tenant
+  success_criteria:
+  - Volume is created in a storage class the tenant is authorized to consume
+  - Volume is attached to the target VM without cross-tenant exposure
+  - Tenant quota is updated to reflect the new consumption
+  - Provisioning and attachment are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: policy
+    interaction: tenant-isolation gating evaluates volume request against tenant's
+      storage class eligibility
+  - domain: provider
+    interaction: storage provider allocates block volume in eligible class
+  - domain: provider
+    interaction: service provider attaches volume to target VM
+  - domain: data
+    interaction: volume record created with tenancy and VM reference, quota incremented
+  - domain: audit
+    interaction: provisioning and attachment recorded with actor, intent, outcome
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-04-23T04:45:00.000000+00:00'
+tags:
+- data
+- storage
+- volume
+- happy-path
+- dev-profile
+- cross-resource-dependency
+version: 1.0.0
+metadata:
+  admitted_at: '2026-04-23T04:45:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt

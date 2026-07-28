@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-017
+handle: peer-dcm/open-federated-placement-permissive
+scenario:
+  description: Under an open profile, a workload is placed across a mixed landscape of local and peer providers
+    with no sovereignty, residency, or tenancy-isolation constraints — placement optimizes purely on requirements
+    and capacity. The permissive path for non-regulated / experimental estates.
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Place across peers with no sovereignty or residency constraints
+  success_criteria:
+  - The open profile applies no sovereignty/residency constraints
+  - Placement optimizes on requirements and capacity across local+peers
+  - The best-fit candidate is selected without governance filtering
+  - The workload realizes on the chosen local or peer provider
+  - The placement is recorded
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: system_defaults_only
+    provider_landscape: mixed
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: policy
+    interaction: no governance filtering; optimize on requirements/capacity
+  - domain: provider
+    interaction: the best-fit local or peer provider realizes the workload
+  - domain: audit
+    interaction: the permissive placement recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- open
+- no-governance
+- placement
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Open profile; local and peer providers eligible without constraints
+  postconditions:
+  - The workload runs on the capacity-optimal candidate
+  note: batch=peer-dcm-2026-07-23

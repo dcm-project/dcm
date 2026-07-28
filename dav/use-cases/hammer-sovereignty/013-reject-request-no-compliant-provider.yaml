@@ -1,0 +1,65 @@
+uuid: uc-hammer-sovereignty-013
+handle: sovereignty/reject-request-no-compliant-provider
+scenario:
+  description: 'A tenant admin requests a resource pinned to a sovereign jurisdiction for which no eligible
+    provider exists in the catalog. Rather than falling back to the nearest available provider or queuing
+    the request indefinitely without explanation, the architecture must evaluate the sovereignty policy,
+    find zero compliant providers, and reject the request with a clear unsatisfiable-residency reason.
+    Nothing is realized. This is a deliberately simple negative case that checks the model fails closed
+    — no compliant provider means no placement, not a relaxed one.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - provider-owner
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Provision in a jurisdiction with no compliant provider
+  success_criteria:
+  - Sovereignty policy filters the provider catalog by the required jurisdiction
+  - The filter yields zero compliant providers
+  - The request is rejected with an unsatisfiable-residency reason
+  - No resource is realized and no non-compliant fallback is used
+  - The rejection and the unmet jurisdiction are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty validation finds zero compliant providers and rejects
+  - domain: provider
+    interaction: no provider is dispatched; no fallback used
+  - domain: data
+    interaction: request left unrealized; unmet jurisdiction recorded
+  - domain: audit
+    interaction: rejection and unsatisfiable residency recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- fail-closed
+- no-compliant-provider
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - No provider in the catalog satisfies the required jurisdiction
+  postconditions:
+  - Request rejected; nothing realized
+  - Unmet jurisdiction recorded
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,58 @@
+uuid: uc-hammer-networking-010
+handle: networking/address-service-boot-dependency
+scenario:
+  description: 'A diskless/PXE-style host requires DHCP (address + next-server) and DNS to boot at all.
+    The intent declares a hard dependency from the host onto a Network.AddressService (services: dhcp,
+    dns). The system must realize and confirm the AddressService is healthy before booting the dependent
+    host, and — critically for shutdown ordering — must stop the host BEFORE the AddressService in a reverse-topo
+    teardown, because a host cannot renew a lease from a service that is already gone. This tests that
+    an AddressService is a real boot-time dependency, not ambient infrastructure.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Boot a host that hard-depends on a DHCP/DNS AddressService and verify ordering both ways
+  success_criteria:
+  - Host declares a hard dependency on the Network.AddressService (services dhcp, dns)
+  - AddressService is realized and confirmed healthy before the host boots
+  - The dependent host does not boot while the AddressService is unavailable
+  - Reverse-topo shutdown stops the host before the AddressService (served_by relationship honored)
+  - The dependency edge is discoverable in the data model
+  - Boot and shutdown ordering are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: hard dependency host -> AddressService recorded; served_by ordering derived
+  - domain: provider
+    interaction: AddressService realized and health-checked before dependent host boots
+  - domain: audit
+    interaction: boot and reverse-topo shutdown ordering recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- address-service
+- dhcp
+- dns
+- boot-dependency
+- ordering
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

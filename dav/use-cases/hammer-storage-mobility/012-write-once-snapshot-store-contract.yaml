@@ -1,0 +1,59 @@
+uuid: uc-hammer-storage-mobility-012
+handle: storage-mobility/write-once-snapshot-store-contract
+scenario:
+  description: 'A compliance officer provisions a WORM (write-once-read-many) snapshot store for regulatory
+    retention: snapshots written to it are Realized artifacts that, once committed, must be immutable
+    for a declared retention period. The system must model a Realized store whose records carry a write-once
+    contract and a retention lock, and reject any modification or overwrite of a committed snapshot within
+    its lock window. This exercises whether the architecture can express an immutable Realized artifact
+    class distinct from mutable realized state.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - regulator
+  intent: Provision a write-once immutable snapshot store with retention locks
+  success_criteria:
+  - Snapshot store is provisioned with a declared write-once contract
+  - Each committed snapshot carries a retention-lock expiry timestamp
+  - Committed snapshots are immutable — overwrite and mutate are rejected within the lock window
+  - The write-once contract is a modeled property, not merely provider-side configuration
+  - Attempts to shorten a retention lock are rejected
+  - Immutability guarantees are recorded and auditable per snapshot
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: immutable Realized snapshot artifacts persisted with retention-lock metadata
+  - domain: policy
+    interaction: write-once contract rejects mutation or overwrite within the lock window
+  - domain: audit
+    interaction: immutability contract and every rejected mutation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- write-once
+- worm
+- immutability
+- compliance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

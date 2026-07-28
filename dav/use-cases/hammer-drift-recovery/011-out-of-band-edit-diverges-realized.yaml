@@ -1,0 +1,67 @@
+uuid: uc-hammer-drift-recovery-011
+handle: drift-recovery/out-of-band-edit-diverges-realized
+scenario:
+  description: 'A tenant admin, bypassing the pipeline, edits a realized object store''s lifecycle-expiry
+    rule directly in the provider console. The Realized snapshot still records the pipeline-set 30-day
+    expiry; the live provider now reports 7 days. On the next pass the engine must surface that Discovered
+    has diverged from Realized due to an out-of-band edit, attribute the change to no sanctioned pipeline
+    event, and present the exact delta so an operator can decide whether to adopt the new value into intent
+    or remediate it away. This validates detection and clear attribution of out-of-band edits.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - tenancy-authority
+  intent: Surface an out-of-band console edit as a Discovered-vs-Realized divergence with a clear delta
+  success_criteria:
+  - Realized snapshot records the pipeline-set 30-day expiry
+  - Discovery reports a 7-day expiry set out-of-band in the provider console
+  - The engine detects the Discovered-vs-Realized divergence
+  - No sanctioned pipeline event is found to explain the change
+  - The exact field delta (30-day to 7-day) is presented for an adopt-or-remediate decision
+  - The out-of-band divergence and its attribution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered expiry diverges from the 30-day value in the Realized snapshot
+  - domain: policy
+    interaction: divergence attributed to no sanctioned event; flagged for adopt-or-remediate decision
+  - domain: provider
+    interaction: live provider state read revealing the out-of-band 7-day setting
+  - domain: audit
+    interaction: out-of-band divergence, delta, and attribution recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- out-of-band-edit
+- attribution
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Object store realized with a 30-day expiry in the Realized snapshot
+  - A console edit set expiry to 7 days outside the pipeline
+  postconditions:
+  - Divergence detected and attributed to an out-of-band edit
+  - Delta presented for adopt-or-remediate
+  - Divergence recorded
+  note: batch=framework-hammer-2026-07-16

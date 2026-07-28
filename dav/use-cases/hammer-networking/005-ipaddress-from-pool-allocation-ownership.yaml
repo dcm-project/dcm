@@ -1,0 +1,61 @@
+uuid: uc-hammer-networking-005
+handle: networking/ipaddress-from-pool-allocation-ownership
+scenario:
+  description: 'A tenant-admin asks the platform to "allocate the next free address" from a named address
+    pool (10.20.0.0/22) and hand ownership of that specific address to their service, so no two tenants
+    can be handed the same address. This tests whether the architecture models an address POOL as a first-class
+    resource with allocation ownership — a record that atomically carves out a Network.IPAddress and marks
+    it owned — versus only modelling individual IPAddress records and DHCP scopes. The registry today
+    has Network.DHCPScope and Network.IPAddress but no explicit IPAddressPool with allocation-ownership
+    semantics, so this likely returns partially_supported or unsupported and surfaces a real gap.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - tenancy-authority
+  intent: Allocate and take ownership of a free address from a managed pool
+  success_criteria:
+  - A pool resource (or DHCPScope acting as one) is identifiable as the allocation source
+  - The system carves out exactly one Network.IPAddress and records ownership by the requesting service
+  - Allocation is atomic — concurrent requests cannot receive the same address
+  - The allocated address is removed from the free set and cannot be double-allocated
+  - Ownership is queryable (who holds this address, from which pool)
+  - If no pool/allocation-ownership resource exists, the gap is reported explicitly rather than silently
+    faked
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: address carved from a pool and recorded as an owned Network.IPAddress
+  - domain: policy
+    interaction: allocation authorized against the tenant's entitlement to the pool
+  - domain: audit
+    interaction: allocation and ownership transfer recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- ip-address
+- address-pool
+- allocation-ownership
+- edge
+- gap-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

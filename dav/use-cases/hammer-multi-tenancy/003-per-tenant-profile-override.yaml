@@ -1,0 +1,55 @@
+uuid: uc-hammer-tenancy-003
+handle: tenancy/per-tenant-profile-override
+scenario:
+  description: 'A tenant-admin defines a tenant-scoped profile override that tightens one validation threshold
+    above the platform-default standard profile while inheriting all other platform defaults. A new resource
+    request in that tenant must be evaluated against the composed profile — the tenant override layered
+    over the platform default — not against either one in isolation. This tests whether profiles compose
+    hierarchically at the tenant boundary and whether the effective policy set is deterministic and auditable.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: standard
+  perspectives:
+    - compliance-auditor
+    - tenancy-authority
+  intent: Apply a tenant profile override that composes over the platform default
+  success_criteria:
+  - Tenant override is accepted and recorded as a delta over the platform default
+  - Effective profile for the request is the composition, not the override alone
+  - Overridden threshold is enforced; non-overridden defaults are inherited unchanged
+  - Composition order is deterministic and the effective policy set is inspectable
+  - A request that passes the platform default but fails the override is rejected
+  - The composed effective profile is captured in the audit record for the request
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: tenant override composed over platform default to yield the effective profile
+  - domain: data
+    interaction: composed profile resolved and bound to the request record
+  - domain: audit
+    interaction: effective composed profile recorded for later inspection
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- profile-override
+- composition
+- policy
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

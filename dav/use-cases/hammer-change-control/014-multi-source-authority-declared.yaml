@@ -1,0 +1,56 @@
+uuid: uc-4635fb17-b84f-42b7-b649-76f763bbe07d
+handle: change-control/multi-source-authority-declared
+version: 1.0.0
+scenario:
+  description: 'Two sources can answer ''is the window open'': an internally-authored policy clause and
+    the external change-management system''s knowledge records. The consuming policy DECLARES which source
+    is authoritative for which scope (the adopt-by-reference discipline applied to authority): e.g. the
+    external calendar governs production windows, the internal clause governs a lab enclave the ITSM system
+    does not model. When both sources cover the same scope and disagree, and no authority is declared
+    for that scope, the gate refuses to decide — typed (conflicting-sources), naming both sources and
+    their answers — rather than silently picking one.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Declare source authority per scope for change-control knowledge, and refuse gating decisions
+    on undeclared conflicts instead of silently picking a source
+  success_criteria:
+  - The consuming policy declares, per scope, which source (internal clause or external knowledge) is
+    authoritative
+  - Scopes covered by exactly one source evaluate deterministically without a declaration
+  - A scope where declared authority exists evaluates against that source even when the other disagrees,
+    and the decision record notes the overridden source
+  - A scope with conflicting answers and no declared authority produces a typed conflicting-sources refusal
+    naming both sources and both answers
+  - The refusal is a gate outcome record; no adoption proceeds on an unresolved conflict
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: cross_domain_constraint
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: authority-per-scope declarations resolve multi-source answers; undeclared conflict refuses
+  - domain: data
+    interaction: both sources' answers and revisions are part of the decision record
+  - domain: audit
+    interaction: overrides and refusals are recorded with both sources named
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T23:00:00Z'
+tags:
+- hammer
+- change-control
+- knowledge-source
+- multi-source
+- authority
+- must-reject

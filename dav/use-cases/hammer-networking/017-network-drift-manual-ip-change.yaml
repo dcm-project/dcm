@@ -1,0 +1,56 @@
+uuid: uc-hammer-networking-017
+handle: networking/network-drift-manual-ip-change
+scenario:
+  description: 'Someone SSHes into a host and changes an interface''s address by hand with nmcli, diverging
+    the realized NMstate from the declared Network.ConnectionProfile / Network.IPAddress intent. On the
+    next reconciliation the system must detect the drift between intent and realized state, report exactly
+    which fields diverged (address, method), and either flag or converge the interface back to the declared
+    intent according to policy — without losing the record of what the box actually looked like. This
+    tests drift detection on host network configuration.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - platform-operator
+  intent: Detect and reconcile an out-of-band manual change to a host's network config
+  success_criteria:
+  - Reconciliation compares realized NMstate against declared ConnectionProfile/IPAddress intent
+  - Drift is detected and the diverged fields (address, method) are reported specifically
+  - The realized-state record reflects what the host actually had before reconvergence
+  - Per policy, the interface is either flagged for approval or converged back to intent
+  - If converged, realized state returns to match the declared intent
+  - The drift detection and resolution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: realized NMstate diffed against intent; diverged fields identified
+  - domain: policy
+    interaction: drift-resolution policy chooses flag vs converge
+  - domain: audit
+    interaction: drift and its resolution recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- drift
+- reconciliation
+- connection-profile
+- ip-address
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,63 @@
+uuid: uc-hammer-binding-surface-004
+handle: binding-surface/imperative-playbook-to-composite-intent
+version: 1.0.0
+scenario:
+  description: "An infrastructure engineer replaces a working ~200-line imperative provisioning
+    playbook (VM create, host bridge plumbing, guest-image discovery by fetching a release
+    directory listing, hand-authored DNS A and PTR records, a post-provision filesystem-grow
+    play) with a single Composite catalog item. The probe that produced this case validated a
+    real playbook against the registry: the composite expresses the workload in a quarter of
+    the volume, and three playbook fragilities disappear structurally — the DNS record binds to
+    the VM's declared primary_ip output instead of repeating the address as a literal, the
+    guest image becomes a deferred-resolution vocabulary reference instead of runtime directory
+    grepping, and disk placement becomes storage-class tier intent instead of a filesystem
+    path with a migrate-later comment. Intent elements the model could not carry (vCPU
+    hot-resize ceiling, CPU passthrough mode, day-0 access bootstrap, thin-provisioning) were
+    filed as typed gaps rather than silently dropped."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - provider-owner
+  intent: Express a complete single-VM workload (compute, static address on an isolated
+    segment, derived DNS, day-0 job) as one Composite catalog item that a provider can realize
+    without any imperative provisioning logic in the intent
+  success_criteria:
+  - The composite validates against the catalog-item contract and every constituent's
+    spec_defaults validate against its type's spec at full depth
+  - The DNS record's data arrives via a binding to the VM's declared primary_ip output and is
+    rejected if the output is not declared
+  - The guest image is a deferred-resolution reference; the intent document contains no
+    runtime discovery logic
+  - Provider mechanics (hypervisor packages, bridge plumbing, image download, guest
+    customization) appear nowhere in the intent
+  - Intent elements the model cannot express are surfaced as typed expressibility findings,
+    not silently dropped
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the composite and every constituent payload validate against the registry contracts
+  - domain: policy
+    interaction: bindings to undeclared outputs are rejected at request time
+  - domain: provider
+    interaction: the provider owns all realization mechanics and populates declared outputs
+  - domain: audit
+    interaction: gaps found while authoring are recorded as findings with the source artifact as provenance
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: vm-live-probe-2026-07-25
+  timestamp: '2026-07-25T00:00:00Z'
+tags:
+- hammer
+- binding-surface
+- brownfield-migration
+- model-validation

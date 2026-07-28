@@ -1,0 +1,51 @@
+uuid: uc-hammer-binding-surface-003
+handle: binding-surface/fleet-output-coverage-queryable
+version: 1.0.0
+scenario:
+  description: "An architect needs to answer, for the whole registry: which resource types publish a Realized\
+    \ output surface, which are legitimately output-free (knowledge/reference families), and which are\
+    \ gaps. If this requires reading 46 spec files by hand, the gap class regrows silently with every\
+    \ new type. This stresses that output coverage is a queryable property of the registry \u2014 the\
+    \ same way conformance and profile coverage are \u2014 so the fleet-wide gap found once stays found."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Query the registry for output-surface coverage across all resource types and receive a complete
+    declared/exempt/gap classification
+  success_criteria:
+  - 'Every registered type is classified: outputs declared, exempt-by-family, or gap'
+  - The classification is derived from the registry, not from a hand-maintained list
+  - A newly registered realizable type without outputs appears as a gap immediately
+  - The query result is consumable by CI so the gap class cannot silently regrow
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: none_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the registry is the single source the coverage query reads
+  - domain: policy
+    interaction: a governance gate can require outputs on realizable types
+  - domain: provider
+    interaction: provider-declared types are held to the same output bar
+  - domain: audit
+    interaction: coverage snapshots are recordable for trend/attestation
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: binding-surface-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- typed-outputs
+- registry-coverage
+- governance
+- ci-ratchet

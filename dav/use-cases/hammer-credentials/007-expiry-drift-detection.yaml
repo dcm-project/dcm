@@ -1,0 +1,56 @@
+uuid: uc-hammer-credentials-007
+handle: credentials/expiry-drift-detection
+scenario:
+  description: 'A credential in the model has an intent that says it should be valid, but its external
+    secret backend shows it has already expired or been rotated out-of-band. The system''s drift detection
+    must flag the divergence between the intended credential state and the realized backend state, and
+    surface it as remediable drift rather than silently trusting the model. This tests whether credential
+    validity is a first-class drift signal, not just a static attribute.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - security-officer
+  intent: Detect that a credential expired out-of-band as drift against intent
+  success_criteria:
+  - Intended credential validity is compared against the backend's realized state
+  - An expired-but-intended-valid credential is flagged as drift
+  - The drift record identifies the affected credential and its consumers
+  - A remediation (rotate or revoke) is proposed, not auto-trusted
+  - No secret value is read or stored during drift comparison
+  - The drift finding is recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: intended validity compared against realized backend state
+  - domain: policy
+    interaction: drift policy classifies the expiry divergence as remediable
+  - domain: audit
+    interaction: credential drift finding and proposed remediation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- drift
+- expiry
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,64 @@
+uuid: uc-hammer-policy-override-016
+handle: policy-override/override-scope-no-sibling-widening
+scenario:
+  description: 'A security-officer grants an override narrowed to one specific request in a batch of near-identical
+    sibling requests (same policy, same profile, same resource type). The engine must apply the override
+    ONLY to the matched request and must re-block the siblings, which continue to fail the same policy.
+    An override scoped to a request must not widen by matching-shape to its siblings. This probes override
+    scoping precision: a common defect is keying the override to a policy-plus-shape signature that accidentally
+    covers every look-alike request. The mechanism under test is that override scope is bound to the specific
+    matched request, not to a reusable pattern.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Confirm a request-scoped override does not leak to sibling requests
+  success_criteria:
+  - The override is scoped to exactly one matched request
+  - Sibling requests with the same shape still fail the same policy
+  - The override is not keyed to a reusable policy-plus-shape signature
+  - Only the matched request proceeds; siblings remain blocked
+  - Each sibling block and the single override are recorded distinctly
+  - The audit trail shows the override did not widen to look-alikes
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: human_escalation_required
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: override applied only to the matched request, siblings re-blocked
+  - domain: data
+    interaction: override scope bound to a specific request identity, not a pattern
+  - domain: audit
+    interaction: sibling blocks and the single override recorded separately
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- scope-precision
+- no-widening
+- least-privilege
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Several near-identical sibling requests match the same blocking policy
+  - An override is granted for exactly one of them
+  postconditions:
+  - Only the matched request proceeds; siblings stay blocked
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,59 @@
+uuid: uc-5528b265-2393-4a31-a5c3-b19fd447107e
+handle: class-versioning/envelope-set-semantics-and-whole-pin
+version: 1.1.0
+scenario:
+  description: 'The same provider adds an entirely new capability (envelope minor — the set grew compatibly)
+    and later retires another (envelope major — the set shrank). Throughout, an estate that pinned the
+    provider definition revision (the whole-surface pin — definition@version, or definition@sha256:<hex>
+    for byte-exactness, ADR-051) is untouched by every one of these
+    movements until its own change policy adopts: envelope semver communicates set evolution to humans,
+    the definition revision gives conservative estates one pin for everything, and the two carry different
+    meanings by design.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Version the capability set through the envelope while whole-provider pins ride definition revisions,
+    each plane carrying its own meaning
+  success_criteria:
+  - Adding a capability bumps the envelope minor; retiring one bumps it major — set semantics only
+  - Capability-internal changes never drive envelope classification
+  - An estate pinned to a definition revision is untouched by all movements until it re-pins under its
+    change policy
+  - Consumers binding a specific capability identify it by its frozen capability_uuid and pin its revision
+    at a version or digest, never by envelope version
+  - The retired capability follows the deprecation lifecycle — pinned consumers keep resolving it through
+    the published window
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: envelope versions the set; definition revision pins the surface
+  - domain: policy
+    interaction: estate change policies gate adoption of either plane's movement
+  - domain: data
+    interaction: capability pins are version/digest-exact on a frozen identity, independent of envelope
+  - domain: audit
+    interaction: set changes and pin states are reconstructible
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T01:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- two-plane
+- envelope
+- whole-pin
+- deprecation

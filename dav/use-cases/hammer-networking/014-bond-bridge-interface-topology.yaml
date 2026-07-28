@@ -1,0 +1,56 @@
+uuid: uc-hammer-networking-014
+handle: networking/bond-bridge-interface-topology
+scenario:
+  description: 'A host is configured with two physical NICs bonded (802.3ad) and a bridge (br0) built
+    on top of the bond, with a VLAN interface stacked on the bridge. Each layer is a Hardware.NetworkInterface
+    whose device_class distinguishes physical/bond/bridge/vlan, linked by parent_device / lower_layer
+    to the layer beneath it (per #267 config-vs- component). The system must model this multi-layer interface
+    topology as a connected set of records and realize it in the correct bottom-up order. This tests whether
+    composite host interface stacks are representable without flattening them into an opaque blob.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Model and realize a bond -> bridge -> VLAN interface stack on a host
+  success_criteria:
+  - Each layer (physical NICs, bond, bridge, vlan) is a Hardware.NetworkInterface record
+  - device_class distinguishes physical / bond / bridge / vlan per record
+  - lower_layer / parent_device links each layer to the one beneath it
+  - The stack forms a coherent dependency chain in the data model
+  - Provider realizes the layers bottom-up (physical -> bond -> bridge -> vlan)
+  - The topology and realized order are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: layered NetworkInterface records linked by lower_layer/parent_device
+  - domain: provider
+    interaction: interface stack realized bottom-up via NMstate
+  - domain: audit
+    interaction: interface topology and realized order recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- interface
+- bond
+- bridge
+- topology
+- composite
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

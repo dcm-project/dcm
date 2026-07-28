@@ -1,0 +1,51 @@
+uuid: uc-multi-cluster-002
+handle: multi-cluster/move-cluster-between-hubs
+version: 1.0.0
+scenario:
+  description: "An imported spoke migrates from one hub's fleet to another \u2014 a management-plane change\
+    \ with zero workload impact expected. Because imported management is a soft depends_on edge (OCM detach/import\
+    \ semantics), the move is: detach (edge removed), import (new edge to the target hub), workloads untouched\
+    \ throughout. This stresses management-plane portability: the cluster's identity, workloads, and other\
+    \ dependencies are invariant under the hub move, and both hubs' fleet rollups update."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - executive
+  intent: Detach an imported cluster from one hub and import it into another with workload continuity
+    and correct fleet accounting
+  success_criteria:
+  - The cluster entity keeps its UUID and all non-hub edges across the move
+  - Workloads on the cluster are unaffected (soft management semantics honored)
+  - The old hub's managed_cluster_count decrements and the new hub's increments
+  - Audit shows detach and import as governed operations, not silent edge edits
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: multiple_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the management edge is replaced; everything else is invariant
+  - domain: policy
+    interaction: the target hub's admission and any placement policy re-validate the import
+  - domain: provider
+    interaction: both hub providers execute detach/import per OCM semantics
+  - domain: audit
+    interaction: the move is two governed operations with before/after fleet state
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: multi-cluster-2026-07-24
+  timestamp: '2026-07-24T21:00:00.000000+00:00'
+tags:
+- multi-cluster
+- portability
+- hub-migration
+- ocm
