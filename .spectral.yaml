@@ -1,0 +1,5 @@
+# AEP OpenAPI conformance ruleset (ADR-AEP-001).
+# Lints DCM's OpenAPI specs against the API Enhancement Proposals (aep.dev).
+# Run: npx @stoplight/spectral-cli lint schemas/openapi/*.yaml
+extends:
+  - '@aep_dev/aep-openapi-linter'
