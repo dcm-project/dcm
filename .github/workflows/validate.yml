@@ -1,0 +1,57 @@
+# Architecture validation gates for the DCM spec repo (docs + machine-readable contracts).
+# Three independent gates so a failure names its own dimension:
+#   contracts     — JSON Schema + OpenAPI parse/structure (tests/validate_contracts.py)
+#   terminology   — locked naming decisions, 2026-06-30 (tests/check_terminology.py)
+#   estate-tokens — no homelab identifiers in the public spec (tests/check_estate_tokens.py)
+name: validate
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install jsonschema pyyaml
+      # JSON Schemas valid + OpenAPI parse/structure (catches a broken contract merging).
+      - run: python3 tests/validate_contracts.py
+      # UC dimension vocabulary (DIM-001) — needs pyyaml, lives in this job
+      - run: python3 tests/check_uc_dimensions.py
+      # UC persona vocabulary (PER-001) — canonical persona set, single-sourced
+      - run: python3 tests/check_uc_personas.py
+
+  terminology:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Locked terminology (policy-type merge, Realized not Fulfilled, etc.). Pure stdlib.
+      - run: python3 tests/check_terminology.py
+
+  estate-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # No homelab identifiers in the public spec (hashed denylist). Pure stdlib.
+      - run: python3 tests/check_estate_tokens.py
+
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Referential integrity (repo-cleanliness Q8 — croadfeldt/dav docs/repo-cleanliness-review.md):
+      # every relative markdown link resolves. Pure stdlib.
+      - run: python3 tests/check_links.py
