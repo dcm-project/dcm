@@ -1,0 +1,24 @@
+name: AEP OpenAPI lint
+
+# ADR-AEP-001: lint DCM's OpenAPI specs against the AEP conventions (aep.dev)
+# using the AEP Spectral ruleset. ADVISORY for now (continue-on-error) — findings
+# are reported while the baseline is burned down (see schemas/openapi/AEP-CONFORMANCE.md);
+# flip `continue-on-error` to false once the error baseline reaches zero.
+
+on:
+  pull_request:
+    paths: [ "schemas/openapi/**", ".spectral.yaml", ".github/workflows/lint-openapi.yml" ]
+  workflow_dispatch: {}
+
+jobs:
+  aep-lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true          # advisory until the baseline is cleared
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - name: Install AEP linter
+        run: npm install --no-audit --no-fund @stoplight/spectral-cli @aep_dev/aep-openapi-linter
+      - name: Lint OpenAPI specs
+        run: npx spectral lint "schemas/openapi/*.yaml" --ruleset .spectral.yaml --format github-actions || true

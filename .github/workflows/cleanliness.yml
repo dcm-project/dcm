@@ -1,0 +1,37 @@
+# Scheduled repo-cleanliness run (the nine questions — brief: croadfeldt/dav
+# docs/repo-cleanliness-review.md). PR gating is validate.yml; this is the monthly
+# full-suite sweep + the semantic-review prompt, so cleanliness stays ACTIVE.
+name: cleanliness
+on:
+  schedule:
+    - cron: "17 7 1 * *"
+  workflow_dispatch:
+permissions:
+  issues: write
+  contents: read
+jobs:
+  cleanliness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install jsonschema pyyaml
+      - name: gates
+        id: gates
+        run: |
+          set +e; fail=0; : > /tmp/summary.md
+          for c in tests/validate_contracts.py tests/check_terminology.py tests/check_estate_tokens.py tests/check_links.py; do
+            out=$(python3 "$c" 2>&1); rc=$?
+            [ $rc -ne 0 ] && fail=1
+            printf '### `%s` — %s\n```\n%s\n```\n' "$c" "$([ $rc -eq 0 ] && echo PASS || echo FAIL)" "$(echo "$out" | tail -8)" >> /tmp/summary.md
+          done
+          echo "fail=$fail" >> "$GITHUB_OUTPUT"
+      - name: open review issue
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          title="Cleanliness review $(date -u +%Y-%m)"
+          { echo "Monthly repo-cleanliness run — deterministic gates $([ '${{ steps.gates.outputs.fail }}' = '1' ] && echo '**FAILED — fix before other work**' || echo 'all green').";
+            echo; cat /tmp/summary.md; echo;
+            echo "**Semantic sweep due (Q1–Q7 residues):** run the nine-question review brief — croadfeldt/dav \`docs/repo-cleanliness-review.md\` — with review agents over this repo (boundary/ADR-008 both directions, profile-ladder + vocab drift in prose, doc scoping); findings as file:line + severity into a cleanup plan."; } > /tmp/body.md
+          gh issue create --title "$title" --body-file /tmp/body.md
