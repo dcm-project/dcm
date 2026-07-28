@@ -1,0 +1,2007 @@
+openapi: "3.1.0"
+
+info:
+  title: DCM Admin API
+  version: "1.0.0"
+  description: |
+    The DCM Admin API is used by platform engineers, SREs, and system administrators to manage
+    the DCM control plane itself. All endpoints require platform admin or higher authority.
+
+    **Key principles:**
+    - Requires `verified` or `authorized` tier authority for most operations
+    - Mutating operations against the governance model (tier registry, profiles) require
+      `authorized` tier with a declared DCMGroup quorum
+    - All actions produce audit records
+    - Destructive or degrading operations have explicit confirmation steps
+
+
+
+    **AEP Alignment:** This API follows [AEP](https://aep.dev) conventions:
+    custom methods use colon syntax (`POST /resources/{name}:suspend`),
+    async operations return an `Operation` resource (AEP-136 LRO),
+    and list pagination uses `page_size`/`page_token` parameters.
+
+  contact:
+    name: DCM Project
+    url: https://github.com/dcm-project
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://{dcm-host}/
+    description: DCM Control Plane
+    variables:
+      dcm-host:
+        default: dcm.example.com
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: health
+    description: DCM control plane health and readiness
+  - name: tenants
+    description: Tenant lifecycle management
+  - name: actors
+    description: Actor session and risk management
+  - name: providers
+    description: Provider registration approval and management
+  - name: accreditations
+    description: Provider accreditation review
+  - name: discovery
+    description: Brownfield discovery scheduling and monitoring
+  - name: drift
+    description: Drift orphan management and recovery decisions
+  - name: quotas
+    description: Tenant quota management
+  - name: search
+    description: Search index operations
+  - name: bootstrap
+    description: Bootstrap credential management
+  - name: scoring
+    description: Risk scoring model configuration
+  - name: approvals
+    description: Platform-level approval management
+  - name: tier-registry
+    description: Authority tier registry management
+
+paths:
+
+  # ─── HEALTH ───────────────────────────────────────────────────────────────
+
+  /livez:
+    get:
+      tags: [health]
+      operationId: liveness
+      summary: Kubernetes-style liveness probe
+      security: []
+      responses:
+        "200": { description: Control plane process is alive }
+        "503": { description: Control plane unhealthy }
+
+  /readyz:
+    get:
+      tags: [health]
+      operationId: readiness
+      summary: Kubernetes-style readiness probe
+      security: []
+      responses:
+        "200": { description: Control plane ready to serve requests }
+        "503": { description: Control plane not ready (stores unavailable, bootstrap incomplete, etc.) }
+
+  /metrics:
+    get:
+      tags: [health]
+      operationId: metrics
+      summary: Prometheus metrics endpoint
+      security: []
+      responses:
+        "200":
+          description: Prometheus text format metrics
+          content:
+            text/plain:
+              schema: { type: string }
+
+  /api/v1/admin/health:
+    get:
+      tags: [health]
+      operationId: getAdminHealth
+      summary: Detailed control plane health including component and provider status
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdminHealthResponse" }
+
+  # ─── TENANTS ──────────────────────────────────────────────────────────────
+
+  /api/v1/admin/tenants:
+    get:
+      tags: [tenants]
+      operationId: listTenants
+      summary: List all Tenants
+      parameters:
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, suspended, decommissioned] }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantList" }
+    post:
+      tags: [tenants]
+      operationId: createTenant
+      summary: Create a new Tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantCreate" }
+      responses:
+        "201":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "409": { description: Tenant handle already exists }
+
+  /api/v1/admin/tenants/{tenant_uuid}:suspend:
+    post:
+      tags: [tenants]
+      operationId: suspendTenant
+      summary: Suspend a Tenant (blocks all new requests; active resources remain)
+      parameters:
+        - { $ref: "#/components/parameters/tenant_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { description: Tenant suspended }
+        "409": { description: Tenant already suspended or decommissioned }
+
+  /api/v1/admin/tenants/{tenant_uuid}:reinstate:
+    post:
+      tags: [tenants]
+      operationId: reinstateTenant
+      summary: Reinstate a suspended Tenant
+      parameters:
+        - { $ref: "#/components/parameters/tenant_uuid" }
+      responses:
+        "200": { description: Tenant reinstated }
+
+  /api/v1/admin/tenants/{tenant_uuid}:
+    delete:
+      tags: [tenants]
+      operationId: decommissionTenant
+      summary: Decommission a Tenant (must have zero active resources)
+      parameters:
+        - { $ref: "#/components/parameters/tenant_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, confirmation]
+              properties:
+                reason:       { type: string }
+                confirmation: { type: string, const: "DECOMMISSION", description: "Must be the string 'DECOMMISSION'" }
+      responses:
+        "200":
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Operation" }
+        "409": { description: Tenant has active resources — cannot decommission }
+
+  /api/v1/admin/tenants/{tenant_uuid}/quotas:
+    get:
+      tags: [quotas]
+      operationId: getTenantQuotas
+      summary: Get quota configuration for a Tenant
+      parameters:
+        - { $ref: "#/components/parameters/tenant_uuid" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantQuotas" }
+
+  /api/v1/admin/tenants/{tenant_uuid}/quotas/{resource_type}:
+    put:
+      tags: [quotas]
+      operationId: setTenantQuota
+      summary: Set or update quota for a specific resource type on a Tenant
+      parameters:
+        - { $ref: "#/components/parameters/tenant_uuid" }
+        - name: resource_type
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/QuotaUpdate" }
+      responses:
+        "200": { description: Quota updated }
+
+  # ─── ACTORS ───────────────────────────────────────────────────────────────
+
+  /api/v1/admin/actors/{actor_uuid}:revoke-sessions:
+    post:
+      tags: [actors]
+      operationId: revokeActorSessions
+      summary: Revoke all active sessions for an actor (emergency session revocation)
+      parameters:
+        - { $ref: "#/components/parameters/actor_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions_revoked: { type: integer }
+
+  /api/v1/admin/actors/{actor_uuid}/sessions:
+    get:
+      tags: [actors]
+      operationId: getActorSessions
+      summary: List all active sessions for an actor
+      parameters:
+        - { $ref: "#/components/parameters/actor_uuid" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions: { type: array, items: { type: object } }
+
+  /api/v1/admin/actors/{actor_uuid}/risk-history:
+    get:
+      tags: [actors, scoring]
+      operationId: getActorRiskHistory
+      summary: Get risk score history for an actor (full detail for admin)
+      parameters:
+        - { $ref: "#/components/parameters/actor_uuid" }
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RiskHistory" }
+
+  /api/v1/admin/actors/{actor_uuid}/risk-history:reset:
+    post:
+      tags: [actors]
+      operationId: resetActorRiskHistory
+      summary: Reset risk score history for an actor (requires verified tier)
+      parameters:
+        - { $ref: "#/components/parameters/actor_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { description: Risk history reset }
+
+  # ─── PROVIDERS ────────────────────────────────────────────────────────────
+
+  /api/v1/admin/location-types:
+    get:
+      tags: [locations]
+      operationId: listLocationTypes
+      summary: List registered location types (standard and custom)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All registered location types
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  location_types:
+                    type: array
+                    items: { type: object, additionalProperties: true }
+    post:
+      tags: [locations]
+      operationId: registerCustomLocationType
+      summary: Register a custom location type
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: Operation initiated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Operation" }
+
+  /api/v1/admin/locations:
+    get:
+      tags: [locations]
+      operationId: adminListLocations
+      summary: List all location nodes (admin — no entitlement filter)
+      parameters:
+        - { name: level, in: query, schema: { type: string } }
+        - { name: page_size, in: query, schema: { type: integer, default: 100 } }
+        - { name: page_token, in: query, schema: { type: string } }
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All location nodes
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+
+  /api/v1/admin/locations/{location_uuid}:
+    patch:
+      tags: [locations]
+      operationId: updateLocationCapacity
+      summary: Update mutable location fields (e.g., rack_units_available)
+      parameters:
+        - { name: location_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: Location updated
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+
+  /api/v1/admin/providers:
+    get:
+      tags: [providers]
+      operationId: listProviders
+      summary: List all registered providers
+      parameters:
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+        - name: provider_type
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderList" }
+
+  /api/v1/admin/providers/pending:
+    get:
+      tags: [providers]
+      operationId: listPendingProviders
+      summary: List providers awaiting approval
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProviderList" }
+
+  /api/v1/admin/providers/{provider_uuid}:approve:
+    post:
+      tags: [providers]
+      operationId: approveProvider
+      summary: Approve a provider registration
+      parameters:
+        - { $ref: "#/components/parameters/provider_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:             { type: string }
+                conditions:         { type: string, description: "Any conditions attached to approval" }
+                external_reference: { type: string }
+      responses:
+        "200": { description: Provider approved and activated }
+        "409": { description: Provider not in PENDING_APPROVAL state }
+
+  /api/v1/admin/providers/{provider_uuid}:reject:
+    post:
+      tags: [providers]
+      operationId: rejectProvider
+      summary: Reject a provider registration
+      parameters:
+        - { $ref: "#/components/parameters/provider_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { description: Provider rejected }
+
+  /api/v1/admin/providers/{provider_uuid}:suspend:
+    post:
+      tags: [providers]
+      operationId: suspendProvider
+      summary: Suspend a provider (no new requests routed; existing resources unaffected)
+      parameters:
+        - { $ref: "#/components/parameters/provider_uuid" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:   { type: string }
+                duration: { type: string, description: "ISO 8601 duration; null = indefinite" }
+      responses:
+        "200": { description: Provider suspended }
+
+  # ─── ACCREDITATIONS ───────────────────────────────────────────────────────
+
+  /api/v1/admin/accreditations:
+    get:
+      tags: [accreditations]
+      operationId: listAccreditations
+      summary: List provider accreditations (pending, active, expiring soon)
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending, active, expired, expiring_soon] }
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AccreditationList" }
+
+  /api/v1/admin/accreditations/{accreditation_uuid}:approve:
+    post:
+      tags: [accreditations]
+      operationId: approveAccreditation
+      summary: Approve a submitted accreditation
+      parameters:
+        - { name: accreditation_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:             { type: string }
+                external_reference: { type: string }
+      responses:
+        "200": { description: Accreditation approved }
+
+  /api/v1/admin/accreditations/{accreditation_uuid}:
+    delete:
+      tags: [accreditations]
+      operationId: revokeAccreditation
+      summary: Revoke an active accreditation
+      parameters:
+        - { name: accreditation_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { description: Accreditation revoked; affected entities notified }
+
+  # ─── DISCOVERY ────────────────────────────────────────────────────────────
+
+  /api/v1/admin/discovery:trigger:
+    post:
+      tags: [discovery]
+      operationId: triggerDiscovery
+      summary: Trigger an immediate discovery cycle for one or all providers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                provider_uuid: { type: string, format: uuid, description: "Omit to trigger all active providers" }
+                scope:         { type: string, enum: [full, targeted], default: full }
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  discovery_job_uuid: { type: string, format: uuid }
+
+  /api/v1/admin/discovery/jobs/{discovery_job_uuid}:
+    get:
+      tags: [discovery]
+      operationId: getDiscoveryJob
+      summary: Get status of a discovery job
+      parameters:
+        - { name: discovery_job_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJobStatus" }
+
+  # ─── DRIFT / ORPHANS ──────────────────────────────────────────────────────
+
+  /api/v1/admin/orphans:
+    get:
+      tags: [drift]
+      operationId: listOrphans
+      summary: List discovered entities with no matching Requested State record
+      parameters:
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OrphanList" }
+
+  /api/v1/admin/orphans/{orphan_candidate_uuid}/resolve:
+    post:
+      tags: [drift]
+      operationId: resolveOrphan
+      summary: Resolve an orphan candidate (ingest, ignore, or decommission)
+      parameters:
+        - { name: orphan_candidate_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution:        { type: string, enum: [ingest, ignore, decommission] }
+                target_tenant_uuid: { type: string, format: uuid, description: "Required for 'ingest'" }
+                reason:            { type: string }
+      responses:
+        "200": { description: Orphan resolved }
+
+  /api/v1/admin/recovery-decisions/pending:
+    get:
+      tags: [drift]
+      operationId: listPendingRecoveryDecisions
+      summary: List platform-level recovery decisions awaiting admin resolution
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decisions: { type: array, items: { type: object } }
+
+  /api/v1/admin/recovery-decisions/{recovery_decision_uuid}:
+    post:
+      tags: [drift]
+      operationId: resolveRecoveryDecision
+      summary: Resolve a platform-level recovery decision
+      parameters:
+        - { name: recovery_decision_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reason]
+              properties:
+                decision: { type: string, enum: [approve, reject, escalate] }
+                reason:   { type: string }
+      responses:
+        "200": { description: Decision recorded }
+
+  # ─── SEARCH INDEX ─────────────────────────────────────────────────────────
+
+  /api/v1/admin/search-index:rebuild:
+    post:
+      tags: [search]
+      operationId: rebuildSearchIndex
+      summary: Trigger a full search index rebuild
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_uuid: { type: string, format: uuid }
+
+  /api/v1/admin/search-index/status:
+    get:
+      tags: [search]
+      operationId: getSearchIndexStatus
+      summary: Get current search index status and last rebuild time
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:       { type: string }
+                  entity_count: { type: integer }
+                  last_rebuilt: { type: string, format: date-time }
+
+  # ─── BOOTSTRAP ────────────────────────────────────────────────────────────
+
+  /api/v1/admin/bootstrap:rotate-credential:
+    post:
+      tags: [bootstrap]
+      operationId: rotateBootstrapCredential
+      summary: Rotate the bootstrap credential (zero-day trust credential rotation)
+      description: |
+        Rotates the bootstrap credential used for initial DCM trust establishment.
+        Requires the current credential to be presented and records the rotation in
+        the Audit Store. New credential is returned once; cannot be retrieved again.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_credential_ref, reason]
+              properties:
+                current_credential_ref: { type: string }
+                reason:                 { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  new_credential: { type: string, description: "New bootstrap credential. Shown once." }
+                  rotated_at:     { type: string, format: date-time }
+
+  # ─── SCORING ──────────────────────────────────────────────────────────────
+
+  /api/v1/admin/profiles/{profile_name}/scoring:
+    get:
+      tags: [scoring]
+      operationId: getProfileScoring
+      summary: Get scoring model configuration for a profile
+      parameters:
+        - { $ref: "#/components/parameters/profile_name" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScoringConfiguration" }
+
+    patch:
+      tags: [scoring]
+      operationId: updateProfileScoring
+      summary: Update scoring configuration for a profile (threshold adjustments)
+      parameters:
+        - { $ref: "#/components/parameters/profile_name" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScoringConfigurationUpdate" }
+      responses:
+        "200": { description: Scoring configuration updated }
+        "422": { description: Configuration violates SMX-008 hard constraint (auto max_score ≤ 50) }
+
+  /api/v1/admin/profiles/{profile_name}/scoring/overrides:
+    post:
+      tags: [scoring]
+      operationId: addScoringOverride
+      summary: Add a per-policy enforcement class override for a profile
+      parameters:
+        - { $ref: "#/components/parameters/profile_name" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ScoringOverride" }
+      responses:
+        "201": { description: Override added }
+
+  /api/v1/admin/scoring/audit:
+    get:
+      tags: [scoring]
+      operationId: getScoringAudit
+      summary: Get scoring evaluation audit records for review
+      parameters:
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+        - name: actor_uuid
+          in: query
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records: { type: array, items: { type: object } }
+
+  # ─── APPROVALS ────────────────────────────────────────────────────────────
+
+  /api/v1/admin/approvals/pending:
+    get:
+      tags: [approvals]
+      operationId: listPlatformApprovals
+      summary: List all platform-level approvals pending admin action
+      parameters:
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+        - name: tier
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approvals: { type: array, items: { $ref: "#/components/schemas/ApprovalRecord" } }
+
+  /api/v1/admin/approvals/{approval_uuid}:
+    get:
+      tags: [approvals]
+      operationId: getApproval
+      summary: Get full detail for an approval record including all decisions
+      parameters:
+        - { name: approval_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApprovalDetail" }
+
+  /api/v1/admin/approvals/{approval_uuid}:vote:
+    post:
+      tags: [approvals]
+      operationId: recordAdminApprovalVote
+      summary: Record a platform admin approval vote
+      parameters:
+        - { name: approval_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reason]
+              properties:
+                decision:           { type: string, enum: [approve, reject, abstain] }
+                reason:             { type: string }
+                external_reference: { type: string }
+      responses:
+        "200": { description: Vote recorded; approval gate re-evaluated }
+
+  # ─── AUTHORITY TIER REGISTRY ──────────────────────────────────────────────
+
+  /api/v1/admin/tier-registry/changes:
+    post:
+      tags: [tier-registry]
+      operationId: proposeTierRegistryChange
+      summary: Propose a change to the authority tier registry
+      description: |
+        Submits a proposed updated tier list. DCM computes the tier impact diff immediately —
+        comparing the proposed ordered list to the current one and classifying every changed
+        tier as SECURITY_DEGRADATION, SECURITY_UPGRADE, BROKEN_REFERENCE, PROFILE_GAP, or
+        STALE_WEIGHT. Returns the impact report UUID for inspection.
+        The change cannot activate until all SECURITY_DEGRADATION and BROKEN_REFERENCE items
+        are explicitly accepted. See 32-authority-tier-model.md Section 7.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TierRegistryChangeProposal" }
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  change_uuid:        { type: string, format: uuid }
+                  impact_report_uuid: { type: string, format: uuid }
+                  blocking_items:     { type: integer, description: "Number of SECURITY_DEGRADATION or BROKEN_REFERENCE items" }
+                  status:             { type: string, enum: [pending_review, ready_to_activate] }
+
+    get:
+      tags: [tier-registry]
+      operationId: listTierRegistryChanges
+      summary: List tier registry change proposals
+      parameters:
+        - name: status
+          in: query
+          schema: { type: string, enum: [pending_review, ready_to_activate, activated, rejected] }
+        - { $ref: "#/components/parameters/page_size" }
+        - { $ref: "#/components/parameters/page_token" }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes: { type: array, items: { type: object } }
+
+  /api/v1/admin/tier-registry/changes/{change_uuid}/impact:
+    get:
+      tags: [tier-registry]
+      operationId: getTierRegistryImpact
+      summary: Get the full impact report for a proposed tier registry change
+      parameters:
+        - { name: change_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TierImpactReport" }
+
+  /api/v1/admin/tier-registry/changes/{change_uuid}:accept-degradation:
+    post:
+      tags: [tier-registry]
+      operationId: acceptTierDegradation
+      summary: Accept a specific SECURITY_DEGRADATION item (requires verified tier)
+      description: |
+        Accepts a single SECURITY_DEGRADATION item identified in the impact report.
+        The accepting actor must be at `verified` tier or above and must provide a reason
+        describing what compensating controls justify the degradation.
+        The change cannot activate until ALL SECURITY_DEGRADATION items are accepted.
+      parameters:
+        - { name: change_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [degradation_item_uuid, reason, compensating_controls]
+              properties:
+                degradation_item_uuid: { type: string, format: uuid }
+                reason:                { type: string, minLength: 20, description: "Why this degradation is acceptable" }
+                compensating_controls: { type: string, minLength: 20, description: "What compensating controls are in place" }
+      responses:
+        "200": { description: Degradation accepted; impact report updated }
+        "403": { description: Actor does not meet required tier (verified or above)" }
+        "409": { description: Item already accepted or change not in pending_review state }
+
+  /api/v1/admin/tier-registry/changes/{change_uuid}:activate:
+    post:
+      tags: [tier-registry]
+      operationId: activateTierRegistryChange
+      summary: Activate a proposed tier registry change
+      description: |
+        Activates the proposed tier list as the new authoritative authority tier registry.
+        Returns 409 if any SECURITY_DEGRADATION or BROKEN_REFERENCE items remain unaccepted.
+        Impact report is stored in the Audit Store at activation time.
+        Requires `authorized` tier.
+      parameters:
+        - { name: change_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      responses:
+        "200": { description: Tier registry updated; new ordered list now active }
+        "403": { description: Actor does not meet required tier (authorized)" }
+        "409":
+          description: Blocking items remain unaccepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blocking_items: { type: array, items: { type: object } }
+
+# ─── COMPONENTS ────────────────────────────────────────────────────────────────
+
+  # ── Workload Analysis (Admin — aggregate view) ────────────────────────────────
+  /api/v1/admin/workload-analysis:
+    get:
+      tags: [workload-analysis]
+      operationId: listWorkloadProfiles
+      summary: List all workload profiles across all tenants (admin aggregate view)
+      description: |
+        Returns workload profiles platform-wide. Useful for capacity planning,
+        workload-type distribution reporting, and migration readiness assessment.
+        Filtered by archetype, confidence, or resource type.
+      parameters:
+        - {name: archetype, in: query, schema: {type: string, enum: [web_server, database, batch_processor, message_broker, api_gateway, cache, storage, monitoring, unknown]}}
+        - {name: confidence, in: query, schema: {type: string, enum: [high, medium, low, undetermined]}}
+        - {name: resource_type, in: query, schema: {type: string}, description: "FQN e.g. Compute.VirtualMachine"}
+        - {name: tenant_uuid, in: query, schema: {type: string, format: uuid}}
+        - {name: containerization_score_min, in: query, schema: {type: integer, minimum: 1, maximum: 10}}
+        - {name: page_size, in: query, schema: {type: integer, default: 50}}
+        - {name: page_token, in: query, schema: {type: string}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Workload profile list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        entity_uuid: {type: string, format: uuid}
+                        tenant_uuid: {type: string, format: uuid}
+                        resource_type: {type: string}
+                        workload_archetype: {type: string}
+                        confidence: {type: string}
+                        containerization_score: {type: integer}
+                        analyzed_at: {type: string, format: date-time}
+                  total_count: {type: integer}
+                  archetype_distribution:
+                    type: object
+                    description: Count per archetype across all profiles in result set
+                    additionalProperties: {type: integer}
+                  next_page_token: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  # ── Accreditation Monitor ─────────────────────────────────────────────────────
+  /api/v1/admin/accreditations/{accreditation_uuid}:verify:
+    post:
+      tags: [accreditation]
+      operationId: triggerAccreditationVerification
+      summary: Trigger immediate external verification of an accreditation
+      parameters:
+        - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                override_reason: {type: string, description: "Required when manually overriding last_verified_at in air-gapped mode"}
+      responses:
+        "200":
+          description: Operation initiated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Operation"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/admin/accreditations/{accreditation_uuid}:configure-webhook:
+    post:
+      tags: [accreditation]
+      operationId: configureAccreditationWebhook
+      summary: Configure a contract management webhook for Tier 3 accreditation verification
+      description: |
+        Used for BAA and DoD IL accreditations. Registers the contract management
+        system (DocuSign, Ironclad, etc.) to send lifecycle events to DCM when
+        the underlying contract is signed, amended, or terminated.
+      parameters:
+        - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contract_system, contract_id]
+              properties:
+                contract_system: {type: string, enum: [docusign, ironclad, agiloft, custom]}
+                contract_id: {type: string, description: ID in the contract management system}
+                webhook_secret: {type: string, description: HMAC secret for webhook authentication}
+      responses:
+        "200":
+          description: Webhook configured; webhook_url returned for registration in contract system
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accreditation_uuid: {type: string, format: uuid}
+                  webhook_url: {type: string, format: uri, description: "Register this URL in your contract management system"}
+                  webhook_secret_set: {type: boolean}
+
+  /api/v1/admin/accreditations/{accreditation_uuid}/contract-event:
+    post:
+      tags: [accreditation]
+      operationId: receiveAccreditationContractEvent
+      summary: Inbound webhook — receive contract lifecycle event from contract management system
+      description: |
+        Called by contract management systems (DocuSign, Ironclad, etc.) when
+        the underlying BAA or authorization contract changes state.
+        Authenticated via HMAC signature using the webhook_secret.
+      parameters:
+        - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{webhookHmac: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [contract_event_type, contract_id, effective_date]
+              properties:
+                contract_event_type: {type: string, enum: [signed, amended, terminated, renewal_due, renewed]}
+                contract_id: {type: string}
+                effective_date: {type: string, format: date-time}
+                details: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Event received and processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accreditation_uuid: {type: string, format: uuid}
+                  dcm_action_taken: {type: string, enum: [activated, pending_review, revoked, none]}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  # ── Maintenance Windows ───────────────────────────────────────────────────────
+  /api/v1/admin/maintenance-windows:
+    get:
+      tags: [scheduling]
+      operationId: listMaintenanceWindows
+      summary: List declared maintenance windows
+      parameters:
+        - {name: status, in: query, schema: {type: string, enum: [active, upcoming, expired]}}
+        - {name: page_size, in: query, schema: {type: integer, default: 50}}
+        - {name: page_token, in: query, schema: {type: string}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Maintenance window list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/MaintenanceWindow"}}
+                  next_page_token: {type: string}
+    post:
+      tags: [scheduling]
+      operationId: createMaintenanceWindow
+      summary: Declare a new maintenance window
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MaintenanceWindowCreate"}
+      responses:
+        "200":
+          description: Maintenance window created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MaintenanceWindow"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+
+  /api/v1/admin/maintenance-windows/{window_uuid}:
+    get:
+      tags: [scheduling]
+      operationId: getMaintenanceWindow
+      summary: Get maintenance window details including scheduled requests in queue
+      parameters:
+        - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Maintenance window detail
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MaintenanceWindow"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    patch:
+      tags: [scheduling]
+      operationId: updateMaintenanceWindow
+      summary: Update maintenance window schedule or description
+      parameters:
+        - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/MaintenanceWindowPatch"}
+      responses:
+        "200":
+          description: Maintenance window updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/MaintenanceWindow"}
+    delete:
+      tags: [scheduling]
+      operationId: deleteMaintenanceWindow
+      summary: Delete a maintenance window (cancels queued requests if policy dictates)
+      parameters:
+        - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Deleted; queued_request_disposition indicates what happened to waiting requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  window_uuid: {type: string, format: uuid}
+                  queued_requests_affected: {type: integer}
+                  queued_request_disposition: {type: string, enum: [cancelled, reassigned, held]}
+
+  /api/v1/admin/maintenance-windows/{window_uuid}/scheduled-requests:
+    get:
+      tags: [scheduling]
+      operationId: listWindowScheduledRequests
+      summary: List requests queued for this maintenance window
+      parameters:
+        - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: page_size, in: query, schema: {type: integer, default: 50}}
+        - {name: page_token, in: query, schema: {type: string}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Queued requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {type: object, additionalProperties: true}}
+                  next_page_token: {type: string}
+
+  # ── Federation Management ────────────────────────────────────────────────────
+  /api/v1/admin/federation/peers:
+    get:
+      tags: [federation]
+      operationId: listFederationPeers
+      summary: List all registered federation peer DCM instances
+      parameters:
+        - {name: trust_posture, in: query, schema: {type: string, enum: [verified, vouched, untrusted]}}
+        - {name: status, in: query, schema: {type: string, enum: [active, suspended, pending]}}
+        - {name: page_size, in: query, schema: {type: integer, default: 50}}
+        - {name: page_token, in: query, schema: {type: string}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: List of federation peer registrations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {$ref: "#/components/schemas/FederationPeer"}}
+                  next_page_token: {type: string}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+    post:
+      tags: [federation]
+      operationId: registerFederationPeer
+      summary: Register a new federation peer DCM instance
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FederationPeerRegistration"}
+      responses:
+        "200":
+          description: Operation initiated — peer registration pending trust verification
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Operation"}
+        "422": {$ref: "#/components/responses/UnprocessableEntity"}
+
+  /api/v1/admin/federation/peers/{peer_uuid}:
+    get:
+      tags: [federation]
+      operationId: getFederationPeer
+      summary: Get federation peer details and current trust status
+      parameters:
+        - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Federation peer record
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FederationPeer"}
+        "404": {$ref: "#/components/responses/NotFound"}
+    delete:
+      tags: [federation]
+      operationId: deregisterFederationPeer
+      summary: Deregister a federation peer (graceful tunnel teardown)
+      parameters:
+        - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Operation initiated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Operation"}
+
+  /api/v1/admin/federation/peers/{peer_uuid}:set-trust-posture:
+    post:
+      tags: [federation]
+      operationId: setFederationPeerTrustPosture
+      summary: Set the trust posture for a federation peer
+      parameters:
+        - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trust_posture, reason]
+              properties:
+                trust_posture: {type: string, enum: [verified, vouched, untrusted]}
+                reason: {type: string, description: Justification for trust posture change}
+      responses:
+        "200":
+          description: Trust posture updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FederationPeer"}
+
+  /api/v1/admin/federation/peers/{peer_uuid}:suspend:
+    post:
+      tags: [federation]
+      operationId: suspendFederationPeer
+      summary: Suspend federation tunnel (stop routing; preserve registration)
+      parameters:
+        - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: {type: string}
+      responses:
+        "200":
+          description: Peer suspended
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FederationPeer"}
+
+  /api/v1/admin/federation/peers/{peer_uuid}/routed-requests:
+    get:
+      tags: [federation]
+      operationId: listFederationRoutedRequests
+      summary: List requests routed through this federation peer
+      parameters:
+        - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+        - {name: status, in: query, schema: {type: string}}
+        - {name: page_size, in: query, schema: {type: integer, default: 50}}
+        - {name: page_token, in: query, schema: {type: string}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Federated request list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items: {type: array, items: {type: object, additionalProperties: true}}
+                  next_page_token: {type: string}
+
+  /api/v1/admin/federation/config:
+    get:
+      tags: [federation]
+      operationId: getFederationConfig
+      summary: Get this DCM instance's federation configuration (identity, capabilities, trust policy)
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Federation configuration
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FederationConfig"}
+    patch:
+      tags: [federation]
+      operationId: updateFederationConfig
+      summary: Update federation configuration (enable/disable federation, set scope)
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/FederationConfigPatch"}
+      responses:
+        "200":
+          description: Configuration updated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/FederationConfig"}
+
+  # ── Subscription Administration (doc 50) ────────────────────────────
+
+  /api/v1/admin/subscriptions:
+    get:
+      operationId: adminListSubscriptions
+      summary: List all subscriptions across tenants
+      tags: [Subscription Administration]
+      parameters:
+        - {name: tenant_uuid, in: query, schema: {type: string, format: uuid}}
+        - {name: lifecycle_state, in: query, schema: {type: string}}
+        - {name: provider_uuid, in: query, schema: {type: string, format: uuid}}
+        - {name: page_size, in: query, schema: {type: integer, default: 100}}
+        - {name: page_token, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Paginated subscription list across tenants
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResourceList"}
+
+  /api/v1/admin/subscriptions/expiring:
+    get:
+      operationId: adminListExpiringSubscriptions
+      summary: List subscriptions approaching expiry
+      tags: [Subscription Administration]
+      parameters:
+        - {name: within_days, in: query, schema: {type: integer, default: 30}}
+        - {name: page_size, in: query, schema: {type: integer, default: 100}}
+        - {name: page_token, in: query, schema: {type: string}}
+      responses:
+        "200":
+          description: Expiring subscriptions
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/ResourceList"}
+
+  /api/v1/admin/subscriptions/{subscription_uuid}:force-cancel:
+    post:
+      operationId: adminForceCancelSubscription
+      summary: Admin force cancellation — bypasses consumer approval
+      tags: [Subscription Administration]
+      parameters:
+        - {name: subscription_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: {type: string}
+                skip_grace_period: {type: boolean, default: false}
+      responses:
+        "200":
+          description: Force cancellation initiated
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Operation"}
+
+
+  /api/v1/admin/overrides:
+    get:
+      summary: List pending override requests
+      operationId: listOverrideRequests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected, expired]
+        - name: role
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Override requests
+  /api/v1/admin/overrides/{request_uuid}:
+    get:
+      summary: Get override request details
+      operationId: getOverrideRequest
+      parameters:
+        - name: request_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Override request details
+  /api/v1/admin/overrides/{request_uuid}/approve:
+    post:
+      summary: Approve override request
+      operationId: approveOverride
+      parameters:
+        - name: request_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [justification, role]
+              properties:
+                justification:
+                  type: string
+                role:
+                  type: string
+                compensating_controls:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Override approved
+  /api/v1/admin/overrides/{request_uuid}/reject:
+    post:
+      summary: Reject override request
+      operationId: rejectOverride
+      parameters:
+        - name: request_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Override rejected
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+
+    tenant_uuid:
+      name: tenant_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+    provider_uuid:
+      name: provider_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+    actor_uuid:
+      name: actor_uuid
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+    profile_name:
+      name: profile_name
+      in: path
+      required: true
+      schema: { type: string, enum: [homelab, dev, standard, prod, fsi, sovereign] }
+
+    limit:
+      name: page_size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 1000, default: 50 }
+
+    cursor:
+      name: page_token
+      in: query
+      schema: { type: string }
+
+  schemas:
+
+
+
+    MaintenanceWindow:
+      type: object
+      properties:
+        window_uuid: {type: string, format: uuid}
+        handle: {type: string, description: "Stable reference used in schedule.window_id"}
+        display_name: {type: string}
+        description: {type: string}
+        schedule:
+          type: object
+          description: Cron expression or recurrence rule for this window
+          properties:
+            rrule: {type: string, description: "RFC 5545 RRULE e.g. FREQ=WEEKLY;BYDAY=SA;BYHOUR=2"}
+            duration: {type: string, description: "ISO 8601 duration e.g. PT4H"}
+            timezone: {type: string, description: "IANA timezone e.g. UTC, America/New_York"}
+        status: {type: string, enum: [active, suspended, expired]}
+        next_opens_at: {type: string, format: date-time}
+        next_closes_at: {type: string, format: date-time}
+        queued_request_count: {type: integer}
+        created_at: {type: string, format: date-time}
+        owned_by_actor_uuid: {type: string, format: uuid}
+
+    MaintenanceWindowCreate:
+      type: object
+      required: [handle, display_name, schedule]
+      properties:
+        handle: {type: string, pattern: "^[a-z][a-z0-9-]{2,63}$"}
+        display_name: {type: string}
+        description: {type: string}
+        schedule:
+          type: object
+          required: [rrule, duration, timezone]
+          properties:
+            rrule: {type: string}
+            duration: {type: string}
+            timezone: {type: string}
+
+    MaintenanceWindowPatch:
+      type: object
+      properties:
+        display_name: {type: string}
+        description: {type: string}
+        status: {type: string, enum: [active, suspended]}
+        schedule:
+          type: object
+          properties:
+            rrule: {type: string}
+            duration: {type: string}
+            timezone: {type: string}
+
+    FederationPeer:
+      type: object
+      properties:
+        peer_uuid: {type: string, format: uuid}
+        display_name: {type: string}
+        dcm_instance_uuid: {type: string, format: uuid}
+        endpoint: {type: string, format: uri}
+        trust_posture: {type: string, enum: [verified, vouched, untrusted]}
+        status: {type: string, enum: [active, suspended, pending, deregistered]}
+        sovereignty_declarations: {type: array, items: {type: string}}
+        registered_at: {type: string, format: date-time}
+        last_heartbeat_at: {type: string, format: date-time}
+        routed_request_count: {type: integer}
+
+    FederationPeerRegistration:
+      type: object
+      required: [display_name, endpoint, public_key_pem]
+      properties:
+        display_name: {type: string}
+        endpoint: {type: string, format: uri, description: mTLS endpoint of the peer DCM instance}
+        public_key_pem: {type: string, description: Public key for mTLS identity verification}
+        initial_trust_posture: {type: string, enum: [verified, vouched, untrusted], default: untrusted}
+        scope_declaration:
+          type: object
+          properties:
+            resource_types_accessible: {type: array, items: {type: string}}
+            sovereignty_constraints: {type: array, items: {type: string}}
+
+    FederationConfig:
+      type: object
+      properties:
+        federation_enabled: {type: boolean}
+        this_instance_uuid: {type: string, format: uuid}
+        this_instance_display_name: {type: string}
+        this_instance_endpoint: {type: string, format: uri}
+        default_trust_posture: {type: string, enum: [verified, vouched, untrusted]}
+        peer_count: {type: integer}
+        active_peer_count: {type: integer}
+
+    FederationConfigPatch:
+      type: object
+      properties:
+        federation_enabled: {type: boolean}
+        default_trust_posture: {type: string, enum: [verified, vouched, untrusted]}
+        this_instance_display_name: {type: string}
+
+    Operation:
+      type: object
+      description: |
+        AEP-136 Long-Running Operation. Returned by async operations instead of 202 Accepted.
+        Poll GET {operation.name} until done is true.
+        The operation.name is a stable resource path: /api/v1/operations/{uuid}
+      required: [name, done]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: "Stable resource path for this operation. Poll this URL for status."
+          example: /api/v1/operations/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        done:
+          type: boolean
+          description: True when the operation has reached a terminal state (success or error)
+          default: false
+        metadata:
+          type: object
+          description: Operation-specific progress metadata
+          additionalProperties: false
+          properties:
+            stage:
+              type: string
+              description: Current pipeline stage
+            progress_pct:
+              type: integer
+              minimum: 0
+              maximum: 100
+            resource_uuid:
+              type: string
+              format: uuid
+              description: UUID of the resource being created/modified (set as soon as assigned)
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+        response:
+          type: object
+          description: Present when done is true and the operation succeeded. Contains the result resource.
+          additionalProperties: true
+        error:
+          type: object
+          description: Present when done is true and the operation failed.
+          additionalProperties: false
+          properties:
+            code:    { type: string }
+            message: { type: string }
+            details: { type: array, items: { type: object } }
+
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          properties:
+            code:       { type: string }
+            message:    { type: string }
+            request_id: { type: string, format: uuid }
+            rule_uuid:  { type: string, format: uuid }
+            fields:     { type: array, items: { type: object } }
+
+    AdminHealthResponse:
+      type: object
+      properties:
+        status:        { type: string, enum: [healthy, degraded, unhealthy] }
+        version:       { type: string }
+        uptime:        { type: string }
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              name:   { type: string }
+              status: { type: string }
+              detail: { type: string }
+        providers:
+          type: object
+          properties:
+            total:    { type: integer }
+            healthy:  { type: integer }
+            degraded: { type: integer }
+            unavailable: { type: integer }
+
+    Tenant:
+      type: object
+      properties:
+        uuid:         { type: string, format: uuid }
+        handle:       { type: string }
+        display_name: { type: string }
+        status:       { type: string }
+        created_at:   { type: string, format: date-time }
+        updated_at:   { type: string, format: date-time }
+        resource_count: { type: integer }
+        compliance_domains: { type: array, items: { type: string } }
+
+    TenantCreate:
+      type: object
+      required: [handle, display_name]
+      properties:
+        handle:       { type: string }
+        display_name: { type: string }
+        compliance_domains: { type: array, items: { type: string } }
+
+    TenantList:
+      type: object
+      properties:
+        items:      { type: array, items: { $ref: "#/components/schemas/Tenant" } }
+        pagination: { type: object }
+
+    TenantQuotas:
+      type: object
+      properties:
+        tenant_uuid: { type: string, format: uuid }
+        quotas:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_type: { type: string }
+              page_size:         { type: integer }
+              used:          { type: integer }
+              remaining:     { type: integer }
+
+    QuotaUpdate:
+      type: object
+      required: [limit]
+      properties:
+        page_size:  { type: integer, minimum: 0 }
+        reason: { type: string }
+
+    ProviderList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              uuid:             { type: string, format: uuid }
+              display_name:     { type: string }
+              provider_type_id: { type: string }
+              status:           { type: string }
+              trust_score:      { type: number }
+              health_status:    { type: string }
+              accreditations:   { type: array, items: { type: object } }
+        pagination: { type: object }
+
+    AccreditationList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              accreditation_uuid: { type: string, format: uuid }
+              provider_uuid:      { type: string, format: uuid }
+              framework:          { type: string }
+              status:             { type: string }
+              expires_at:        { type: string, format: date-time }
+        pagination: { type: object }
+
+    DiscoveryJobStatus:
+      type: object
+      properties:
+        discovery_job_uuid: { type: string, format: uuid }
+        status:     { type: string, enum: [running, completed, failed] }
+        started_at: { type: string, format: date-time }
+        completed_at: { type: string, format: date-time }
+        providers_queried: { type: integer }
+        entities_discovered: { type: integer }
+        drift_records_created: { type: integer }
+        orphans_detected: { type: integer }
+
+    OrphanList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              orphan_candidate_uuid: { type: string, format: uuid }
+              provider_uuid: { type: string, format: uuid }
+              resource_type: { type: string }
+              discovered_at: { type: string, format: date-time }
+              provider_entity_id: { type: string }
+        pagination: { type: object }
+
+    ScoringConfiguration:
+      type: object
+      properties:
+        profile: { type: string }
+        approval_routing:
+          type: array
+          items:
+            type: object
+            properties:
+              tier:      { type: string }
+              max_score: { type: integer }
+        smx008_auto_cap:
+          type: integer
+          description: "Hard cap on auto-approve max_score (≤ 50 always enforced)"
+
+    ScoringConfigurationUpdate:
+      type: object
+      properties:
+        approval_routing:
+          type: array
+          items:
+            type: object
+            required: [tier, max_score]
+            properties:
+              tier:      { type: string }
+              max_score: { type: integer, minimum: 0, maximum: 100 }
+
+    ScoringOverride:
+      type: object
+      required: [policy_uuid, enforcement_class_override]
+      properties:
+        policy_uuid: { type: string, format: uuid }
+        enforcement_class_override: { type: string, enum: [compliance, operational] }
+        reason: { type: string }
+
+    RiskHistory:
+      type: object
+      properties:
+        actor_uuid: { type: string, format: uuid }
+        records:
+          type: array
+          items:
+            type: object
+            properties:
+              score:          { type: integer }
+              routing_tier:   { type: string }
+              evaluated_at:   { type: string, format: date-time }
+              request_uuid:   { type: string, format: uuid }
+              stored_tier_weight: { type: integer }
+
+    ApprovalRecord:
+      type: object
+      properties:
+        approval_uuid:    { type: string, format: uuid }
+        subject_type:     { type: string }
+        subject_uuid:     { type: string, format: uuid }
+        required_tier:    { type: string }
+        required_quorum:  { type: integer }
+        decisions:
+          type: array
+          items:
+            type: object
+            properties:
+              actor_uuid:   { type: string, format: uuid }
+              decision:     { type: string }
+              reason:       { type: string }
+              recorded_at:  { type: string, format: date-time }
+        expires_at:  { type: string, format: date-time }
+        created_at:  { type: string, format: date-time }
+        status:      { type: string, enum: [open, approved, rejected, expired] }
+
+    ApprovalDetail:
+      allOf:
+        - { $ref: "#/components/schemas/ApprovalRecord" }
+        - type: object
+          properties:
+            subject_detail: { type: object }
+            stored_tier_weights:
+              type: object
+              description: "Tier weights recorded at approval creation time (ATM-008)"
+              additionalProperties: { type: integer }
+
+    TierRegistryChangeProposal:
+      type: object
+      required: [proposed_tier_list, reason]
+      properties:
+        proposed_tier_list:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [name, decision_gravity]
+            properties:
+              name:             { type: string, description: "Stable tier name (e.g., auto, reviewed, verified, authorized)" }
+              decision_gravity: { type: string, enum: [none, routine, elevated, critical] }
+              description:      { type: string }
+              dcm_gate:         { type: string }
+              organization_provides: { type: string }
+              dcmgroup_required: { type: boolean }
+              dcmgroup_uuid:    { type: string, format: uuid }
+              quorum_threshold: { type: integer, minimum: 1 }
+        reason: { type: string }
+
+    TierImpactReport:
+      type: object
+      properties:
+        impact_report_uuid: { type: string, format: uuid }
+        change_uuid:        { type: string, format: uuid }
+        computed_at:        { type: string, format: date-time }
+        blocking_items:     { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_uuid:       { type: string, format: uuid }
+              classification:
+                type: string
+                enum: [SECURITY_DEGRADATION, SECURITY_UPGRADE, BROKEN_REFERENCE, PROFILE_GAP, STALE_WEIGHT]
+              tier_name:       { type: string }
+              old_position:    { type: integer }
+              new_position:    { type: integer }
+              old_gravity:     { type: string }
+              new_gravity:     { type: string }
+              affected_items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    item_type:   { type: string }
+                    item_uuid:   { type: string, format: uuid }
+                    description: { type: string }
+              accepted:        { type: boolean }
+              accepted_by:     { type: string, format: uuid }
+              accepted_reason: { type: string }

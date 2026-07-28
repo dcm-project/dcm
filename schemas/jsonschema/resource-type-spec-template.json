@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dcm-project.io/schemas/resource-types/template/v1",
+  "title": "DCM Resource Type Extension Schema Template",
+  "description": "Template and authoring guide for Resource Type Extension schemas. Service Providers publish one schema per resource type they offer to the Resource Type Registry. DCM uses these schemas to validate request fields, populate the Service Catalog field explorer, and enforce field constraints. See data-model/05-resource-type-hierarchy.md and data-model/20-registry-governance.md.",
+
+  "$defs": {
+
+    "resource_type_spec": {
+      "type": "object",
+      "title": "Resource Type Specification",
+      "description": "The top-level object published to the Resource Type Registry for each resource type.",
+      "required": [
+        "fqn",
+        "version",
+        "entity_type",
+        "ownership_model",
+        "display_name",
+        "description",
+        "registry_tier",
+        "spec_schema",
+        "lifecycle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+
+        "fqn": {
+          "type": "string",
+          "pattern": "^[A-Z][a-zA-Z0-9]+\\.[A-Z][a-zA-Z0-9]+$",
+          "description": "Fully-qualified resource type name. Format: <Category>.<TypeName>. Examples: Compute.VirtualMachine, Network.VLAN, Database.PostgreSQLInstance, Process.AnsiblePlaybook"
+        },
+
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$",
+          "description": "Semantic version. Major version increments when the spec_schema has breaking changes (removed required fields, type changes). Minor for new optional fields. Patch for description/metadata updates."
+        },
+
+        "entity_type": {
+          "type": "string",
+          "enum": ["infrastructure_resource", "composite_resource", "process_resource"],
+          "description": "Which DCM entity type resources of this type produce. Determines lifecycle state machine, drift detection, TTL eligibility."
+        },
+
+        "ownership_model": {
+          "type": "string",
+          "enum": ["whole_allocation", "allocation", "shareable"],
+          "description": "whole_allocation: requesting Tenant owns the resource outright. allocation: resource is carved from a pool (declare pool_resource_type). shareable: multiple consumers reference the same resource."
+        },
+
+        "pool_resource_type": {
+          "type": "string",
+          "description": "Required when ownership_model is 'allocation'. FQN of the pool resource type this allocation comes from (e.g., if this type is Network.IPAddress, pool_resource_type might be Network.IPAddressPool)."
+        },
+
+        "allocatable_pool": {
+          "type": "boolean",
+          "default": false,
+          "description": "True if resources of this type act as allocation pools. When true, this resource type produces pool entities from which allocation entities are carved."
+        },
+
+        "display_name":  { "type": "string", "maxLength": 64 },
+        "description":   { "type": "string", "maxLength": 1024 },
+        "icon":          { "type": "string", "format": "uri", "description": "URL to SVG icon for Service Catalog display" },
+        "documentation": { "type": "string", "format": "uri", "description": "URL to operator documentation for this resource type" },
+
+        "registry_tier": {
+          "type": "string",
+          "enum": ["dcm_system", "verified_community", "organization"],
+          "description": "dcm_system: built-in DCM types. verified_community: reviewed by DCM project. organization: local to this DCM deployment."
+        },
+
+        "provider_uuid": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the Service Provider that realizes this resource type."
+        },
+
+        "spec_schema": {
+          "type": "object",
+          "description": "JSON Schema for the resource-type-specific fields. These fields appear in the `spec` object on create/update requests and in the `realized_fields` on entities. Must be a valid JSON Schema.",
+          "$ref": "#/$defs/resource_spec_schema"
+        },
+
+        "constraint_visibility": {
+          "type": "string",
+          "enum": ["full", "partial", "none"],
+          "default": "full",
+          "description": "How much constraint detail is visible to consumers in the Service Catalog. full: all constraints shown. partial: labels shown, not values. none: field exists but constraints hidden."
+        },
+
+        "lifecycle": {
+          "type": "object",
+          "description": "Lifecycle configuration for this resource type.",
+          "required": ["supports_suspension", "supports_rehydration"],
+          "additionalProperties": false,
+          "properties": {
+            "supports_suspension":  { "type": "boolean" },
+            "supports_rehydration": { "type": "boolean" },
+            "default_ttl":         { "type": "string", "description": "ISO 8601 duration. If set, resources get this TTL by default." },
+            "max_ttl":             { "type": "string", "description": "ISO 8601 duration. Maximum allowed TTL." },
+            "on_expiry_default":   { "type": "string", "enum": ["decommission", "suspend", "notify", "escalate"] }
+          }
+        },
+
+        "drift_detection": {
+          "type": "object",
+          "description": "Drift detection configuration for this resource type.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "field_criticality": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string",
+                "enum": ["critical", "significant", "minor"]
+              },
+              "description": "Map of field_path → criticality. Fields not listed default to 'minor'. Criticality × change magnitude = drift severity."
+            }
+          }
+        },
+
+        "relationships": {
+          "type": "object",
+          "description": "Permitted relationship types for resources of this type.",
+          "additionalProperties": false,
+          "properties": {
+            "requires": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Resource type FQNs this resource type requires (hard dependencies)"
+            },
+            "supports_references_to": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Resource type FQNs this resource type may reference (soft dependencies)"
+            }
+          }
+        },
+
+        "catalog_metadata": {
+          "type": "object",
+          "description": "Service Catalog presentation metadata.",
+          "additionalProperties": false,
+          "properties": {
+            "category": { "type": "string" },
+            "tags": { "type": "array", "items": { "type": "string" } },
+            "cost_unit": { "type": "string", "description": "What the cost is denominated in (e.g., 'per vCPU/month')" },
+            "typical_provisioning_time": { "type": "string", "description": "ISO 8601 duration estimate" }
+          }
+        },
+
+        "deprecated": {
+          "type": "object",
+          "description": "Present if this resource type is deprecated.",
+          "additionalProperties": false,
+          "properties": {
+            "since_version":  { "type": "string" },
+            "sunset_at":      { "type": "string", "format": "date-time" },
+            "successor_type": { "type": "string", "description": "FQN of the replacement resource type" },
+            "migration_guide":{ "type": "string", "format": "uri" }
+          }
+        }
+      }
+    },
+
+    "resource_spec_schema": {
+      "type": "object",
+      "description": "The JSON Schema for resource-type-specific fields. This is an embedded JSON Schema document. It defines what fields appear in the `spec` object of create/update requests and in the `realized_fields` of entities.",
+      "required": ["type", "properties"],
+      "properties": {
+        "type":       { "const": "object" },
+        "properties": { "type": "object" },
+        "required":   { "type": "array", "items": { "type": "string" } },
+        "additionalProperties": { "type": "boolean", "default": false }
+      }
+    },
+
+    "field_descriptor": {
+      "type": "object",
+      "description": "A field in the resource spec_schema. Extends standard JSON Schema with DCM-specific metadata.",
+      "properties": {
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "x-dcm-editable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this field can be changed on a REALIZED/OPERATIONAL resource via PATCH /resources/{uuid}"
+        },
+        "x-dcm-provider-only": {
+          "type": "boolean",
+          "default": false,
+          "description": "Field is populated by the provider on realization and cannot be set by the consumer on request"
+        },
+        "x-dcm-immutable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Field cannot be changed after initial request (not editable, not updated by provider)"
+        },
+        "x-dcm-display": {
+          "type": "string",
+          "enum": ["visible", "hidden", "admin_only"],
+          "default": "visible",
+          "description": "Service Catalog visibility for this field"
+        },
+        "x-dcm-constraint-basis": {
+          "type": "string",
+          "description": "Human-readable explanation of why this constraint exists (displayed in Service Catalog)"
+        },
+        "x-dcm-example": {
+          "description": "Example value shown in Service Catalog field explorer"
+        }
+      }
+    }
+
+  },
+
+  "type": "object",
+  "title": "Resource Type Extension Schema — Example (Compute.VirtualMachine)",
+  "description": "Example showing how a Service Provider would define the Resource Type Spec for Compute.VirtualMachine. Replace all fields with your resource type specifics.",
+
+  "properties": {
+    "resource_type_spec": { "$ref": "#/$defs/resource_type_spec" }
+  },
+
+  "examples": [
+    {
+      "resource_type_spec": {
+        "fqn": "Compute.VirtualMachine",
+        "version": "1.2.0",
+        "entity_type": "infrastructure_resource",
+        "ownership_model": "whole_allocation",
+        "display_name": "Virtual Machine",
+        "description": "A virtual machine instance on the organization's virtualization infrastructure.",
+        "registry_tier": "organization",
+        "provider_uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+
+        "spec_schema": {
+          "type": "object",
+          "required": ["cpu_cores", "memory_gb", "os_image"],
+          "additionalProperties": false,
+          "properties": {
+
+            "cpu_cores": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 128,
+              "description": "Number of vCPUs",
+              "x-dcm-editable": true,
+              "x-dcm-display": "visible",
+              "x-dcm-constraint-basis": "Maximum set by hypervisor NUMA topology",
+              "x-dcm-example": 4
+            },
+
+            "memory_gb": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1024,
+              "description": "RAM in gigabytes",
+              "x-dcm-editable": true,
+              "x-dcm-display": "visible",
+              "x-dcm-example": 8
+            },
+
+            "os_image": {
+              "type": "string",
+              "description": "OS image identifier",
+              "x-dcm-editable": false,
+              "x-dcm-immutable": true,
+              "x-dcm-display": "visible",
+              "x-dcm-example": "rhel-9-approved-2026-03"
+            },
+
+            "os_image_version": {
+              "type": "string",
+              "description": "Current patched OS version",
+              "x-dcm-provider-only": true,
+              "x-dcm-display": "visible"
+            },
+
+            "network_segment_uuid": {
+              "type": "string",
+              "format": "uuid",
+              "description": "UUID of the Network.Segment resource to attach to",
+              "x-dcm-editable": false,
+              "x-dcm-immutable": true
+            },
+
+            "ip_address": {
+              "type": "string",
+              "format": "ipv4",
+              "description": "Assigned IP address (provider-assigned)",
+              "x-dcm-provider-only": true,
+              "x-dcm-display": "visible"
+            },
+
+            "hostname": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$",
+              "description": "VM hostname. If not provided, generated by the provider.",
+              "x-dcm-editable": false,
+              "x-dcm-example": "prod-app-01"
+            },
+
+            "storage_volumes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["size_gb"],
+                "properties": {
+                  "size_gb":     { "type": "integer", "minimum": 10 },
+                  "type":        { "type": "string", "enum": ["ssd", "hdd", "nvme"] },
+                  "mount_point": { "type": "string" }
+                }
+              },
+              "x-dcm-editable": true,
+              "description": "Additional storage volumes. Root volume is always included."
+            },
+
+            "hypervisor_host": {
+              "type": "string",
+              "description": "Hypervisor host where the VM was placed",
+              "x-dcm-provider-only": true,
+              "x-dcm-display": "admin_only"
+            }
+          }
+        },
+
+        "lifecycle": {
+          "supports_suspension": true,
+          "supports_rehydration": true,
+          "default_ttl": null,
+          "on_expiry_default": "notify"
+        },
+
+        "drift_detection": {
+          "enabled": true,
+          "field_criticality": {
+            "cpu_cores":           "significant",
+            "memory_gb":           "significant",
+            "os_image_version":    "critical",
+            "ip_address":          "critical",
+            "network_segment_uuid":"critical",
+            "hostname":            "significant",
+            "storage_volumes":     "significant",
+            "hypervisor_host":     "minor"
+          }
+        },
+
+        "relationships": {
+          "requires": ["Network.Segment"],
+          "supports_references_to": ["Network.IPAddressPool", "Storage.Volume"]
+        },
+
+        "catalog_metadata": {
+          "category": "Compute",
+          "tags": ["virtual-machine", "compute", "vm"],
+          "cost_unit": "per vCPU/month",
+          "typical_provisioning_time": "PT3M"
+        }
+      }
+    }
+  ]
+}

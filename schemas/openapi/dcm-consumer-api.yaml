@@ -1,0 +1,2663 @@
+openapi: 3.1.0
+info:
+  title: DCM Consumer API
+  version: 1.0.0
+  description: 'The DCM Consumer API provides the interface used by application teams,
+    Tenant owners,
+
+    and automated tooling to interact with the DCM control plane. All interactions
+    are
+
+    authenticated, Tenant-scoped, and governed by the Policy Engine.
+
+
+    **Key principles:**
+
+    - All requests require a valid session token (Bearer) obtained via `/api/v1/auth/token`
+
+    - All responses are Tenant-scoped — actors only see entities they are authorized
+    to see
+
+    - Policy denials return 403 with a `rule_uuid` identifying the governing rule
+
+    - All mutating operations produce an audit record
+
+    - List endpoints support cursor-based pagination via `page_size` and `page_token`
+    query parameters
+
+
+    **API Versioning:** DCM uses URL path versioning (`/api/v1/`). Version discovery
+    is available
+
+    at `/.well-known/dcm-api-versions`. See `34-api-versioning-strategy.md`.
+
+
+
+
+    **AEP Alignment:** This API follows [AEP](https://aep.dev) conventions:
+
+    custom methods use colon syntax (`POST /resources/{name}:suspend`),
+
+    async operations return an `Operation` resource (AEP-136 LRO),
+
+    and list pagination uses `page_size`/`page_token` parameters.
+
+    '
+  contact:
+    name: DCM Project
+    url: https://github.com/dcm-project
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+- url: https://{dcm-host}/
+  description: DCM Control Plane
+  variables:
+    dcm-host:
+      description: Hostname of the DCM control plane deployment
+      default: dcm.example.com
+security:
+- BearerAuth: []
+tags:
+- name: discovery
+  description: API version discovery and migration guides
+- name: authentication
+  description: Session management, token issuance, and introspection
+- name: catalog
+  description: Service catalog browsing and search
+- name: requests
+  description: Service request submission and lifecycle
+- name: resources
+  description: Resource entity management and lifecycle operations
+- name: drift
+  description: Drift detection, acknowledgement, and remediation
+- name: groups
+  description: Resource group management
+- name: approvals
+  description: Approval workflow for pending decisions
+- name: cost
+  description: Cost estimation and attribution
+- name: notifications
+  description: Notification inbox management
+- name: webhooks
+  description: Outbound webhook subscription management
+- name: search
+  description: Cross-entity search
+- name: audit
+  description: Audit trail access
+- name: contributions
+  description: Federated contribution submission (policies, resource groups)
+- name: credentials
+  description: Credential retrieval and rotation
+paths:
+  /.well-known/dcm-api-versions:
+    get:
+      tags:
+      - discovery
+      operationId: getApiVersions
+      summary: List supported API versions
+      security: []
+      responses:
+        '200':
+          description: Supported API versions and deprecation status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        version:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - current
+                          - supported
+                          - deprecated
+                          - sunset
+                        sunset_date:
+                          type: string
+                          format: date
+  /api/v1/migration-guide:
+    get:
+      tags:
+      - discovery
+      operationId: getMigrationGuide
+      summary: Get migration guide for API version transitions
+      security: []
+      parameters:
+      - name: from
+        in: query
+        required: true
+        schema:
+          type: string
+          example: '1'
+      - name: to
+        in: query
+        required: true
+        schema:
+          type: string
+          example: '2'
+      responses:
+        '200':
+          description: Migration guide document
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  from_version:
+                    type: string
+                  to_version:
+                    type: string
+                  breaking_changes:
+                    type: array
+                    items:
+                      type: object
+                  guidance:
+                    type: string
+  /api/v1/auth/token:
+    post:
+      tags:
+      - authentication
+      operationId: createSession
+      summary: Authenticate and obtain a session token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - grant_type
+              properties:
+                grant_type:
+                  type: string
+                  enum:
+                  - password
+                  - client_credentials
+                  - oidc_code
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                  format: password
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                  format: uri
+      responses:
+        '200':
+          description: Session token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionTokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/auth/sessions:
+    get:
+      tags:
+      - authentication
+      operationId: listSessions
+      summary: List active sessions for the authenticated actor
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SessionSummary'
+      description: List active sessions
+    delete:
+      tags:
+      - authentication
+      operationId: revokeAllSessions
+      summary: Revoke all sessions for the authenticated actor (except the current
+        session)
+      responses:
+        '204':
+          description: All other sessions revoked
+  /api/v1/auth/sessions/{session_uuid}:
+    delete:
+      tags:
+      - authentication
+      operationId: revokeSession
+      summary: Revoke a specific session
+      parameters:
+      - $ref: '#/components/parameters/session_uuid'
+      responses:
+        '204':
+          description: Session revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/auth:introspect:
+    post:
+      tags:
+      - authentication
+      operationId: introspectToken
+      summary: Introspect a token and return actor identity and roles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - token
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenIntrospection'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/auth/session:
+    delete:
+      tags:
+      - auth
+      operationId: logoutCurrentSession
+      summary: Logout current session
+      description: Terminates the calling actor's current session and invalidates
+        the bearer token.
+      security:
+      - bearerAuth: []
+      responses:
+        '204':
+          description: Session terminated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/v1/catalog:
+    get:
+      tags:
+      - catalog
+      operationId: listCatalogItems
+      summary: List catalog items available to the authenticated actor (RBAC-filtered)
+      parameters:
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      - name: category
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemList'
+  /api/v1/catalog/{catalog_item_uuid}:
+    get:
+      tags:
+      - catalog
+      operationId: getCatalogItem
+      summary: Get full schema and details for a catalog item including field constraints
+      parameters:
+      - $ref: '#/components/parameters/catalog_item_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/catalog/search:
+    get:
+      tags:
+      - catalog
+      operationId: searchCatalog
+      summary: Search catalog by keyword, resource type, or tag
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CatalogItemList'
+  /api/v1/requests:
+    post:
+      tags:
+      - requests
+      operationId: submitRequest
+      summary: Submit a service request
+      description: 'Submits a resource request. The request is stored as an Intent
+        State artifact, processed
+
+        through layer assembly and policy evaluation, placed with a provider, and
+        dispatched.
+
+        Returns immediately with a request_uuid for status polling or SSE streaming.
+
+        '
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRequest'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    get:
+      tags:
+      - requests
+      operationId: listRequests
+      summary: List requests submitted by the authenticated actor
+      parameters:
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      - name: status
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestList'
+  /api/v1/requests/{request_uuid}/status:
+    get:
+      tags:
+      - requests
+      operationId: getRequestStatus
+      summary: Poll request status and pipeline stage
+      parameters:
+      - $ref: '#/components/parameters/request_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/requests/{request_uuid}/stream:
+    get:
+      tags:
+      - requests
+      operationId: streamRequestStatus
+      summary: Stream real-time request status updates (Server-Sent Events)
+      parameters:
+      - $ref: '#/components/parameters/request_uuid'
+      responses:
+        '200':
+          description: SSE stream of RequestStatus events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /api/v1/requests/{request_uuid}:
+    delete:
+      tags:
+      - requests
+      operationId: cancelRequest
+      summary: Cancel a pending request (before provider dispatch)
+      parameters:
+      - $ref: '#/components/parameters/request_uuid'
+      responses:
+        '204':
+          description: Request cancelled
+        '409':
+          description: Request already dispatched — cannot cancel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/request-groups:
+    post:
+      tags:
+      - requests
+      operationId: createRequestGroup
+      summary: Submit a group of related requests (bulk or dependency-ordered)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestGroup'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/request-groups/{group_uuid}:
+    get:
+      tags:
+      - requests
+      operationId: getRequestGroup
+      summary: Get status of all requests in a group
+      parameters:
+      - $ref: '#/components/parameters/group_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestGroupStatus'
+  /api/v1/resources:
+    get:
+      tags:
+      - resources
+      operationId: listResources
+      summary: List resources owned by the authenticated actor's Tenant
+      parameters:
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      - name: resource_type
+        in: query
+        schema:
+          type: string
+      - name: lifecycle_state
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+  /api/v1/resources/{entity_uuid}:
+    get:
+      tags:
+      - resources
+      operationId: getResource
+      summary: Get full entity detail for a resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceEntity'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags:
+      - resources
+      operationId: updateResource
+      summary: Update editable fields on a realized resource (delta only)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceUpdate'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    delete:
+      tags:
+      - resources
+      operationId: decommissionResource
+      summary: Initiate resource decommission
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '409':
+          description: Resource has active dependents — cannot decommission
+  /api/v1/resources/{entity_uuid}:suspend:
+    post:
+      tags:
+      - resources
+      operationId: suspendResource
+      summary: Suspend an OPERATIONAL resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '409':
+          description: Resource not in OPERATIONAL state
+  /api/v1/resources/{entity_uuid}:resume:
+    post:
+      tags:
+      - resources
+      operationId: resumeResource
+      summary: Resume a SUSPENDED resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '409':
+          description: Resource not in SUSPENDED state
+  /api/v1/resources/{entity_uuid}:rehydrate:
+    post:
+      tags:
+      - resources
+      operationId: rehydrateResource
+      summary: Rehydrate a resource to a new provider or context
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RehydrateRequest'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/resources/{entity_uuid}:extend-ttl:
+    post:
+      tags:
+      - resources
+      operationId: extendTtl
+      summary: Extend or modify the TTL of a resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - new_ttl
+              properties:
+                new_ttl:
+                  type: string
+                  description: ISO 8601 duration or datetime
+      responses:
+        '200':
+          description: TTL updated
+  /api/v1/resources/expiring:
+    get:
+      tags:
+      - resources
+      operationId: listExpiringResources
+      summary: List resources expiring within a time window
+      parameters:
+      - name: within
+        in: query
+        schema:
+          type: string
+          description: ISO 8601 duration (e.g., P30D)
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+  /api/v1/resources/{entity_uuid}:transfer:
+    post:
+      tags:
+      - resources
+      operationId: initiateOwnershipTransfer
+      summary: Initiate ownership transfer to another Tenant
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - target_tenant_uuid
+              - reason
+              properties:
+                target_tenant_uuid:
+                  type: string
+                  format: uuid
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/resources/transfers/{transfer_uuid}:accept:
+    post:
+      tags:
+      - resources
+      operationId: acceptOwnershipTransfer
+      summary: Accept an incoming ownership transfer
+      parameters:
+      - name: transfer_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Transfer accepted; ownership updated
+  /api/v1/resources/transfers/{transfer_uuid}:reject:
+    post:
+      tags:
+      - resources
+      operationId: rejectOwnershipTransfer
+      summary: Reject an incoming ownership transfer
+      parameters:
+      - name: transfer_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Transfer rejected
+  /api/v1/resources:bulk-decommission:
+    post:
+      tags:
+      - resources
+      operationId: bulkDecommission
+      summary: Decommission multiple resources in dependency-safe order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - entity_uuids
+              properties:
+                entity_uuids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  minItems: 1
+                dry_run:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/resources/{entity_uuid}/relationships:
+    get:
+      tags:
+      - resources
+      operationId: getResourceRelationships
+      summary: Get all relationships for a resource entity
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  relationships:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/resources/{entity_uuid}/provider-notifications:
+    get:
+      tags:
+      - resources
+      operationId: getProviderNotifications
+      summary: List pending provider-initiated state change notifications requiring
+        approval
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/resources/{entity_uuid}/provider-notifications/{notification_uuid}:approve:
+    post:
+      tags:
+      - resources
+      operationId: approveProviderNotification
+      summary: Approve a provider-initiated state change
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - name: notification_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Provider notification approved
+  /api/v1/resources/{entity_uuid}/recovery-decisions:
+    get:
+      tags:
+      - resources
+      operationId: getRecoveryDecisions
+      summary: List pending recovery decisions for a resource (for notify_and_wait
+        policies)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decisions:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/resources/{entity_uuid}/recovery-decisions/{recovery_decision_uuid}:
+    post:
+      tags:
+      - resources
+      operationId: resolveRecoveryDecision
+      summary: Resolve a pending recovery decision
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - name: recovery_decision_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - decision
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - approve
+                  - reject
+                  - escalate
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Decision recorded
+  /api/v1/resources/{entity_uuid}/audit:
+    get:
+      tags:
+      - audit
+      operationId: getResourceAudit
+      summary: Get audit trail for a resource entity
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+  /api/v1/resources/{entity_uuid}/drift:
+    get:
+      tags:
+      - drift
+      operationId: getResourceDrift
+      summary: Get current drift records for a resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriftRecordList'
+  /api/v1/resources/{entity_uuid}/drift/{drift_uuid}:acknowledge:
+    post:
+      tags:
+      - drift
+      operationId: acknowledgeDrift
+      summary: Acknowledge a drift record (suppress notification without resolving)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - name: drift_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Drift acknowledged
+  /api/v1/resources/{entity_uuid}/drift/{drift_uuid}:accept:
+    post:
+      tags:
+      - drift
+      operationId: acceptDrift
+      summary: Accept the drifted state as the new intended state (update Requested
+        State)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - name: drift_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Drifted state accepted; Requested State updated
+  /api/v1/resources/{entity_uuid}/drift/{drift_uuid}:revert:
+    post:
+      tags:
+      - drift
+      operationId: revertDrift
+      summary: Revert the resource to its Requested State (dispatch remediation)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      - name: drift_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/groups:
+    get:
+      tags:
+      - groups
+      operationId: listGroups
+      summary: List groups the authenticated actor's Tenant has access to
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groups:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/groups/{group_uuid}:
+    get:
+      tags:
+      - groups
+      operationId: getGroup
+      summary: Get group detail and member list
+      parameters:
+      - name: group_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+  /api/v1/groups/{group_uuid}/members:
+    post:
+      tags:
+      - groups
+      operationId: addGroupMember
+      summary: Add an entity to a group
+      parameters:
+      - name: group_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - entity_uuid
+              properties:
+                entity_uuid:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Entity added to group
+  /api/v1/groups/{group_uuid}/members/{entity_uuid}:
+    delete:
+      tags:
+      - groups
+      operationId: removeGroupMember
+      summary: Remove an entity from a group
+      parameters:
+      - name: group_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '204':
+          description: Entity removed from group
+  /api/v1/approvals/pending:
+    get:
+      tags:
+      - approvals
+      operationId: listPendingApprovals
+      summary: List approval decisions pending the authenticated actor's action
+      parameters:
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approvals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApprovalRecord'
+  /api/v1/approvals/{approval_uuid}:
+    post:
+      tags:
+      - approvals
+      operationId: recordApprovalDecision
+      summary: Record an approval decision (approve/reject/abstain)
+      description: 'Designed to be called by both humans via the UI and by external
+        systems (ITSM, Slack bots,
+
+        CI/CD pipelines) that have been authorized to record decisions on behalf of
+        the organization.
+
+        DCM enforces the gate and records the audit trail; the deliberation process
+        is the
+
+        organization''s responsibility.
+
+        '
+      parameters:
+      - name: approval_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - decision
+              - reason
+              properties:
+                decision:
+                  type: string
+                  enum:
+                  - approve
+                  - reject
+                  - abstain
+                reason:
+                  type: string
+                  minLength: 1
+                external_reference:
+                  type: string
+                  description: ITSM ticket ID, Jira issue key, etc.
+      responses:
+        '200':
+          description: Decision recorded; approval gate re-evaluated
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Approval already in terminal state
+  /api/v1/cost/estimate:
+    post:
+      tags:
+      - cost
+      operationId: estimateCost
+      summary: Get cost estimate before submitting a request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostEstimate'
+  /api/v1/resources/{entity_uuid}/cost:
+    get:
+      tags:
+      - cost
+      operationId: getResourceCost
+      summary: Get cost actuals and attribution for a resource
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostActuals'
+  /api/v1/operations/{operation_uuid}:
+    get:
+      tags:
+      - operations
+      operationId: getOperation
+      summary: Poll a Long-Running Operation for status (AEP-136)
+      description: 'Returns the current state of an async operation. Poll until `done`
+        is `true`.
+
+
+        **Note:** `operation_uuid == request_uuid`. All async operations initiated
+        via
+
+        POST /api/v1/requests, PATCH /api/v1/resources/{uuid}, etc., return an Operation
+
+        whose UUID is the same as the request UUID.
+
+
+        Two polling views are available:
+
+        - This endpoint: AEP-standard (done, metadata, response/error)
+
+        - GET /api/v1/requests/{uuid}/status: DCM-native rich view (pipeline_stage,
+        full history)
+
+
+        Both reflect the same underlying operation state.
+
+        '
+      parameters:
+      - name: operation_uuid
+        in: path
+        required: true
+        description: The operation UUID (same as the request UUID)
+        schema:
+          type: string
+          format: uuid
+      security:
+      - bearerAuth: []
+      responses:
+        '200':
+          description: Operation status (check `done` field for completion)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/quota:
+    get:
+      tags:
+      - cost
+      operationId: getQuota
+      summary: Get quota status for the authenticated actor's Tenant
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaStatus'
+  /api/v1/notifications:
+    get:
+      tags:
+      - notifications
+      operationId: listNotifications
+      summary: List notifications in the authenticated actor's inbox
+      parameters:
+      - name: unread_only
+        in: query
+        schema:
+          type: boolean
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/notifications/{notification_uuid}/read:
+    post:
+      tags:
+      - notifications
+      operationId: markNotificationRead
+      summary: Mark a notification as read
+      parameters:
+      - name: notification_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Marked as read
+  /api/v1/notifications:read-all:
+    post:
+      tags:
+      - notifications
+      operationId: markAllNotificationsRead
+      summary: Mark all notifications as read
+      responses:
+        '204':
+          description: All notifications marked as read
+  /api/v1/webhooks:
+    get:
+      tags:
+      - webhooks
+      operationId: listWebhooks
+      summary: List outbound webhook subscriptions for the authenticated actor
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  webhooks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookSubscription'
+    post:
+      tags:
+      - webhooks
+      operationId: createWebhook
+      summary: Create an outbound webhook subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookSubscription'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookSubscription'
+  /api/v1/webhooks/{webhook_uuid}:
+    delete:
+      tags:
+      - webhooks
+      operationId: deleteWebhook
+      summary: Delete a webhook subscription
+      parameters:
+      - name: webhook_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Webhook deleted
+  # ── Workload Analysis ─────────────────────────────────────────────────────────
+  /api/v1/resources/{entity_uuid}/workload-profile:
+    get:
+      tags: [workload-analysis]
+      operationId: getWorkloadProfile
+      summary: Get the Workload Analysis profile for a resource
+      description: |
+        Returns the most recent WorkloadProfile entity for the given resource.
+        WorkloadProfiles are created automatically during brownfield ingestion
+        and can be refreshed on demand via the :analyze custom method.
+      parameters:
+        - {name: entity_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      responses:
+        "200":
+          description: Workload profile
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/WorkloadProfile"}
+        "404": {$ref: "#/components/responses/NotFound"}
+        "403": {$ref: "#/components/responses/Forbidden"}
+
+  /api/v1/resources/{entity_uuid}/workload-profile:analyze:
+    post:
+      tags: [workload-analysis]
+      operationId: analyzeWorkload
+      summary: Trigger re-analysis of a resource's workload profile
+      description: |
+        Initiates a new Workload Analysis pass for the resource. The existing
+        WorkloadProfile is superseded when the new analysis completes. Useful
+        when a resource's role has changed since initial classification.
+      parameters:
+        - {name: entity_uuid, in: path, required: true, schema: {type: string, format: uuid}}
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: {type: string, description: Why re-analysis is needed}
+                include_mta: {type: boolean, default: true, description: Include MTA containerization assessment}
+      responses:
+        "200":
+          description: Operation initiated — poll for completion
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Operation"}
+        "404": {$ref: "#/components/responses/NotFound"}
+
+  /api/v1/search:
+    get:
+      tags:
+      - search
+      operationId: search
+      summary: Cross-entity search (resources, groups, catalog items)
+      parameters:
+      - name: q
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+      - name: types
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+      - $ref: '#/components/parameters/page_size'
+      - $ref: '#/components/parameters/page_token'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResults'
+  /api/v1/audit/correlation/{correlation_id}:
+    get:
+      tags:
+      - audit
+      operationId: getAuditByCorrelation
+      summary: Get all audit records for a correlation ID (cross-resource trace)
+      parameters:
+      - name: correlation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditList'
+  /api/v1/contribute/policy:
+    post:
+      tags:
+      - contributions
+      operationId: contributePolicy
+      summary: Submit a policy contribution via the federated contribution pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyContribution'
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/contribute/resource-group:
+    post:
+      tags:
+      - contributions
+      operationId: contributeResourceGroup
+      summary: Submit a resource group contribution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /api/v1/contribute:
+    get:
+      tags:
+      - contributions
+      operationId: listContributions
+      summary: List contributions submitted by the authenticated actor
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contributions:
+                    type: array
+                    items:
+                      type: object
+  /api/v1/contribute/{contribution_uuid}:
+    delete:
+      tags:
+      - contributions
+      operationId: withdrawContribution
+      summary: Withdraw a pending contribution
+      parameters:
+      - name: contribution_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Contribution withdrawn
+        '409':
+          description: Contribution already activated — cannot withdraw
+  /api/v1/resources/{entity_uuid}/credentials:
+    get:
+      tags:
+      - credentials
+      operationId: listResourceCredentials
+      summary: List credentials associated with a resource (metadata only — no values)
+      parameters:
+      - $ref: '#/components/parameters/entity_uuid'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CredentialSummary'
+  /api/v1/credentials/{credential_uuid}/value:
+    get:
+      tags:
+      - credentials
+      operationId: getCredentialValue
+      summary: Retrieve the current credential value (audited; step-up auth may be
+        required)
+      parameters:
+      - name: credential_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CredentialValue'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /api/v1/credentials/{credential_uuid}:rotate:
+    post:
+      tags:
+      - credentials
+      operationId: rotateCredential
+      summary: Initiate credential rotation
+      parameters:
+      - name: credential_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Operation initiated. Poll `operation.name` for completion.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  # ── Subscription Management (doc 50) ──────────────────────────────────
+
+  /api/v1/subscriptions:
+    get:
+      operationId: listSubscriptions
+      summary: List tenant subscriptions (paginated)
+      tags: [Subscription Management]
+      parameters:
+        - { name: page_size, in: query, schema: { type: integer, default: 100 } }
+        - { name: page_token, in: query, schema: { type: string } }
+        - { name: lifecycle_state, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Paginated subscription list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionList'
+    post:
+      operationId: createSubscription
+      summary: Create a subscription (enters request pipeline)
+      tags: [Subscription Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '200':
+          description: Subscription creation initiated. Poll operation for status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}:
+    get:
+      operationId: getSubscription
+      summary: Get subscription details
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+    patch:
+      operationId: updateSubscription
+      summary: Update subscription (tier change, auto_renew toggle)
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdate'
+      responses:
+        '200':
+          description: Update initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}:cancel:
+    post:
+      operationId: cancelSubscription
+      summary: Cancel subscription (starts grace period)
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Cancellation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}:renew:
+    post:
+      operationId: renewSubscription
+      summary: Manually renew subscription
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Renewal initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}:suspend:
+    post:
+      operationId: suspendSubscription
+      summary: Suspend subscription
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Suspension initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}:resume:
+    post:
+      operationId: resumeSubscription
+      summary: Resume suspended subscription
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Resume initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}/entities:
+    get:
+      operationId: listSubscriptionEntities
+      summary: List managed entities under this subscription
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: page_size, in: query, schema: { type: integer, default: 100 } }
+        - { name: page_token, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Paginated entity list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceList'
+
+  /api/v1/subscriptions/{subscription_uuid}/updates:
+    get:
+      operationId: listSubscriptionUpdates
+      summary: List pending and applied updates
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: status, in: query, schema: { type: string, enum: [PENDING, APPROVED, REJECTED, APPLIED, FAILED] } }
+        - { name: page_size, in: query, schema: { type: integer, default: 100 } }
+        - { name: page_token, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Paginated update list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionUpdateList'
+
+  /api/v1/subscriptions/{subscription_uuid}/updates/{update_uuid}:approve:
+    post:
+      operationId: approveSubscriptionUpdate
+      summary: Approve a pending provider-originated update
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: update_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Update approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+  /api/v1/subscriptions/{subscription_uuid}/updates/{update_uuid}:reject:
+    post:
+      operationId: rejectSubscriptionUpdate
+      summary: Reject a pending provider-originated update
+      tags: [Subscription Management]
+      parameters:
+        - { name: subscription_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: update_uuid, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Update rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+
+
+  /api/v1/requests/{request_uuid}/resolution:
+    get:
+      summary: Get policy block details and resolution options
+      operationId: getResolutionOptions
+      parameters:
+        - name: request_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Blocking details and resolution options
+  /api/v1/requests/{request_uuid}:resolve:
+    post:
+      summary: Resolve a policy-blocked request
+      operationId: resolveBlockedRequest
+      parameters:
+        - name: request_uuid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [modify, request_override, cancel, escalate]
+                modifications:
+                  type: object
+                justification:
+                  type: string
+                compensating_controls:
+                  type: array
+                  items:
+                    type: string
+                context:
+                  type: string
+      responses:
+        '200':
+          description: Resolution action accepted
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Session token obtained from POST /api/v1/auth/token
+  parameters:
+    entity_uuid:
+      name: entity_uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of the resource entity
+    request_uuid:
+      name: request_uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    catalog_item_uuid:
+      name: catalog_item_uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    group_uuid:
+      name: group_uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    session_uuid:
+      name: session_uuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    limit:
+      name: page_size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 1000
+        default: 50
+    cursor:
+      name: page_token
+      in: query
+      schema:
+        type: string
+      description: Opaque page token from previous response (use next_page_token from
+        response)
+  responses:
+    BadRequest:
+      description: Invalid request syntax
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Authenticated but not authorized. rule_uuid identifies the governing
+        policy.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found or not visible to authenticated actor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Request syntax valid but semantically invalid (e.g., field validation
+        failure)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Operation:
+      type: object
+      description: "AEP-136 Long-Running Operation. Returned by async operations instead\
+        \ of 202 Accepted.\nPoll GET {operation.name} until done is true.\nThe operation.name\
+        \ is a stable resource path: /api/v1/operations/{uuid}\nNote: operation_uuid\
+        \ == request_uuid. Two polling endpoints are available:\n  - GET /api/v1/operations/{uuid}\
+        \ — AEP-standard thin view (done, metadata, response/error)\n  - GET /api/v1/requests/{uuid}/status\
+        \ — DCM-native rich view (pipeline_stage, full status history)\nBoth endpoints\
+        \ reflect the same underlying operation state.\n"
+      required:
+      - name
+      - done
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          description: Stable resource path for this operation. Poll this URL for
+            status.
+          example: /api/v1/operations/a1b2c3d4-e5f6-7890-abcd-ef1234567890
+        done:
+          type: boolean
+          description: True when the operation has reached a terminal state (success
+            or error)
+          default: false
+        metadata:
+          type: object
+          description: Operation-specific progress metadata
+          additionalProperties: false
+          properties:
+            stage:
+              type: string
+              description: Current pipeline stage
+            progress_pct:
+              type: integer
+              minimum: 0
+              maximum: 100
+            resource_uuid:
+              type: string
+              format: uuid
+              description: UUID of the resource being created/modified (set as soon
+                as assigned)
+            request_uuid:
+              type: string
+              format: uuid
+              description: The DCM request UUID. operation_uuid == request_uuid. Use
+                GET /api/v1/requests/{request_uuid}/status for the full DCM-native
+                pipeline view.
+            created_at:
+              type: string
+              format: date-time
+            updated_at:
+              type: string
+              format: date-time
+        response:
+          type: object
+          description: Present when done is true and the operation succeeded. Contains
+            the result resource.
+          additionalProperties: true
+        error:
+          type: object
+          description: Present when done is true and the operation failed.
+          additionalProperties: false
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+    Error:
+      type: object
+      required:
+      - error
+      properties:
+        error:
+          type: object
+          required:
+          - code
+          - message
+          - request_id
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            request_id:
+              type: string
+              format: uuid
+            rule_uuid:
+              type: string
+              format: uuid
+              description: Present on POLICY_DENIED and GOVERNANCE_DENIED
+            fields:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  issue:
+                    type: string
+    SessionTokenResponse:
+      type: object
+      required:
+      - access_token
+      - token_type
+      - expires_in
+      - session_uuid
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          const: bearer
+        expires_in:
+          type: integer
+          description: Seconds until expiry
+        session_uuid:
+          type: string
+          format: uuid
+        refresh_token:
+          type: string
+    SessionSummary:
+      type: object
+      properties:
+        session_uuid:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        ip_address:
+          type: string
+        user_agent:
+          type: string
+        current:
+          type: boolean
+    TokenIntrospection:
+      type: object
+      properties:
+        active:
+          type: boolean
+        actor_uuid:
+          type: string
+          format: uuid
+        actor_type:
+          type: string
+        display_name:
+          type: string
+        tenant_uuids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        roles:
+          type: array
+          items:
+            type: string
+        groups:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+    CatalogItem:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        resource_type:
+          description: Resource type — FQN string (e.g., 'Compute.VirtualMachine')
+            or Registry UUID. DCM resolves either form internally.
+          oneOf:
+          - type: string
+            pattern: ^[A-Z][a-zA-Z0-9]+\.[A-Z][a-zA-Z0-9]+$
+            description: FQN form (recommended)
+          - type: string
+            format: uuid
+            description: UUID form
+        display_name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+        provider_uuid:
+          type: string
+          format: uuid
+        field_schema:
+          type: object
+          description: 'JSON Schema for the request body fields. Each field includes
+            a constraint block with type: range|enum|pattern|layer_reference|layer_reference_list.
+            For layer_reference constraints, allowed_values is resolved at render
+            time from active Reference Data Layer instances of the declared layer_type.'
+        cost_estimate:
+          type: object
+        dependencies:
+          type: array
+          items:
+            type: object
+    CatalogItemList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogItem'
+        pagination:
+          type: object
+    ServiceRequest:
+      type: object
+      required:
+      - catalog_item_uuid
+      - fields
+      properties:
+        catalog_item_uuid:
+          type: string
+          format: uuid
+        fields:
+          type: object
+          description: Resource-type-specific field values
+          additionalProperties: true
+        group_uuid:
+          type: string
+          format: uuid
+          description: Assign to a resource group on creation
+        scheduled_at:
+          type: string
+          format: date-time
+          description: Defer request execution to this time
+        depends_on:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Request UUIDs that must complete first
+        dry_run:
+          type: boolean
+          default: false
+          description: Evaluate policy and placement without submitting
+    RequestAccepted:
+      type: object
+      properties:
+        request_uuid:
+          type: string
+          format: uuid
+        status:
+          type: string
+        stream_url:
+          type: string
+          format: uri
+    RequestStatus:
+      type: object
+      properties:
+        request_uuid:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - ACKNOWLEDGED
+          - ASSEMBLING
+          - AWAITING_APPROVAL
+          - APPROVED
+          - DISPATCHED
+          - PROVISIONING
+          - COMPLETED
+          - FAILED
+          - CANCELLED
+          - SCHEDULED
+          - PENDING_DEPENDENCY
+          description: "Consumer request lifecycle status. COMPLETED/FAILED/CANCELLED are terminal."
+        pipeline_stage:
+          type: string
+        entity_uuid:
+          type: string
+          format: uuid
+          description: Set once realization begins
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        error:
+          $ref: '#/components/schemas/Error'
+    RequestList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestStatus'
+        pagination:
+          type: object
+    RequestGroup:
+      type: object
+      required:
+      - requests
+      properties:
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceRequest'
+          minItems: 1
+        ordered:
+          type: boolean
+          default: false
+          description: Execute in declared order with dependency waiting
+        group_name:
+          type: string
+    RequestGroupAccepted:
+      type: object
+      properties:
+        group_uuid:
+          type: string
+          format: uuid
+        request_uuids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    RequestGroupStatus:
+      type: object
+      properties:
+        group_uuid:
+          type: string
+          format: uuid
+        status:
+          type: string
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequestStatus'
+    ResourceEntity:
+      type: object
+      description: Resource entity as returned by the Consumer API (may be field-filtered
+        by governance matrix)
+      properties:
+        uuid:
+          type: string
+          format: uuid
+        entity_type:
+          type: string
+        resource_type:
+          type: string
+        lifecycle_state:
+          type: string
+        owned_by_tenant_uuid:
+          type: string
+          format: uuid
+        provider_uuid:
+          type: string
+          format: uuid
+        drift_status:
+          type: string
+        billing_state:
+          type: string
+        ttl_expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        fields:
+          type: object
+          additionalProperties: true
+          description: Resource-type-specific realized fields
+        relationships:
+          type: array
+          items:
+            type: object
+    ResourceList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceEntity'
+        pagination:
+          type: object
+    ResourceUpdate:
+      type: object
+      required:
+      - fields
+      properties:
+        fields:
+          type: object
+          additionalProperties: true
+          description: Editable fields and their new values (delta only)
+        reason:
+          type: string
+    RehydrateRequest:
+      type: object
+      properties:
+        target_provider_uuid:
+          type: string
+          format: uuid
+        reason:
+          type: string
+    DriftRecord:
+      type: object
+      properties:
+        drift_uuid:
+          type: string
+          format: uuid
+        entity_uuid:
+          type: string
+          format: uuid
+        detected_at:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum:
+          - minor
+          - significant
+          - critical
+        unsanctioned:
+          type: boolean
+        status:
+          type: string
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          - escalated
+        field_differences:
+          type: array
+          items:
+            type: object
+    DriftRecordList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DriftRecord'
+        pagination:
+          type: object
+    ApprovalRecord:
+      type: object
+      properties:
+        approval_uuid:
+          type: string
+          format: uuid
+        subject_type:
+          type: string
+        subject_uuid:
+          type: string
+          format: uuid
+        required_tier:
+          type: string
+        required_quorum:
+          type: integer
+        decisions_so_far:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+    CostEstimate:
+      type: object
+      properties:
+        estimated_monthly_cost:
+          type: number
+        currency:
+          type: string
+        breakdown:
+          type: array
+          items:
+            type: object
+        confidence:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+    CostActuals:
+      type: object
+      properties:
+        entity_uuid:
+          type: string
+          format: uuid
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        total_cost:
+          type: number
+        currency:
+          type: string
+        breakdown:
+          type: array
+          items:
+            type: object
+    QuotaStatus:
+      type: object
+      properties:
+        tenant_uuid:
+          type: string
+          format: uuid
+        quotas:
+          type: array
+          items:
+            type: object
+    WebhookSubscription:
+      type: object
+      required:
+      - endpoint_url
+      - events
+      properties:
+        webhook_uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        endpoint_url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+          description: Event types from the DCM Event Catalog
+        secret:
+          type: string
+          description: HMAC-SHA256 signing secret for signature verification
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    SearchResults:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+        pagination:
+          type: object
+    AuditRecord:
+      type: object
+      properties:
+        audit_uuid:
+          type: string
+          format: uuid
+        entity_uuid:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+        actor:
+          type: object
+        recorded_at:
+          type: string
+          format: date-time
+        correlation_id:
+          type: string
+          format: uuid
+        payload:
+          type: object
+    AuditList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditRecord'
+        pagination:
+          type: object
+    PolicyContribution:
+      type: object
+      required:
+      - policy_artifact
+      properties:
+        policy_artifact:
+          type: object
+          description: DCM policy artifact per B-policy-contract schema
+        rationale:
+          type: string
+        shadow_first:
+          type: boolean
+          default: true
+    ContributionAccepted:
+      type: object
+      properties:
+        contribution_uuid:
+          type: string
+          format: uuid
+        status:
+          type: string
+        shadow_mode:
+          type: boolean
+    CredentialSummary:
+      type: object
+      properties:
+        credential_uuid:
+          type: string
+          format: uuid
+        credential_type:
+          type: string
+        entity_uuid:
+          type: string
+          format: uuid
+        expires_at:
+          type: string
+          format: date-time
+        rotated_at:
+          type: string
+          format: date-time
+    CredentialValue:
+      type: object
+      properties:
+        credential_uuid:
+          type: string
+          format: uuid
+        credential_type:
+          type: string
+        value:
+          type: object
+          description: Credential-type-specific value (e.g., kubeconfig, token, certificate)
+        expires_at:
+          type: string
+          format: date-time
+
+    WorkloadProfile:
+      type: object
+      description: "Workload analysis classification for a DCM resource entity (doc 46)"
+      properties:
+        workload_profile_uuid: {type: string, format: uuid}
+        subject_entity_uuid: {type: string, format: uuid}
+        analyzed_at: {type: string, format: date-time}
+        analysis_version: {type: string}
+        classification:
+          type: object
+          properties:
+            resource_type_match:
+              type: object
+              properties:
+                primary: {type: string}
+                confidence: {type: string, enum: [high, medium, low, undetermined]}
+            workload_archetype:
+              type: object
+              properties:
+                type: {type: string, enum: [web_server, database, batch_processor, message_broker, api_gateway, cache, storage, monitoring, unknown]}
+                confidence: {type: string, enum: [high, medium, low, undetermined]}
+            migration_readiness:
+              type: object
+              properties:
+                containerization_score: {type: integer, minimum: 1, maximum: 10}
+                blockers: {type: array, items: {type: string}}
+                suggested_target: {type: string}
+            lifecycle_recommendation:
+              type: object
+              properties:
+                dcm_lifecycle_model: {type: string}
+                rehydration_eligible: {type: boolean}
+                notes: {type: string}
+
+    # ── Subscription Schemas (doc 50) ────────────────────────────────
+
+    Subscription:
+      type: object
+      required: [subscription_uuid, tenant_uuid, catalog_item_uuid, lifecycle_state]
+      properties:
+        subscription_uuid: {type: string, format: uuid}
+        handle: {type: string}
+        display_name: {type: string}
+        tenant_uuid: {type: string, format: uuid}
+        catalog_item_uuid: {type: string, format: uuid}
+        resource_type: {type: string}
+        provider_uuid: {type: string, format: uuid}
+        lifecycle_state:
+          type: string
+          enum: [PENDING, PROVISIONING, ACTIVE, SUSPENDED, RENEWAL_PENDING, TIER_CHANGE_PENDING, EXPIRED, CANCELLED, DECOMMISSIONING, DECOMMISSIONED]
+        terms:
+          type: object
+          properties:
+            tier: {type: string}
+            consumption_model: {type: string, enum: [on_demand, reserved, subscription]}
+            billing_period: {type: string}
+            auto_renew: {type: boolean}
+            renewal_advance_notice: {type: string, description: 'ISO 8601 duration'}
+            started_at: {type: string, format: date-time}
+            expires_at: {type: string, format: date-time}
+            terms_version: {type: string}
+        entitlements:
+          type: object
+          properties:
+            max_instances: {type: integer}
+            resource_limits: {type: object, additionalProperties: true}
+            capabilities: {type: array, items: {type: string}}
+        update_channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel: {type: string}
+              auto_apply: {type: boolean}
+        managed_entity_count: {type: integer}
+        version: {type: string}
+        created_at: {type: string, format: date-time}
+
+    SubscriptionCreate:
+      type: object
+      required: [catalog_item_uuid, consumption_model]
+      properties:
+        catalog_item_uuid: {type: string, format: uuid}
+        consumption_model: {type: string, enum: [on_demand, reserved, subscription]}
+        subscription_tier: {type: string}
+        auto_renew: {type: boolean, default: true}
+        display_name: {type: string}
+        fields: {type: object, additionalProperties: true}
+
+    SubscriptionUpdate:
+      type: object
+      properties:
+        tier: {type: string}
+        auto_renew: {type: boolean}
+        update_channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel: {type: string}
+              auto_apply: {type: boolean}
+
+    SubscriptionList:
+      type: object
+      properties:
+        subscriptions: {type: array, items: {$ref: '#/components/schemas/Subscription'}}
+        next_page_token: {type: string}
+
+    SubscriptionUpdateRecord:
+      type: object
+      properties:
+        update_uuid: {type: string, format: uuid}
+        subscription_uuid: {type: string, format: uuid}
+        entity_uuid: {type: string, format: uuid}
+        channel: {type: string}
+        status: {type: string, enum: [PENDING, APPROVED, REJECTED, APPLIED, FAILED, EXPIRED]}
+        update_payload: {type: object, additionalProperties: true}
+        submitted_at: {type: string, format: date-time}
+        decided_at: {type: string, format: date-time}
+        auto_applied: {type: boolean}
+
+    SubscriptionUpdateList:
+      type: object
+      properties:
+        updates: {type: array, items: {$ref: '#/components/schemas/SubscriptionUpdateRecord'}}
+        next_page_token: {type: string}
