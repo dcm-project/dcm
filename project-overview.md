@@ -63,7 +63,7 @@ DCM manages the complete lifecycle of infrastructure resources — from bare met
 
 Comparing these four states continuously is how DCM detects drift, enforces governance, and enables rehydration (replaying original intent through current policies to reproduce a resource in a new location or after failure).
 
-**Policy** is every rule that governs DCM behavior — expressed as code, stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. Seven typed policy schemas cover every governance need:
+**Policy** is every rule that governs DCM behavior — expressed as code, stored in Git, versioned, tested in shadow mode before activation, and enforced deterministically. Each policy type is a typed output schema. This list follows the `policy_type` enum in UDLM [`registry/policy.schema.json`](https://github.com/croadfeldt/udlm/blob/main/registry/policy.schema.json), which is the authority:
 
 | Policy Type | What It Does |
 |-------------|-------------|
@@ -73,20 +73,17 @@ Comparing these four states continuously is how DCM detects drift, enforces gove
 | **Recovery** | Governs what DCM does when things go wrong (timeout, failure, drift) |
 | **Governance Matrix Rule** | Enforces data classification and sovereignty boundaries at every cross-boundary interaction |
 | **Lifecycle** | Triggers actions on entity state changes (TTL expiry, scheduled operations) |
+| **Placement** | Constrains where a resource may land (affinity, anti-affinity, spread, pin) over abstract topology kinds ([ADR-019](architecture/adr/019-placement-policy.md)) |
 | **ITSM Action** | Creates and updates records in connected ITSM systems as a side-effect of pipeline events |
+| **Override** | Suppresses one soft policy within a narrowed scope until a mandatory expiry. Hard policies cannot be overridden |
 
 Every business rule, every compliance constraint, every operational standard is a Policy — never hard-coded, always auditable, always testable in shadow mode before enforcement.
 
-**Providers** are everything external that DCM integrates with. Six provider types share a common base contract (registration, health, mTLS, sovereignty declaration, accreditation, governance matrix enforcement) and add typed capability extensions:
+**Providers** are everything external that DCM integrates with: anything that provides a service, such as information, provisioning or policy evaluation. There is one provider model. Every provider shares one base contract (registration, health, mTLS, sovereignty declaration, accreditation, governance matrix enforcement) and declares what it can do as a set of capabilities, not a fixed type. UDLM [provider-contract §8](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/provider-contract.md) defines the capabilities and is the authority.
 
-| Provider Type | Capability |
-|--------------|-----------|
-| **Service Provider** | Realizes infrastructure resources (VMs, networks, storage, containers, bare metal). Also covers credentials (internal or Vault), notifications (email/Slack), and ITSM integration via resource type declarations. |
-| **Information Provider** | Serves authoritative external data (CMDB, HR, finance, identity systems) |
-| **Composite Service** | A catalog item composed of multiple constituent resource types (a "three-tier web app" as a single catalog entry); registered by an ordinary Service Provider, not a separate provider type |
-| **Auth Provider** | Authenticates identities; resolves role and group memberships. Multiple auth providers enable tenant-routed authentication. |
-| **Peer DCM** | Another DCM instance participating in federated deployment |
-| **Process Provider** | Executes ephemeral workflows (software install, backup, migration, compliance scan) via automation platforms (AAP, Tekton) |
+The capability verbs are listed once, in the [DCM Taxonomy](taxonomy/DCM-Taxonomy.md#provider-capabilities). Provisioning, serving data, authentication, federation and workflow execution are all capabilities. A discovery source serves data ([ADR-028](architecture/adr/028-discovery-source-is-information-provider.md), proposed: a discovery source is an Information Provider).
+
+One provider may declare several capabilities. Names such as "Service Provider" or "Information Provider" are convenience labels for a provider's capability set.
 
 ### What This Enables
 
@@ -225,7 +222,7 @@ Policy authoring is not an engineering task requiring code deployment. Policies 
 
 ### How Providers Integrate
 
-Every provider implements one base contract: registration, health check, mTLS identity, sovereignty declaration, and governance matrix enforcement. What varies between provider types is the capability extension — the typed set of additional endpoints and behaviors that define what the provider can do.
+Every provider implements one base contract: registration, health check, mTLS identity, sovereignty declaration, and governance matrix enforcement. What varies between providers is the set of capabilities each declares, and the endpoints and behaviors those capabilities add.
 
 This means DCM does not need to know in advance what automation tools an organization uses. A VMware vSphere cluster, a bare metal Redfish endpoint, a Kubernetes cluster via CAPI, and an OpenStack cloud all register as Service Providers. DCM speaks the same language to all of them. The provider handles translation to and from the native tool format — Naturalization (DCM → native) and Denaturalization (native → DCM).
 
@@ -269,7 +266,7 @@ This is different from compliance tooling that inspects systems and produces rep
 
 ### The Architecture Should Be Easy to Implement and Extend
 
-DCM is designed so that new capabilities fit within the existing three-abstraction model without modifying the core. A new provider type is a new implementation of the base contract with a new capability extension — no core changes. A new policy type is a new output schema — no core changes. A new data entity type is a new schema registration — no core changes.
+DCM is designed so that new capabilities fit within the existing three-abstraction model without modifying the core. A new kind of provider is the same base contract with a new set of declared capabilities, so the core does not change. A new policy type is a new output schema — no core changes. A new data entity type is a new schema registration — no core changes.
 
 This is the test: if a new capability can be expressed as Data, Provider, or Policy, it belongs in DCM and requires no architectural changes. If it cannot be expressed within these three abstractions, it is either a runtime implementation detail or a signal that the abstractions need to be reconsidered.
 
@@ -286,20 +283,21 @@ This is not just an audit requirement — it is an architectural property that m
 
 ## Key Facts
 
+Counts are not kept here, because copies of a count drift apart. Each row names the source to read or count.
+
 | | |
 |-|-|
 | **Architecture** | Three abstractions (Data, Provider, Policy) · Policy-driven event loop |
-| **Provider types** | 12 (unified base contract + typed capability extensions) |
-| **Policy types** | 8 (typed output schemas with deterministic evaluation) |
-| **Entity lifecycle states** | 4 (Intent · Requested · Realized · Discovered) |
-| **Capabilities** | 331 across 39 domains |
-| **Data model documents** | 58 |
-| **Specifications** | 15 |
-| **OpenAPI paths** | 63 consumer · 57 admin · 5 operator · 7 provider callback |
+| **Providers** | One provider model: a provider declares capabilities on one base contract. Verbs listed in [the taxonomy](taxonomy/DCM-Taxonomy.md#provider-capabilities). Source: UDLM [provider-contract §8](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/provider-contract.md) |
+| **Policy types** | Typed output schemas with deterministic evaluation. Source: the `policy_type` enum in UDLM [`registry/policy.schema.json`](https://github.com/croadfeldt/udlm/blob/main/registry/policy.schema.json) |
+| **Entity lifecycle states** | 4 (Intent · Requested · Realized · Discovered), adopted from UDLM `foundations/four-states.md` |
+| **Capabilities** | Source: [`architecture/DCM-Capabilities-Matrix.md`](architecture/DCM-Capabilities-Matrix.md) |
+| **Specifications** | Source: [`docs/specifications/`](docs/specifications/) |
+| **OpenAPI paths** | Consumer, admin, operator and provider callback. Source: the `paths` of each spec in [`schemas/openapi/`](schemas/openapi/) |
 | **Compliance frameworks** | FedRAMP · CMMC · HIPAA · SOC 2 · ISO 27001 · PCI DSS · DoD IL2–IL6 |
 | **Deployment profiles** | minimal · dev · standard · prod · fsi · sovereign |
 | **License** | Apache 2.0 |
-| **Reference Implementation** | | **Reference Implementation** | [dcm-project/dcm-examples](https://github.com/dcm-project/dcm-examples) — Example #1: Summit Demo (OpenShift + AAP + ACM + RHDH) | — OpenShift + AAP + ACM + RHDH |
+| **Reference Implementation** | [dcm-project/dcm-examples](https://github.com/dcm-project/dcm-examples), Example #1: Summit Demo (OpenShift, AAP, ACM, RHDH) |
 | **GitHub** | https://github.com/dcm-project |
 
 ---
