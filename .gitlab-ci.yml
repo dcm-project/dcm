@@ -1,0 +1,49 @@
+# GitLab CI mirror of .github/workflows/validate.yml — architecture validation gates.
+# Same jobs as GitHub Actions so the repo validates wherever it is hosted
+# (croadfeldt/dcm on GitHub; a GitLab mirror if used). Keep the two files in step.
+stages: [validate]
+
+.validate_rules: &validate_rules
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  - if: $CI_COMMIT_BRANCH == "main"
+
+contracts:
+  stage: validate
+  image: python:3.12-slim
+  before_script:
+    - pip install jsonschema pyyaml openapi-spec-validator
+  script:
+    - python3 tests/validate_contracts.py
+  rules: *validate_rules
+
+dav-corpus:
+  stage: validate
+  image: python:3.12-slim
+  before_script:
+    - pip install pyyaml
+  script:
+    - python3 tests/check_uc_dimensions.py
+    - python3 tests/check_uc_personas.py
+    - python3 tests/test_uc_checks_fail_closed.py
+  rules: *validate_rules
+
+terminology:
+  stage: validate
+  image: python:3.12   # not -slim: this check lists files with `git ls-files`, and -slim has no git
+  script:
+    - python3 tests/check_terminology.py
+  rules: *validate_rules
+
+estate-tokens:
+  stage: validate
+  image: python:3.12   # not -slim: this check lists files with `git ls-files`, and -slim has no git
+  script:
+    - python3 tests/check_estate_tokens.py
+  rules: *validate_rules
+
+links:
+  stage: validate
+  image: python:3.12   # not -slim: this check lists files with `git ls-files`, and -slim has no git
+  script:
+    - python3 tests/check_links.py
+  rules: *validate_rules
