@@ -75,11 +75,14 @@ System components (service accounts, provider callbacks) use `prod` bucket param
 
 ### 2.4 Rate Limit State Store
 
-The rate limit state is stored in a **dedicated in-memory cache** backed by a fast data store:
-- Cache TTL: 2× the rate limit window (120 seconds for 60 req/min rate)
-- PostgreSQL store contract: key-value (Redis or equivalent)
-- Consistency: eventual — brief over-counting tolerated to avoid distributed lock overhead
-- Cross-replica sharing: rate limit state is shared across all API Gateway replicas via the backing store
+The API Gateway reads and writes rate limit state through one interface, the **Rate Limit State Store**. The contract is:
+- Key-value, keyed by bucket (actor_uuid plus bucket class: consumer, admin, or per-provider callback)
+- Atomic take-and-refill on a bucket, so concurrent replicas cannot each spend the same token
+- Entry TTL: 2× the rate limit window (120 seconds for a 60 req/min rate)
+- Consistency: eventual. Brief over-counting is tolerated to avoid distributed lock overhead
+- Shared across all API Gateway replicas
+
+The backend is an implementation detail behind that interface. PostgreSQL is the default, as [ADR-015](../architecture/adr/015-minimal-infrastructure.md) requires (PostgreSQL is the only required dependency, and every capability has an internal path first). Redis or an equivalent key-value store is an optional external backend for read-heavy or high-rate deployments ([PostgreSQL Mandate](../architecture/persistence/postgres-mandate.md) §3 lists Redis as optional). A gateway replica may keep a short-lived in-memory copy of a bucket as a cache in front of the store. That cache is not the source of truth.
 
 ### 2.5 Exemptions
 

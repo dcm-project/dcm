@@ -450,7 +450,7 @@ DCM realizes udlm `contracts/identifier-scheme.md` §2.1 (normative). Implementa
 - **Lifecycle:** uuids are minted exactly once, survive tenant/realization migration, remain
   resolvable after `retired` (tombstone, DEP-007), and are NEVER reused (identifier-scheme §5).
 
-## 10. Policy-family-to-standard mapping (DCM realization)
+## 10. Policy-family-to-standard mapping (DCM implementation)
 
 | Policy family | Standards basis |
 |---|---|

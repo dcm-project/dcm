@@ -18,25 +18,49 @@ non-normative gists; the owner is the [udlm repo](https://github.com/croadfeldt/
 | Term | Definition |
 |------|-----------|
 | **Data** | Any structured artifact in DCM with a type, UUID, lifecycle state, fields, data classification, and provenance. Everything that exists, is stored, and has a lifecycle. Entities, layers, policies, accreditations, audit records, groups, relationships — all Data. |
-| **Provider** | Any external component DCM calls or that calls DCM. Implements the unified Provider base contract (registration, health, sovereignty, accreditation, governance matrix enforcement, zero trust). What varies between provider types is the capability extension. |
+| **Provider** | Any external component DCM calls or that calls DCM. Implements the unified Provider base contract (registration, health, sovereignty, accreditation, governance matrix enforcement, zero trust). A provider is anything that integrates with DCM and provides a service, such as information, provisioning or policy evaluation. What it does is the set of capabilities it declares, not a fixed type. |
 | **Policy** | A rule artifact that fires when Data matches declared conditions, produces a typed output (decision, mutation, action, or directive), and is enforced at a declared level. Policies govern every transition, transformation, and constraint in DCM. |
 
-### Provider Types (11)
+### Provider Capabilities
+
+DCM has one provider model. A provider declares capabilities as `verb × domain` and may declare several.
+The verbs are a closed vocabulary owned by UDLM: [provider-contract §8](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/provider-contract.md)
+and `registry/taxonomies/provider-capability.yaml`. That source wins on any divergence. No count is kept here.
+
+| Capability verb | Definition |
+|-----------------|-----------|
+| **`realize_resources`** | Provision, update and decommission typed resources under the four-state lifecycle. Implements naturalization, realization, denaturalization and discovery of what it controls. Credential issuance (`Credential.*`), notification delivery (`Notification.*`) and ITSM records (`ITSM.*`) are this capability scoped to those domains. |
+| **`serve_data`** | Answer queries with authoritative external data (CMDB, HR, Finance, identity), or report observations. A discovery source declares this ([ADR-028](../architecture/adr/028-discovery-source-is-information-provider.md), proposed: a discovery source is an Information Provider). |
+| **`authenticate`** | Authenticate actor identities and resolve role and group memberships. |
+| **`federate`** | Act as a peer DCM instance. Federation is the Provider abstraction applied across DCM instances. |
+| **`execute_workflows`** | Run ephemeral workflows (install, backup, migration, compliance scan) through automation platforms. |
+
+**Labels.** The names below are convenience labels for a capability set, not types (UDLM provider-contract §9: there are no provider types, only capabilities and the categories they form).
+
+| Label | Capability set |
+|-------|---------------|
+| **Service Provider** | `realize_resources`. May also register Composite Services (catalog items composed of multiple constituent resource types), see the Composite Service Composition Terms section below. A composite service is not a separate kind of provider. |
+| **Information Provider** | `serve_data` |
+| **Auth Provider** | `authenticate` |
+| **Peer DCM** | `federate` |
+| **Process Provider** | `execute_workflows` |
+| **credential management service** | `realize_resources` on `Credential.*`: issue, rotate and revoke secrets and credentials. |
+| **notification service** | `realize_resources` on `Notification.*`: deliver notification envelopes to configured channels (Slack, PagerDuty, email, webhook). |
+| **External Policy Evaluator** | A provider of policy decisions. DCM sends the evaluation context and receives a decision (UDLM policy-contract §7.2a: built-in or delegated, the contract is the same). OPA/Rego is the common engine. |
+
+**Not providers.** These were listed as provider types in earlier drafts. [ADR-005](../architecture/adr/005-provider-abstraction.md) rejected the fixed type list because message bus, registry and storage are implementation details or data concepts.
 
 | Term | Definition |
 |------|-----------|
-| **Service Provider** | Typed Provider. Capability: realize infrastructure resources. Implements naturalization, realization, denaturalization, and discovery. A Service Provider can additionally register Composite Services (catalog items composed of multiple constituent resource types) — see the Composite Service Composition Terms section below. |
-| **Information Provider** | Typed Provider. Capability: serve authoritative external data (CMDB, HR, Finance, identity). |
-| **Data Store Contract** | PostgreSQL store contract defining persistence requirements per data domain (Intent, Requested, Realized, Discovered, Audit). |
-| **External Policy Evaluator** | Typed Provider. Capability: evaluate policies externally. Modes 1–4; Mode 3–4 for OPA/Rego sidecar and black-box query enrichment. |
-| **credential management service** | Typed Provider. Capability: issue, rotate, and revoke secrets and credentials. |
-| **Auth Provider** | Typed Provider. Capability: authenticate actor identities and resolve role/group memberships. |
-| **notification service** | Typed Provider. Capability: deliver notification envelopes to configured channels (Slack, PagerDuty, email, webhook). |
-| **event routing service** | Typed Provider. Capability: async event streaming between DCM and external systems. |
-| **Resource Type Registry** | Typed Provider. Capability: serve the Resource Type Registry (core, community, organization tiers). |
-| **Peer DCM** | Typed Provider. Another DCM instance participating in federation. Federation is the Provider abstraction applied across DCM instances. |
+| **Data Store Contract** | PostgreSQL store contract defining persistence requirements per data domain (Intent, Requested, Realized, Discovered, Audit). A store contract, not a provider or a policy type. |
+| **event routing service** | Async event streaming between DCM and external systems. |
+| **Resource Type Registry** | The registry of resource types (core, community, organization tiers). |
 
-### Policy Types (8)
+### Policy Types
+
+Each policy type is a typed output schema. The authority is the `policy_type` enum in UDLM
+[`registry/policy.schema.json`](https://github.com/croadfeldt/udlm/blob/main/registry/policy.schema.json),
+with output schemas in UDLM policy-contract §10-17. This table follows that enum. No count is kept here.
 
 | Term | Definition |
 |------|-----------|
@@ -46,7 +70,9 @@ non-normative gists; the owner is the [udlm repo](https://github.com/croadfeldt/
 | **Orchestration Flow Policy** | Typed Policy. Output: ordered step sequence. Fires on pipeline payload type events. Named workflow artifacts — the explicit, visible pipeline skeleton. |
 | **Governance Matrix Rule** | Typed Policy. Output: ALLOW / DENY / ALLOW_WITH_CONDITIONS / STRIP_FIELD / REDACT / AUDIT_ONLY. Fires at every cross-boundary interaction. The single enforcement point for all data/capability boundary decisions. |
 | **Lifecycle Policy** | Typed Policy. Output: action on related entity (cascade, protect, detach, notify). Fires on relationship events. |
-| **Placement Policy** | Typed Policy (the 8th). Output: placement constraints — affinity / anti-affinity / spread / co-locate / prefer / pin (+ weights) over **abstract `Topology` kinds** (never provider-native ids). Declarative; the **Placement Engine** evaluates it. Consumes UDLM `Topology` + capacity/utilization + provider `topology_capability`. See [ADR-019](../architecture/adr/019-placement-policy.md). |
+| **Placement Policy** | Typed Policy. Output: placement constraints — affinity / anti-affinity / spread / co-locate / prefer / pin (+ weights) over **abstract `Topology` kinds** (never provider-native ids). Declarative; the **Placement Engine** evaluates it. Consumes UDLM `Topology` + capacity/utilization + provider `topology_capability`. See [ADR-019](../architecture/adr/019-placement-policy.md). |
+| **ITSM Action Policy** | Typed Policy (`itsm_action`). Output: an action in a connected ITSM system. Side-effect only, never an allow or deny decision. See ITSM Integration Terms below. |
+| **Override** | Typed Policy (`override`). Suppresses one soft policy within a narrowed scope until a mandatory expiry. Hard-enforcement policies cannot be overridden (UDLM POL-003; policy-contract §18). |
 
 ### Data Model Terms
 
@@ -144,7 +170,7 @@ non-normative gists; the owner is the [udlm repo](https://github.com/croadfeldt/
 | **PatternFly** | Red Hat's open-source design system and React component library — the design system for the DCM GUI surfaces. Key components: Nav (sidebar), NavGroup (non-clickable headers), NavItem with NotificationBadge (approvals count), Table, Toolbar, Gallery (catalog cards), Drawer (live status), Modal (step-up MFA). |
 
 <!-- RHDH / Backstage integration terms removed 2026-06-29 (engineering feedback, dcm PR #64): the DCM GUI
-     is realization-neutral; RHDH/Backstage is not a DCM dependency. Backstage Dynamic Plugins were rejected
+     is implementation-neutral; RHDH/Backstage is not a DCM dependency. Backstage Dynamic Plugins were rejected
      upstream. The dedicated dcm-rhdh-integration-spec was retired. PatternFly (the design system) is retained
      above as it is not Backstage-coupled. -->
 
@@ -156,8 +182,8 @@ non-normative gists; the owner is the [udlm repo](https://github.com/croadfeldt/
 
 | Term | Definition |
 |------|-----------|
-| **ITSM Integration** | Bidirectional integration with IT Service Management systems (ServiceNow, Jira Service Management, BMC Remedy/Helix, Freshservice, PagerDuty, etc.) via process_provider and service_provider types. Outbound: DCM lifecycle events → ITSM records. Inbound: ITSM approvals → DCM approval votes. |
-| **ITSM Action Policy** | The 8th DCM Policy output type. Side-effect policy that triggers an action in a connected ITSM system when a DCM event matches. Non-blocking by default (`on_failure: log_and_continue`). May gate the pipeline via `block_until_created: true` with mandatory timeout (ITSM-005). |
+| **ITSM Integration** | Bidirectional integration with IT Service Management systems (ServiceNow, Jira Service Management, BMC Remedy/Helix, Freshservice, PagerDuty, etc.) via providers that declare `execute_workflows`, or `realize_resources` on `ITSM.*`. Outbound: DCM lifecycle events → ITSM records. Inbound: ITSM approvals → DCM approval votes. |
+| **ITSM Action Policy** | The `itsm_action` policy type (UDLM policy-contract §17). Side-effect policy that triggers an action in a connected ITSM system when a DCM event matches. Non-blocking by default (`on_failure: log_and_continue`). May gate the pipeline via `block_until_created: true` with mandatory timeout (ITSM-005). |
 | **ITSM Reference** | Metadata stored on a DCM entity linking it to an ITSM record: system, record_type (change_request/incident/cmdb_ci), record_id, record_url, status, last_synced_at. Preserved through entity lifecycle; included in audit records. |
 | **block_until_created** | Optional ITSM Policy flag. When `true`, DCM waits for ITSM record creation confirmation before dispatching to Service Provider. Requires `block_timeout`. Timeout expiry triggers `on_failure` behavior — the pipeline never permanently stalls due to ITSM unavailability (ITSM-005). |
 | **CMDB CI Mapping** | ITSM integration configuration mapping DCM resource type FQNs to ITSM CI class names (e.g. `Compute.VirtualMachine → cmdb_ci_server` in ServiceNow). Used for `create_cmdb_ci`, `update_cmdb_ci`, and `retire_cmdb_ci` actions. |
