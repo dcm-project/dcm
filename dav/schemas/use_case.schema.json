@@ -87,7 +87,7 @@
         },
         "dimensions": {
           "type": "object",
-          "description": "Classifies the UC along DCM's controlled vocabularies so corpus coverage is measurable. Values are drawn from the consumer-profile vocabulary — SOURCE OF TRUTH: examples/dcm-reference-profile.yaml (mirrored into engine consumer_profile). Kept as described strings here (not hard enums) deliberately, so the schema does not become a second, drift-prone copy of that vocabulary; the engine enum-constrains at eval time.",
+          "description": "Classifies the UC along DCM's controlled vocabularies so corpus coverage is measurable. Values must be in dav/use-cases/DIMENSION-VOCABULARY.yaml, the single source of truth (gated by tests/check_uc_dimensions.py). Kept as described strings here (not enums) deliberately, so the schema does not become a second, drift-prone copy of that vocabulary.",
           "required": [
             "lifecycle_phase",
             "resource_complexity",
@@ -99,27 +99,27 @@
           "properties": {
             "lifecycle_phase": {
               "type": "string",
-              "description": "Where in the resource lifecycle the scenario sits. Vocabulary (dcm-reference-profile.yaml): new_request, modification, decommission, drift_detection, brownfield_ingestion, rehydration_{faithful,provider_portable,historical_exact,historical_portable}, expiry_enforcement."
+              "description": "Where in the resource lifecycle the scenario sits. Allowed values: see DIMENSION-VOCABULARY.yaml."
             },
             "resource_complexity": {
               "type": "string",
-              "description": "Shape/dependency complexity of the requested resource(s). Vocabulary (engine consumer_profile default): single_no_deps, hard_dependencies, composite_service, conditional_soft_deps, process_resource, cross_dependency_payload."
+              "description": "Shape/dependency complexity of the requested resource(s). Allowed values: see DIMENSION-VOCABULARY.yaml."
             },
             "policy_complexity": {
               "type": "string",
-              "description": "The policy-evaluation complexity the scenario exercises. Vocabulary (engine consumer_profile default): system_defaults_only, single_validation, multi_policy_chain, conflicting_policies, orchestration_flow_static, dynamic_conditional_flow, cross_domain_constraint, human_escalation_required, governance_matrix_enforcement, recovery_policy."
+              "description": "The policy-evaluation complexity the scenario exercises. Allowed values: see DIMENSION-VOCABULARY.yaml."
             },
             "provider_landscape": {
               "type": "string",
-              "description": "The provider landscape the scenario runs against. Vocabulary (engine consumer_profile default): single_eligible, multiple_eligible, none_eligible, peer_dcm_required, process_provider, mixed."
+              "description": "The provider landscape the scenario runs against. Allowed values: see DIMENSION-VOCABULARY.yaml."
             },
             "governance_context": {
               "type": "string",
-              "description": "The governance/compliance posture in force. Vocabulary: no_governance, standard_governance, audit_heavy, compliance_gated, sovereignty_enforced."
+              "description": "The governance/compliance posture in force. Allowed values: see DIMENSION-VOCABULARY.yaml."
             },
             "failure_mode": {
               "type": "string",
-              "description": "The failure (or happy_path) the scenario exercises. Vocabulary: happy_path, provider_failure, policy_violation, peer_dcm_disconnect, data_inconsistency, rollback_required, partial_fulfillment, timeout, resource_exhaustion."
+              "description": "The failure (or happy_path) the scenario exercises. Allowed values: see DIMENSION-VOCABULARY.yaml."
             }
           }
         },

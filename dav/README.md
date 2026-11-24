@@ -60,12 +60,25 @@ For full DAV usage see the DAV README.
 Use cases enter the corpus via:
 
 1. **Direct hand authoring.** Open a PR adding a new YAML under the
-   appropriate domain. CI (eventually) runs DAV's stage 2 against the
-   new case and the architect spot-checks the result.
+   appropriate domain. CI checks it (see below) and the architect
+   spot-checks the result.
 2. **Promotion from a DAV exploration run.** An architect reviews a
    generated case in DAV's Review Console and clicks "promote to
    corpus," which opens a PR against this directory with the YAML
    pre-filled.
+
+## What CI checks today
+
+The `dav-corpus` job (`.github/workflows/validate.yml`, mirrored in
+`.gitlab-ci.yml`) blocks a merge if either check fails:
+
+- `tests/check_uc_dimensions.py`: every `scenario.dimensions.*` value
+  is in [`use-cases/DIMENSION-VOCABULARY.yaml`](use-cases/DIMENSION-VOCABULARY.yaml).
+- `tests/check_uc_personas.py`: every persona reference resolves in
+  [`use-cases/PERSONAS.yaml`](use-cases/PERSONAS.yaml).
+
+CI does not yet validate use cases against `schemas/use_case.schema.json`,
+detect near-duplicates, or run DAV. Those are review steps for now.
 
 ## Review criteria for corpus admission
 
@@ -78,6 +91,11 @@ A use case gets merged when:
 - ✅ Tags are useful for filtering (domain, complexity, edge flags)
 - ✅ Not a near-duplicate of an existing case
 - ✅ Initial DAV run produces a verdict an architect agrees with
+
+No DAV baseline run exists yet for this corpus (see `CHANGELOG.md`).
+Until one exists and an architect has recorded a verdict on it, the
+last criterion cannot be met, so admission of the corpus as a contract
+is pending that baseline.
 
 ## Retirement
 
@@ -93,35 +111,28 @@ preserving the historical record.
 
 ## Controlled vocabularies
 
-Dimension values are constrained. Valid values as of schema v1.0:
+The dimension values are a closed set, and
+[`use-cases/DIMENSION-VOCABULARY.yaml`](use-cases/DIMENSION-VOCABULARY.yaml)
+is the only source of truth for them. This README does not copy the
+list, so it cannot drift. `tests/check_uc_dimensions.py` fails any use
+case whose value is not in that file.
 
-- **profile**: `minimal | dev | standard | prod | fsi | sovereign`
-- **lifecycle_phase**: `new_request | modification | decommission |
-  drift_detection | brownfield_ingestion | rehydration_faithful |
-  rehydration_provider_portable | rehydration_historical_exact |
-  rehydration_historical_portable | expiry_enforcement`
-- **resource_complexity**: `single_no_deps | hard_dependencies |
-  composite_service | conditional_soft_deps | process_resource |
-  cross_dependency_payload`
-- **policy_complexity**: `system_defaults_only | single_gating |
-  multi_policy_chain | conflicting_policies | orchestration_flow_static |
-  dynamic_conditional_flow | cross_domain_constraint |
-  human_escalation_required | governance_matrix_enforcement |
-  recovery_policy`
-- **provider_landscape**: `single_eligible | multiple_eligible |
-  none_eligible | peer_dcm_required | process_provider | mixed`
-- **governance_context**: `no_governance | standard_governance |
-  audit_heavy | compliance_gated | sovereignty_enforced`
-- **failure_mode**: `happy_path | provider_failure | policy_violation |
-  peer_dcm_disconnect | data_inconsistency | rollback_required |
-  partial_fulfillment | timeout | resource_exhaustion`
+The six dimensions are `lifecycle_phase`, `resource_complexity`,
+`policy_complexity`, `provider_landscape`, `governance_context` and
+`failure_mode`. For example, `failure_mode: happy_path` and
+`provider_landscape: multiple_eligible` are valid values.
+
+`profile` is not a dimension. It is a field on the scenario and the
+actor, and the schema enumerates it: `homelab | dev | standard | prod |
+fsi | sovereign`.
 
 Note: `policy_complexity: cross_domain_constraint` is a vocabulary term
 and intentionally retains the underscore form. Directory names use
 hyphens (`cross-domain/`); the dimension value does not.
 
-These vocabularies evolve alongside DCM itself. Additions require a
-schema bump and updates to DAV's `core/consumer_profile.py`.
+To add a value, add it to `DIMENSION-VOCABULARY.yaml` first, then use it
+in a use case. The DAV engine's runtime vocabulary must be reconciled to
+that file.
 
 ## License
 
