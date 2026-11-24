@@ -1,9 +1,21 @@
-name: AEP OpenAPI lint
+name: AEP OpenAPI lint (advisory)
 
 # ADR-AEP-001: lint DCM's OpenAPI specs against the AEP conventions (aep.dev)
-# using the AEP Spectral ruleset. ADVISORY for now (continue-on-error) — findings
-# are reported while the baseline is burned down (see schemas/openapi/AEP-CONFORMANCE.md);
-# flip `continue-on-error` to false once the error baseline reaches zero.
+# using the AEP Spectral ruleset.
+#
+# ADVISORY. This job reports findings and never blocks a merge. It is not a gate.
+# The structural checks that do gate (OpenAPI parses, refs resolve) are in validate.yml.
+#
+# Baseline, re-run 2026-11-24 (same as the first run on 2026-07-08):
+#   198 errors across the three specs Spectral can lint
+#     dcm-consumer-api.yaml 144, dcm-operator-api.yaml 32, dcm-provider-callback-api.yaml 22
+#   dcm-admin-api.yaml cannot be linted (Spectral crashes on it)
+#   37 of the 198 are broken refs and missing response descriptions; the other 161 are
+#   AEP convention findings (pagination, standard methods, error model).
+#
+# Flip to enforcing when every spec lints and the error count is 0: replace the final
+# `exit 0` with `exit $(( total + unlintable > 0 ))` and drop "(advisory)" from the name.
+# Burn-down plan: schemas/openapi/AEP-CONFORMANCE.md.
 
 on:
   pull_request:
@@ -11,14 +23,47 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  aep-lint:
+  aep-lint-advisory:
+    name: aep-lint (advisory, does not block)
     runs-on: ubuntu-latest
-    continue-on-error: true          # advisory until the baseline is cleared
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: "20" }
       - name: Install AEP linter
         run: npm install --no-audit --no-fund @stoplight/spectral-cli @aep_dev/aep-openapi-linter
-      - name: Lint OpenAPI specs
-        run: npx spectral lint "schemas/openapi/*.yaml" --ruleset .spectral.yaml --format github-actions || true
+      - name: Lint OpenAPI specs (advisory)
+        run: |
+          set +e
+          baseline=198
+          total=0; unlintable=0
+          {
+            echo "## AEP OpenAPI lint: advisory, does not block a merge"
+            echo
+            echo "| Spec | Errors | Result |"
+            echo "|------|-------:|--------|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # One spec at a time, so a Spectral crash on one spec does not hide the others.
+          for f in schemas/openapi/*.yaml; do
+            rm -f lint.json
+            npx spectral lint "$f" --ruleset .spectral.yaml \
+              -f github-actions -f json --output.json lint.json
+            rc=$?
+            echo   # Spectral's annotation output has no trailing newline
+            if [ "$rc" -le 1 ] && [ -s lint.json ]; then
+              n=$(jq '[.[] | select(.severity == 0)] | length' lint.json)
+              total=$((total + n))
+              echo "| \`$f\` | $n | linted |" >> "$GITHUB_STEP_SUMMARY"
+            else
+              unlintable=$((unlintable + 1))
+              echo "::warning file=$f::Spectral could not lint this spec (exit $rc)"
+              echo "| \`$f\` | n/a | could not lint (Spectral exit $rc) |" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          {
+            echo
+            echo "**$total errors** (baseline $baseline), **$unlintable spec(s) not lintable**."
+            echo "This job becomes a blocking gate when both numbers are 0."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=AEP lint (advisory)::$total errors (baseline $baseline), $unlintable spec(s) not lintable. Advisory: does not block."
+          exit 0   # advisory: see the header for the condition to flip this

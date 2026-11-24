@@ -1,8 +1,11 @@
 # Architecture validation gates for the DCM spec repo (docs + machine-readable contracts).
-# Three independent gates so a failure names its own dimension:
-#   contracts     — JSON Schema + OpenAPI parse/structure (tests/validate_contracts.py)
-#   terminology   — locked naming decisions, 2026-06-30 (tests/check_terminology.py)
-#   estate-tokens — no homelab identifiers in the public spec (tests/check_estate_tokens.py)
+# Independent gates so a failure names its own dimension. All of them block a merge.
+# .gitlab-ci.yml runs the same jobs.
+#   contracts    : JSON Schema + full OpenAPI 3.x validation, $ref resolution; fails on an empty set (tests/validate_contracts.py)
+#   dav-corpus   : UC dimension and persona vocabularies (tests/check_uc_*.py)
+#   terminology  : locked naming decisions, 2026-06-30 (tests/check_terminology.py)
+#   estate-tokens: no homelab identifiers in the public spec (tests/check_estate_tokens.py)
+#   links        : every relative markdown link resolves (tests/check_links.py)
 name: validate
 on:
   pull_request:
@@ -17,13 +20,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install jsonschema pyyaml
-      # JSON Schemas valid + OpenAPI parse/structure (catches a broken contract merging).
+      - run: pip install jsonschema pyyaml openapi-spec-validator
+      # JSON Schemas valid, OpenAPI 3.x valid, every $ref resolves; fails on an empty contract set.
       - run: python3 tests/validate_contracts.py
-      # UC dimension vocabulary (DIM-001) — needs pyyaml, lives in this job
+
+  dav-corpus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      # UC dimension vocabulary (DIM-001): every value is in dav/use-cases/DIMENSION-VOCABULARY.yaml.
       - run: python3 tests/check_uc_dimensions.py
-      # UC persona vocabulary (PER-001) — canonical persona set, single-sourced
+      # UC persona vocabulary (PER-001/PER-002): every persona is in dav/use-cases/PERSONAS.yaml.
       - run: python3 tests/check_uc_personas.py
+      # Both checks fail with a message, not a traceback, if their vocabulary file is missing.
+      - run: python3 tests/test_uc_checks_fail_closed.py
 
   terminology:
     runs-on: ubuntu-latest

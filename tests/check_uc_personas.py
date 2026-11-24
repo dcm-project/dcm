@@ -11,6 +11,11 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VOCAB = os.path.join(ROOT, "dav", "use-cases", "PERSONAS.yaml")
 
 def main():
+    # Fail closed with a message, not a traceback, when the vocabulary is absent.
+    if not os.path.isfile(VOCAB):
+        print(f"FAIL [PER-001] vocabulary file missing: {os.path.relpath(VOCAB, ROOT)} "
+              "(this check needs it; add it, or do not run this check in a repo without the corpus)")
+        return 1
     spec = yaml.safe_load(open(VOCAB, encoding="utf-8"))
     canon = {p["id"] for p in spec["personas"]}
     aliases = spec.get("folded_aliases") or {}
