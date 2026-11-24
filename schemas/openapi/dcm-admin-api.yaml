@@ -88,7 +88,7 @@ paths:
       security: []
       responses:
         "200": { description: Control plane ready to serve requests }
-        "503": { description: Control plane not ready (stores unavailable, bootstrap incomplete, etc.) }
+        "503": { description: "Control plane not ready (stores unavailable, bootstrap incomplete, etc.)" }
 
   /metrics:
     get:
@@ -110,6 +110,7 @@ paths:
       summary: Detailed control plane health including component and provider status
       responses:
         "200":
+          description: "Control plane health, with component and provider status"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AdminHealthResponse" }
@@ -129,6 +130,7 @@ paths:
           schema: { type: string, enum: [active, suspended, decommissioned] }
       responses:
         "200":
+          description: "Page of Tenants"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TenantList" }
@@ -143,6 +145,7 @@ paths:
             schema: { $ref: "#/components/schemas/TenantCreate" }
       responses:
         "201":
+          description: "Tenant created"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Tenant" }
@@ -212,6 +215,7 @@ paths:
         - { $ref: "#/components/parameters/tenant_uuid" }
       responses:
         "200":
+          description: "Quota configuration for the Tenant"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TenantQuotas" }
@@ -255,6 +259,7 @@ paths:
                 reason: { type: string }
       responses:
         "200":
+          description: "Sessions revoked"
           content:
             application/json:
               schema:
@@ -271,6 +276,7 @@ paths:
         - { $ref: "#/components/parameters/actor_uuid" }
       responses:
         "200":
+          description: "Active sessions for the actor"
           content:
             application/json:
               schema:
@@ -289,6 +295,7 @@ paths:
         - { $ref: "#/components/parameters/page_token" }
       responses:
         "200":
+          description: "Risk score history for the actor"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RiskHistory" }
@@ -320,7 +327,7 @@ paths:
       operationId: listLocationTypes
       summary: List registered location types (standard and custom)
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         "200":
           description: All registered location types
@@ -337,7 +344,7 @@ paths:
       operationId: registerCustomLocationType
       summary: Register a custom location type
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -360,7 +367,7 @@ paths:
         - { name: page_size, in: query, schema: { type: integer, default: 100 } }
         - { name: page_token, in: query, schema: { type: string } }
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       responses:
         "200":
           description: All location nodes
@@ -376,7 +383,7 @@ paths:
       parameters:
         - { name: location_uuid, in: path, required: true, schema: { type: string, format: uuid } }
       security:
-        - bearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -407,6 +414,7 @@ paths:
           schema: { type: string }
       responses:
         "200":
+          description: "Page of registered providers"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ProviderList" }
@@ -418,6 +426,7 @@ paths:
       summary: List providers awaiting approval
       responses:
         "200":
+          description: "Providers awaiting approval"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ProviderList" }
@@ -479,7 +488,7 @@ paths:
               required: [reason]
               properties:
                 reason:   { type: string }
-                duration: { type: string, description: "ISO 8601 duration; null = indefinite" }
+                duration: { type: [string, "null"], description: "ISO 8601 duration; null = indefinite" }
       responses:
         "200": { description: Provider suspended }
 
@@ -498,6 +507,7 @@ paths:
         - { $ref: "#/components/parameters/page_token" }
       responses:
         "200":
+          description: "Page of provider accreditations"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AccreditationList" }
@@ -558,6 +568,7 @@ paths:
                 scope:         { type: string, enum: [full, targeted], default: full }
       responses:
         "202":
+          description: "Discovery job accepted"
           content:
             application/json:
               schema:
@@ -574,6 +585,7 @@ paths:
         - { name: discovery_job_uuid, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         "200":
+          description: "Discovery job status"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/DiscoveryJobStatus" }
@@ -590,6 +602,7 @@ paths:
         - { $ref: "#/components/parameters/page_token" }
       responses:
         "200":
+          description: "Page of orphaned discovered entities"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/OrphanList" }
@@ -622,6 +635,7 @@ paths:
       summary: List platform-level recovery decisions awaiting admin resolution
       responses:
         "200":
+          description: "Recovery decisions awaiting admin resolution"
           content:
             application/json:
               schema:
@@ -658,6 +672,7 @@ paths:
       summary: Trigger a full search index rebuild
       responses:
         "202":
+          description: "Search index rebuild accepted"
           content:
             application/json:
               schema:
@@ -672,6 +687,7 @@ paths:
       summary: Get current search index status and last rebuild time
       responses:
         "200":
+          description: "Search index status"
           content:
             application/json:
               schema:
@@ -704,6 +720,7 @@ paths:
                 reason:                 { type: string }
       responses:
         "200":
+          description: "Bootstrap credential rotated"
           content:
             application/json:
               schema:
@@ -723,6 +740,7 @@ paths:
         - { $ref: "#/components/parameters/profile_name" }
       responses:
         "200":
+          description: "Scoring model configuration for the profile"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ScoringConfiguration" }
@@ -770,6 +788,7 @@ paths:
           schema: { type: string, format: uuid }
       responses:
         "200":
+          description: "Page of scoring evaluation audit records"
           content:
             application/json:
               schema:
@@ -792,6 +811,7 @@ paths:
           schema: { type: string }
       responses:
         "200":
+          description: "Page of platform-level approvals pending admin action"
           content:
             application/json:
               schema:
@@ -808,6 +828,7 @@ paths:
         - { name: approval_uuid, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         "200":
+          description: "Approval record with all decisions"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ApprovalDetail" }
@@ -854,6 +875,7 @@ paths:
             schema: { $ref: "#/components/schemas/TierRegistryChangeProposal" }
       responses:
         "202":
+          description: "Change proposal accepted for review"
           content:
             application/json:
               schema:
@@ -876,6 +898,7 @@ paths:
         - { $ref: "#/components/parameters/page_token" }
       responses:
         "200":
+          description: "Page of tier registry change proposals"
           content:
             application/json:
               schema:
@@ -892,6 +915,7 @@ paths:
         - { name: change_uuid, in: path, required: true, schema: { type: string, format: uuid } }
       responses:
         "200":
+          description: "Impact report for the proposed change"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/TierImpactReport" }
@@ -977,7 +1001,7 @@ paths:
         - {name: containerization_score_min, in: query, schema: {type: integer, minimum: 1, maximum: 10}}
         - {name: page_size, in: query, schema: {type: integer, default: 50}}
         - {name: page_token, in: query, schema: {type: string}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Workload profile list
@@ -1015,7 +1039,7 @@ paths:
       summary: Trigger immediate external verification of an accreditation
       parameters:
         - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         content:
           application/json:
@@ -1042,7 +1066,7 @@ paths:
         the underlying contract is signed, amended, or terminated.
       parameters:
         - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1077,7 +1101,7 @@ paths:
         Authenticated via HMAC signature using the webhook_secret.
       parameters:
         - {name: accreditation_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{webhookHmac: []}]
+      security: [{WebhookHmac: []}]
       requestBody:
         required: true
         content:
@@ -1110,10 +1134,10 @@ paths:
       operationId: listMaintenanceWindows
       summary: List declared maintenance windows
       parameters:
-        - {name: status, in: query, schema: {type: string, enum: [active, upcoming, expired]}}
+        - {name: status, in: query, schema: {type: string, enum: [active, suspended, expired]}, description: "Filter on MaintenanceWindow.status"}
         - {name: page_size, in: query, schema: {type: integer, default: 50}}
         - {name: page_token, in: query, schema: {type: string}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Maintenance window list
@@ -1128,7 +1152,7 @@ paths:
       tags: [scheduling]
       operationId: createMaintenanceWindow
       summary: Declare a new maintenance window
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1149,7 +1173,7 @@ paths:
       summary: Get maintenance window details including scheduled requests in queue
       parameters:
         - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Maintenance window detail
@@ -1163,7 +1187,7 @@ paths:
       summary: Update maintenance window schedule or description
       parameters:
         - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1181,7 +1205,7 @@ paths:
       summary: Delete a maintenance window (cancels queued requests if policy dictates)
       parameters:
         - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Deleted; queued_request_disposition indicates what happened to waiting requests
@@ -1203,7 +1227,7 @@ paths:
         - {name: window_uuid, in: path, required: true, schema: {type: string, format: uuid}}
         - {name: page_size, in: query, schema: {type: integer, default: 50}}
         - {name: page_token, in: query, schema: {type: string}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Queued requests
@@ -1226,7 +1250,7 @@ paths:
         - {name: status, in: query, schema: {type: string, enum: [active, suspended, pending]}}
         - {name: page_size, in: query, schema: {type: integer, default: 50}}
         - {name: page_token, in: query, schema: {type: string}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: List of federation peer registrations
@@ -1243,7 +1267,7 @@ paths:
       tags: [federation]
       operationId: registerFederationPeer
       summary: Register a new federation peer DCM instance
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1264,7 +1288,7 @@ paths:
       summary: Get federation peer details and current trust status
       parameters:
         - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Federation peer record
@@ -1278,7 +1302,7 @@ paths:
       summary: Deregister a federation peer (graceful tunnel teardown)
       parameters:
         - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Operation initiated
@@ -1293,7 +1317,7 @@ paths:
       summary: Set the trust posture for a federation peer
       parameters:
         - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1318,7 +1342,7 @@ paths:
       summary: Suspend federation tunnel (stop routing; preserve registration)
       parameters:
         - {name: peer_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1345,7 +1369,7 @@ paths:
         - {name: status, in: query, schema: {type: string}}
         - {name: page_size, in: query, schema: {type: integer, default: 50}}
         - {name: page_token, in: query, schema: {type: string}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Federated request list
@@ -1362,7 +1386,7 @@ paths:
       tags: [federation]
       operationId: getFederationConfig
       summary: Get this DCM instance's federation configuration (identity, capabilities, trust policy)
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Federation configuration
@@ -1373,7 +1397,7 @@ paths:
       tags: [federation]
       operationId: updateFederationConfig
       summary: Update federation configuration (enable/disable federation, set scope)
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1404,7 +1428,7 @@ paths:
           description: Paginated subscription list across tenants
           content:
             application/json:
-              schema: {$ref: "#/components/schemas/ResourceList"}
+              schema: {$ref: "dcm-consumer-api.yaml#/components/schemas/SubscriptionList"}
 
   /api/v1/admin/subscriptions/expiring:
     get:
@@ -1420,7 +1444,7 @@ paths:
           description: Expiring subscriptions
           content:
             application/json:
-              schema: {$ref: "#/components/schemas/ResourceList"}
+              schema: {$ref: "dcm-consumer-api.yaml#/components/schemas/SubscriptionList"}
 
   /api/v1/admin/subscriptions/{subscription_uuid}:force-cancel:
     post:
@@ -1539,6 +1563,17 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    WebhookHmac:
+      type: apiKey
+      in: header
+      name: X-Webhook-Signature
+      description: |
+        HMAC-SHA256 signature of the raw request body, keyed with the
+        webhook_secret set when the contract webhook was registered.
+        HMAC-SHA256 is the normative inbound-webhook check
+        (reference/implementation-standards.md). The header name is
+        provisional: each contract system signs under its own header,
+        and the mapping is not yet specified.
 
   parameters:
 
@@ -1566,15 +1601,44 @@ components:
       required: true
       schema: { type: string, enum: [homelab, dev, standard, prod, fsi, sovereign] }
 
-    limit:
+    page_size:
       name: page_size
       in: query
       schema: { type: integer, minimum: 1, maximum: 1000, default: 50 }
 
-    cursor:
+    page_token:
       name: page_token
       in: query
       schema: { type: string }
+
+  # Same shapes as dcm-consumer-api.yaml components.responses, so both APIs
+  # report errors the same way.
+  responses:
+    BadRequest:
+      description: Invalid request syntax
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: Authenticated but not authorized. rule_uuid identifies the governing policy.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found or not visible to authenticated actor
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    UnprocessableEntity:
+      description: Request syntax valid but semantically invalid (e.g., field validation failure)
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
 
   schemas:
 
@@ -1800,7 +1864,7 @@ components:
             type: object
             properties:
               resource_type: { type: string }
-              page_size:         { type: integer }
+              limit:         { type: integer }
               used:          { type: integer }
               remaining:     { type: integer }
 
@@ -1808,7 +1872,7 @@ components:
       type: object
       required: [limit]
       properties:
-        page_size:  { type: integer, minimum: 0 }
+        limit:  { type: integer, minimum: 0 }
         reason: { type: string }
 
     ProviderList:

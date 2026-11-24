@@ -216,6 +216,7 @@ paths:
       summary: List active sessions for the authenticated actor
       responses:
         '200':
+          description: "Active sessions for the authenticated actor"
           content:
             application/json:
               schema:
@@ -267,6 +268,7 @@ paths:
                   type: string
       responses:
         '200':
+          description: "Token identity and roles"
           content:
             application/json:
               schema:
@@ -282,7 +284,7 @@ paths:
       description: Terminates the calling actor's current session and invalidates
         the bearer token.
       security:
-      - bearerAuth: []
+      - BearerAuth: []
       responses:
         '204':
           description: Session terminated
@@ -303,6 +305,7 @@ paths:
           type: string
       responses:
         '200':
+          description: "Page of catalog items visible to the actor"
           content:
             application/json:
               schema:
@@ -317,6 +320,7 @@ paths:
       - $ref: '#/components/parameters/catalog_item_uuid'
       responses:
         '200':
+          description: "Catalog item with schema and field constraints"
           content:
             application/json:
               schema:
@@ -340,6 +344,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of matching catalog items"
           content:
             application/json:
               schema:
@@ -392,6 +397,7 @@ paths:
           type: string
       responses:
         '200':
+          description: "Page of requests submitted by the actor"
           content:
             application/json:
               schema:
@@ -406,6 +412,7 @@ paths:
       - $ref: '#/components/parameters/request_uuid'
       responses:
         '200':
+          description: "Request status and pipeline stage"
           content:
             application/json:
               schema:
@@ -473,6 +480,7 @@ paths:
       - $ref: '#/components/parameters/group_uuid'
       responses:
         '200':
+          description: "Status of every request in the group"
           content:
             application/json:
               schema:
@@ -496,6 +504,7 @@ paths:
           type: string
       responses:
         '200':
+          description: "Page of resources owned by the actor's Tenant"
           content:
             application/json:
               schema:
@@ -510,6 +519,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Full entity detail for the resource"
           content:
             application/json:
               schema:
@@ -652,6 +662,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of resources expiring within the window"
           content:
             application/json:
               schema:
@@ -759,6 +770,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Relationships of the resource entity"
           content:
             application/json:
               schema:
@@ -779,6 +791,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Pending provider-initiated notifications for the resource"
           content:
             application/json:
               schema:
@@ -816,6 +829,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Pending recovery decisions for the resource"
           content:
             application/json:
               schema:
@@ -871,6 +885,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of audit records for the resource"
           content:
             application/json:
               schema:
@@ -885,6 +900,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Current drift records for the resource"
           content:
             application/json:
               schema:
@@ -953,6 +969,7 @@ paths:
       summary: List groups the authenticated actor's Tenant has access to
       responses:
         '200':
+          description: "Groups the actor's Tenant can access"
           content:
             application/json:
               schema:
@@ -977,6 +994,7 @@ paths:
           format: uuid
       responses:
         '200':
+          description: "Group detail and member list"
           content:
             application/json:
               schema:
@@ -1037,6 +1055,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of approvals pending the actor's action"
           content:
             application/json:
               schema:
@@ -1114,6 +1133,7 @@ paths:
               $ref: '#/components/schemas/ServiceRequest'
       responses:
         '200':
+          description: "Cost estimate for the proposed request"
           content:
             application/json:
               schema:
@@ -1128,6 +1148,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Cost actuals and attribution for the resource"
           content:
             application/json:
               schema:
@@ -1170,7 +1191,7 @@ paths:
           type: string
           format: uuid
       security:
-      - bearerAuth: []
+      - BearerAuth: []
       responses:
         '200':
           description: Operation status (check `done` field for completion)
@@ -1192,6 +1213,7 @@ paths:
       summary: Get quota status for the authenticated actor's Tenant
       responses:
         '200':
+          description: "Quota status for the actor's Tenant"
           content:
             application/json:
               schema:
@@ -1211,6 +1233,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of notifications in the actor's inbox"
           content:
             application/json:
               schema:
@@ -1253,6 +1276,7 @@ paths:
       summary: List outbound webhook subscriptions for the authenticated actor
       responses:
         '200':
+          description: "Outbound webhook subscriptions for the actor"
           content:
             application/json:
               schema:
@@ -1275,6 +1299,7 @@ paths:
               $ref: '#/components/schemas/WebhookSubscription'
       responses:
         '201':
+          description: "Webhook subscription created"
           content:
             application/json:
               schema:
@@ -1307,7 +1332,7 @@ paths:
         and can be refreshed on demand via the :analyze custom method.
       parameters:
         - {name: entity_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       responses:
         "200":
           description: Workload profile
@@ -1328,7 +1353,7 @@ paths:
         when a resource's role has changed since initial classification.
       parameters:
         - {name: entity_uuid, in: path, required: true, schema: {type: string, format: uuid}}
-      security: [{bearerAuth: []}]
+      security: [{BearerAuth: []}]
       requestBody:
         required: true
         content:
@@ -1372,6 +1397,7 @@ paths:
       - $ref: '#/components/parameters/page_token'
       responses:
         '200':
+          description: "Page of matching entities"
           content:
             application/json:
               schema:
@@ -1391,6 +1417,7 @@ paths:
           format: uuid
       responses:
         '200':
+          description: "Audit records sharing the correlation ID"
           content:
             application/json:
               schema:
@@ -1441,6 +1468,7 @@ paths:
       summary: List contributions submitted by the authenticated actor
       responses:
         '200':
+          description: "Contributions submitted by the actor"
           content:
             application/json:
               schema:
@@ -1478,6 +1506,7 @@ paths:
       - $ref: '#/components/parameters/entity_uuid'
       responses:
         '200':
+          description: "Credential metadata for the resource (no values)"
           content:
             application/json:
               schema:
@@ -1503,6 +1532,7 @@ paths:
           format: uuid
       responses:
         '200':
+          description: "Current credential value"
           content:
             application/json:
               schema:
@@ -1842,7 +1872,7 @@ components:
       schema:
         type: string
         format: uuid
-    limit:
+    page_size:
       name: page_size
       in: query
       schema:
@@ -1850,7 +1880,7 @@ components:
         minimum: 1
         maximum: 1000
         default: 50
-    cursor:
+    page_token:
       name: page_token
       in: query
       schema:

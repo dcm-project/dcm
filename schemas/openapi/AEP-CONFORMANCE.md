@@ -12,8 +12,12 @@ npx spectral lint "schemas/openapi/*.yaml" --ruleset .spectral.yaml
 ```
 
 CI runs the same lint on every PR that touches `schemas/openapi/**` (`.github/workflows/lint-openapi.yml`).
-It is **advisory** today (`continue-on-error: true`) while the baseline below is burned down; flip it to
-blocking once the error count reaches zero.
+It is **advisory**: the job is named "advisory", always exits 0, and writes the error count against the
+baseline to the job summary. It does not block a merge. I will flip it to blocking when every spec lints
+and the error count is 0; the workflow header says how.
+
+Re-run on 2026-11-24: the counts below are unchanged. `dcm-admin-api.yaml` now parses as YAML, but
+Spectral still crashes on it, so it is still not lintable.
 
 ## Baseline (2026-07-08, first run)
 

@@ -321,6 +321,7 @@ paths:
         - { $ref: "#/components/parameters/notification_uuid" }
       responses:
         "200":
+          description: "Processing status of the update notification"
           content:
             application/json:
               schema: { $ref: "#/components/schemas/UpdateNotificationStatus" }
