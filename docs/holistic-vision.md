@@ -27,7 +27,7 @@ prioritized capabilities → strategy + roadmap.
 
 ## DCM's role: the Platform pillar realization
 
-DCM is a reference realization of the **Platform** pillar — the declarative control
+DCM is a reference implementation of the **Platform** pillar — the declarative control
 plane (Data / Provider / Policy) that makes a platform *able to support* Use Cases. In
 the holistic model, DCM answers **"can the system do it?"** — one of three pillars, not
 the whole picture. People/Process and Enablement sit alongside it, evaluated against the
@@ -40,7 +40,7 @@ ability to adopt it (Enablement). DAV is the engine that evaluates all three; DC
 
 ## Data ownership boundary
 
-UDLM provides the design language and minimal requirements. DCM is one realization
+UDLM provides the design language and minimal requirements. DCM is one implementation
 (implementation) of that language. **Neither UDLM nor DCM owns or stores sensitive
 customer data** (contract pricing, customer PII, credential values). They provide
 the plumbing, integration hooks, and event bus for data exchange — the sensitive

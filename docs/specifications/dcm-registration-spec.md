@@ -9,9 +9,9 @@
 
 > **📋 Draft**
 >
-> This specification has been promoted from Work in Progress to Draft status. All questions resolved. Complete registration pipeline for all 11 provider types with full capability declaration schemas and federation trust model. It is ready for implementation feedback but has not yet been formally reviewed for final release.
+> This specification has been promoted from Work in Progress to Draft status. All questions resolved. Complete registration pipeline for every provider, with capability declaration schemas and the federation trust model. It is ready for implementation feedback but has not yet been formally reviewed for final release.
 >
-> This specification defines the unified registration flow for all DCM provider types. Published to share design direction and invite feedback.
+> This specification defines the unified registration flow for every DCM provider. Published to share design direction and invite feedback.
 
 **Version:** 0.1.0-draft
 **Status:** Draft — Ready for implementation feedback
@@ -22,23 +22,29 @@
 
 ## Abstract
 
-This specification defines the unified registration flow by which all DCM provider types establish a trusted, governed relationship with a DCM deployment. It covers: the Provider Type Registry, the registration token model, the approval method configuration, the step-by-step registration pipeline, trust establishment, the per-type capability declaration schemas, the ongoing lifecycle after activation, federated trust configuration, and profile-bound registration policy defaults.
+This specification defines the unified registration flow by which every DCM provider establishes a trusted, governed relationship with a DCM deployment. It covers: the Capability & Category Registry, the registration token model, the approval method configuration, the step-by-step registration pipeline, trust establishment, the per-type capability declaration schemas, the ongoing lifecycle after activation, federated trust configuration, and profile-bound registration policy defaults.
 
 ---
 
-## 1. Provider Type Registry
+## 1. Capability & Category Registry
 
-The Provider Type Registry is the authoritative list of provider types that a DCM deployment will accept registrations for. It follows the same three-tier registry model as the Resource Type Registry.
+DCM has one provider model. A provider is anything that integrates with DCM and provides a service, such as information, provisioning or a policy engine. What it does is the set of capabilities it declares, not a fixed type. The registry therefore lists the **capabilities and capability categories** (`verb × domain`) a deployment accepts registrations for, not provider types.
+
+The authority is UDLM [provider-contract §8 and §9](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/provider-contract.md). §8 defines the capability verbs (the former provider kinds are capability verbs). §9 defines the Capability & Category Registry and replaces the old Provider Type Registry. This spec does not keep its own list or count of them. It follows the same three-tier registry model as the Resource Type Registry.
+
+**`provider_type_id` in this spec.** Where `provider_type_id` still appears (the entry below, registration tokens, validation V1, error codes), read it as the resolved convenience label for a capability set, as UDLM §9 allows. Registration is accepted or refused per declared capability. Renaming the field on the wire is follow-up work.
 
 ### 1.1 Registry Tiers
 
 | Tier | Maintained By | Examples |
 |------|--------------|---------|
-| **Core** | DCM Project | The eleven built-in provider types |
-| **Verified Community** | Named community maintainers | Domain-specific provider types |
+| **Core** | DCM Project | The capability verbs in UDLM provider-contract §8, and their core categories |
+| **Verified Community** | Named community maintainers | Domain-specific capability categories |
 | **Organization** | Deploying organization | Custom/proprietary integrations |
 
-### 1.2 Provider Type Registry Entry
+### 1.2 Registry Entry
+
+The UDLM entry is keyed by `category` (`verb × domain`), with `tier`, `default_approval_method` and `enabled_in_profiles` (UDLM `provider-registration.schema.json#/$defs/capability_registry_entry`). The example below still carries the older label-keyed shape.
 
 ```yaml
 provider_type_registry_entry:
@@ -56,8 +62,10 @@ provider_type_registry_entry:
   # What this provider type is permitted to do
   permissions:
     may_receive_assembled_payload: true
-    may_write_realized_state: true
-    may_write_discovered_state: true
+    # Providers never write DCM state directly (operator-interface-spec §7a.1).
+    # They submit; DCM validates, writes the state, and writes the audit record.
+    may_submit_realized_state: true            # realized_state_push / update notification; the API Gateway writes Realized State
+    may_submit_discovered_state: true          # discovery reports; the Discovery Service is the only writer of Discovered State
     may_receive_scoped_credentials: true
     may_receive_phi_by_default: false          # requires HIPAA accreditation
     may_receive_sovereign_data: false          # hard limit; never overridden
@@ -81,22 +89,11 @@ provider_type_registry_entry:
     failure_threshold: 3                       # failures before degraded status
 ```
 
-### 1.3 The Eleven Core Provider Types
+### 1.3 Core Capabilities
 
-| # | provider_type_id | Default Approval | Enabled In |
-|---|-----------------|-----------------|------------|
-| 1 | `service_provider` | reviewed | all profiles |
-| 2 | `information_provider` | reviewed | all profiles |
-| 3 | `composite service` | verified | standard+ |
-| 4 | `(prescribed infrastructure)` | verified | all profiles |
-| 5 | `(optional infrastructure)` | reviewed | dev+ (external endpoints: standard+) |
-| 6 | `external_policy_evaluation` (Mode 1-2) | reviewed | all profiles |
-| 7 | `external_policy_evaluation` (Internal and External) | verified | standard+ |
-| 8 | `service_provider` | verified | standard+ |
-| 9 | `auth_provider` | verified | all profiles |
-| 10 | `service_provider` | reviewed | all profiles |
+The core tier holds the capability verbs that UDLM provider-contract §8 defines. They are listed once, in the [DCM Taxonomy](../../taxonomy/DCM-Taxonomy.md#provider-capabilities); this spec does not copy the list or a count. One provider may declare several. Credential issuance, notification and ITSM are `realize_resources` or `serve_data` scoped to those domains, not separate types. A composite service is a `realize_resources` registration of a multi-resource definition.
 
-Note: Internal and External External Policy Evaluators are treated as a separate registry entry from Mode 1-2 due to the elevated trust requirements.
+The older names (Service Provider, Information Provider, Auth Provider, Peer DCM, Process Provider) are convenience labels for these capability sets, also defined in the taxonomy. Default approval methods and enabled profiles are set per category in the registry entry (§1.2), and the active profile can only tighten them (§3.2).
 
 ---
 
@@ -392,6 +389,8 @@ On ACTIVE status:
 ---
 
 ## 5. Per-Type Capability Declaration Schemas
+
+The subsections below are named by convenience label. Each one is the capability profile for a declared capability (UDLM provider-contract §8.1-8.6), not a separate provider type.
 
 ### 5.1 Service Provider Capabilities
 
@@ -889,7 +888,7 @@ profiles, the following readiness gates must pass. These align with the DCM road
 |------|------------|-------------------|
 | `GATE-SP-01` | Simple OpenAPI Spec — declared at registration, URL reachable | all |
 | `GATE-SP-02` | Healthy API — health endpoint returns `{"status": "healthy"}` at activation | all |
-| `GATE-SP-03` | State Management — implements realized_state_push callback | all |
+| `GATE-SP-03` | State Management — implements realized_state_push callback (the provider submits; DCM writes Realized State) | all |
 | `GATE-SP-04` | Tenant Metadata — endpoint declared or implemented | standard+ |
 | `GATE-SP-05` | Prometheus Metrics — required metric families present at declared endpoint | standard+ |
 | `GATE-SP-06` | AEP.DEV Linting — OpenAPI spec passes AEP linter with no errors | standard+ |

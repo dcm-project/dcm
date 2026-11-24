@@ -24,7 +24,7 @@ sequenceDiagram
     participant Reg as Provider registry
     participant Rebuild as Portable-rebuild controller
     participant Pol as Placement + policy engine
-    participant Alt as Alternate provider
+    participant AltP as Alternate provider
     participant St as Intent + realized stores
     participant Aud as Audit store
 
@@ -35,8 +35,8 @@ sequenceDiagram
     Pol->>Pol: re-evaluate validation policies for alternate
     Pol-->>Rebuild: alternate eligible provider chosen
     Rebuild->>Rebuild: rewrite naturalized references for new provider
-    Rebuild->>Alt: reserve then commit (re-realize from intent)
-    Alt-->>Rebuild: built + new native id
+    Rebuild->>AltP: reserve then commit (re-realize from intent)
+    AltP-->>Rebuild: built + new native id
     Rebuild->>St: update realized (provider-neutral fields match intent)
     Rebuild->>Aud: record portability event + re-resolution
 ```

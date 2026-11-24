@@ -10,8 +10,10 @@ request-realization.
 ## What's different in the engine
 - **OSAC is a registered provider.** It appears in the provider registry with its required-data like any
   other. Placement selecting it is the ordinary selection step, not a special integration.
-- **Validation gates before placement.** A single Validation Policy runs before the placement engine selects
-  (`policy_complexity: single_gating`).
+- **Pre-placement-scoped policies run before placement** — the envelope's pre-placement leg;
+  placement occurs during policy application ([request-realization](request-realization.md) owns
+  the pipeline). In this UC's scenario that set contains one validation policy
+  (`policy_complexity: single_gating`) — a fact about the UC, not the architecture.
 - **Provenance names OSAC.** On commit, DCM records the `Realized` state with provider provenance identifying
   the OSAC-backed provider — a checked outcome, not just a log.
 - **Dispatch is the standard reserve→commit** against the OSAC provider adapter.
@@ -27,7 +29,7 @@ sequenceDiagram
     participant OSAC as OSAC provider
 
     User->>API: VM workload intent
-    API->>Pol: validate (single gating) then place
+    API->>Pol: pre-placement policies (this UC: one validation) then place
     Pol->>Reg: eligible providers for this VM
     Reg-->>Pol: OSAC-backed provider
     Pol->>Disp: dispatch to OSAC (reserve then commit)
@@ -38,7 +40,7 @@ sequenceDiagram
 
 ## What an engineer adds
 - **OSAC provider registration** — its required-data and adapter, so placement can select and dispatch to it.
-- **The gating validation policy** that must pass before placement.
+- **The pre-placement policy set** — in this UC, one gating validation.
 - **Provenance capture** wiring OSAC's identity into the `Realized` record. No changes to the base pipeline.
 
 ## Pointers

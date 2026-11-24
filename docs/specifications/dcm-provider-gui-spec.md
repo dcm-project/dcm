@@ -9,7 +9,7 @@
 
 > **Status:** Draft — Ready for implementation feedback
 >
-> The Provider Management GUI is the interface for teams responsible for operating and maintaining DCM providers. It surfaces in the DCM web application for actors holding provider owner roles. Each of the eleven DCM provider types has a common management shell plus type-specific extension panels.
+> The Provider Management GUI is the interface for teams responsible for operating and maintaining DCM providers. It surfaces in the DCM web application for actors holding provider owner roles. Every provider has a common management shell, plus extension panels for each capability it declares (UDLM provider-contract §8: one provider model, capabilities not types).
 
 ---
 
@@ -39,7 +39,7 @@ The `provider_owner` role is scoped to specific provider UUIDs — a team may ow
 
 ### 1.3 Common Management Shell
 
-Every provider type (all eleven) renders within the same management shell. The shell provides:
+Every provider renders within the same management shell. The shell provides:
 - Provider name, type badge, health status indicator
 - Registration status (pending / active / suspended / deregistered)
 - Navigation tabs that vary by provider type
