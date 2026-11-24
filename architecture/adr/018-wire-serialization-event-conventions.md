@@ -41,4 +41,4 @@ UDLM defines the **data model** and fixes its on-the-wire casing — **`snake_ca
 - Python services need **no** Pydantic alias generator — attribute = wire key. Go adds snake_case struct tags (mechanical, centralized).
 - Frontends and third-party webhook consumers ingest payloads directly — no key-translation layer; one convention from API request → event bus → service.
 - Events are CloudEvents-compliant; dot-notation topics enable wildcard subscriptions.
-- This ADR is the DCM realization of UDLM `naming-conventions.md` §4 — the data-model casing is owned by UDLM; the transport/serialization conventions are owned here. Both are now snake_case, so the contract is identity end to end.
+- This ADR is the DCM implementation of UDLM `naming-conventions.md` §4 — the data-model casing is owned by UDLM; the transport/serialization conventions are owned here. Both are now snake_case, so the contract is identity end to end.

@@ -16,7 +16,7 @@ Tenants are **DCMGroups** with type `tenant_boundary`. Groups can be nested (org
 
 **Policy domain precedence** respects tenancy: system > platform > tenant > resource_type > entity. A system-level sizing policy applies to all tenants. A tenant-level naming convention applies only to that tenant.
 
-**Per-tenant key binding + crypto-shredding.** A Tenant's data-at-rest key material is bound to it by reference — `dcm-group.key_bindings` → a `Credential.EncryptionKey` (envelope DEK/KEK) issued by a credential-capability provider. That makes the key **addressable**, so the realization can keep it in-boundary (sovereign profile), rotate it, and **crypto-shred** it on decommission: destroying the tenant's KEK renders its data-at-rest unrecoverable (GDPR Art. 17 erasure) while the immutable audit ledger survives (UDLM GRP-013). UDLM carries the binding (data); the realization owns the key lifecycle and the KMS/HSM integration. This is the architecture primitive, not the implementation.
+**Per-tenant key binding + crypto-shredding.** A Tenant's data-at-rest key material is bound to it by reference — `dcm-group.key_bindings` → a `Credential.EncryptionKey` (envelope DEK/KEK) issued by a credential-capability provider. That makes the key **addressable**, so the implementation can keep it in-boundary (sovereign profile), rotate it, and **crypto-shred** it on decommission: destroying the tenant's KEK renders its data-at-rest unrecoverable (GDPR Art. 17 erasure) while the immutable audit ledger survives (UDLM GRP-013). UDLM carries the binding (data); the implementation owns the key lifecycle and the KMS/HSM integration. This is the architecture primitive, not the implementation.
 
 ## Consequences
 

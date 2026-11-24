@@ -2,7 +2,9 @@
 
 Short, reviewable summaries of the major architectural decisions in DCM. Each ADR answers **"Why does this exist and what does it do?"** — not implementation details.
 
-**Required lens (every ADR / DecisionRecord).** Each decision MUST state its **Data · Policy · Provider** aspects — the three foundational abstractions (ADR-002). *Data* = what's modeled/held (UDLM); *Policy* = what's decided/computed/governed (DCM); *Provider* = what's declared as possible and what executes the mechanism. A decision that can't name all three (or explicitly say "n/a, because…") isn't fully scoped. This is foundational across UDLM and DCM (and any consumer).
+**Required lens (ADR-019 onward, and every DecisionRecord).** Each decision MUST state its **Data · Policy · Provider** aspects — the three foundational abstractions (ADR-002). *Data* = what's modeled/held (UDLM); *Policy* = what's decided/computed/governed (DCM); *Provider* = what's declared as possible and what executes the mechanism. A decision that can't name all three (or explicitly say "n/a, because…") isn't fully scoped. This is foundational across UDLM and DCM (and any consumer).
+
+*Which ADRs carry it.* The rule was adopted with ADR-019 and ADR-020. ADR-019, 020, 022, 023, 024, 025 and 027 have a Data · Policy · Provider section. ADR-021 and ADR-028 state the three aspects inside their Decision text instead of a separate section. ADR-001 to ADR-018 predate the rule and do not have the section. They are not edited to add it, because an Accepted ADR is superseded, not edited (CONTRIBUTING). ADR-016 is still open; the record that settles it will carry the lens.
 
 **Reading order:** ADRs 001-003 establish the foundations. Read those first, then jump to whichever ADRs are relevant to your area.
 
@@ -12,7 +14,7 @@ Short, reviewable summaries of the major architectural decisions in DCM. Each AD
 > the capability/decision it justifies, paired with [Audit & Tamper Evidence](010-audit-tamper-evidence.md) and
 > field-level provenance ([ADR-012](012-data-assembly-layering.md)). A `DecisionRecord` is the substrate-level,
 > **validation-backed** counterpart of an ADR (it reaches `CANONICAL` only with passing use-case validation); the
-> authoring/validation loop is realized by a conformant assessment realization (non-normative; nothing here depends on a specific tool). Adopt-by-reference per
+> authoring/validation loop is realized by a conformant assessment implementation (non-normative; nothing here depends on a specific tool). Adopt-by-reference per
 > [ADR-021](021-adopting-external-standards.md): DCM records its decisions *as* UDLM DecisionRecords rather than a
 > parallel form.
 
@@ -46,3 +48,4 @@ Short, reviewable summaries of the major architectural decisions in DCM. Each AD
 | [024](024-reference-resolution-and-change-impact.md) | Reference Resolution & Change-Impact Cascade | DCM resolves data references into the payload at assembly; consumes UDLM's transitive impact map; the cascade action (bump dependents) is a profile-governed policy (notify → propose → auto-adopt), never automatic — the policy counterpart to UDLM ADR-012 |
 | [025](025-scoped-class-realization.md) | Realizing the Scoped-Class Paradigm | The DCM engine half of UDLM ADR-038 maps onto existing DCM engines (placement 007/019, assembly 012, governance 013, ingestion 017, naturalization 023, reference-resolution 024, migration 020) + small net-new work (Class-path resolution, requirements↔capability matching, promotion/canonicalization, the governed federation resolver per UDLM ADR-040) |
 | [027](027-policy-firewall-realization.md) | Realizing the Policy Information Firewall | The DCM engine half of UDLM ADR-041 maps onto existing engines (policy 006, sovereignty 011, tenancy 014, trust 022, ingestion 017, naturalization 023, reference-resolution/change-impact 024, audit 010) + small net-new (structural-match evaluation, policy re-convergence, the cross-domain guard with field-granular egress, directional gate placement at crossings) |
+| [028](028-discovery-source-is-information-provider.md) | A Discovery Source Is an Information Provider | Amends ADR-017: every discovery source is a provider (`serve_data` for observers); which observations count and who owns what is policy |
