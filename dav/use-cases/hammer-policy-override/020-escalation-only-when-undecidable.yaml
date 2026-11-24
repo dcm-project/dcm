@@ -1,0 +1,69 @@
+uuid: uc-hammer-policy-override-020
+handle: policy-override/escalation-only-when-undecidable
+scenario:
+  description: 'A platform-engineer on a sovereign mandate submits a request whose governing policy genuinely
+    cannot decide: it depends on an external sovereignty attestation that a peer DCM has not yet returned,
+    so the input is legitimately absent — not defaulted, not inferable. Per DPO-007, human-in-the-loop
+    is a necessary anti-pattern reserved for exactly this residue: the engine must route to review ONLY
+    because the case is undecidable by policy, and must record WHY (the missing attestation) so the escalation
+    is justified, not habitual. When the attestation later arrives the request must become policy-decidable
+    and leave the human queue. The mechanism under test is escalation as a justified last resort, gated
+    on genuine undecidability.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+    - compliance-auditor
+    - sovereignty-authority
+  intent: Route a genuinely undecidable request to review with a recorded justification
+  success_criteria:
+  - The governing policy cannot decide because a required attestation is absent
+  - The absence is genuine (not a defaultable or inferable input)
+  - The request routes to human review as a last resort, not by default
+  - The escalation record names the specific missing input as the reason
+  - Decidable policies in the same request are still decided automatically
+  - When the attestation arrives the request becomes decidable and leaves the queue
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: human_escalation_required
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: peer_dcm_disconnect
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: policy reports undecidable due to a genuinely missing attestation
+  - domain: provider
+    interaction: peer DCM attestation is pending, input legitimately absent
+  - domain: policy
+    interaction: only the undecidable residue routes to review, rest decided
+  - domain: audit
+    interaction: escalation recorded with the specific missing input as justification
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- dpo-007
+- escalation-last-resort
+- undecidable
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16
+  preconditions:
+  - A required external attestation is genuinely absent
+  postconditions:
+  - Only the undecidable residue is escalated, with a recorded reason
+  - Arrival of the attestation makes the request decidable again

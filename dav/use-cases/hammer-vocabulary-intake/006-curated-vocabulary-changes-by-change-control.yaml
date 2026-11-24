@@ -1,0 +1,54 @@
+uuid: uc-70f54659-a8c7-4c1f-8c21-5cfc36beba98
+handle: vocabulary-intake/curated-vocabulary-changes-by-change-control
+version: 1.0.0
+scenario:
+  description: 'A regulated estate permits pre-existing canonical elements only: minting is unavailable
+    in every intake path, including review-queued. Extending the vocabulary is a change to a governed
+    artifact and runs through the estate''s own change control — proposal, approval, window — exactly
+    as any other governed change (the change-policy machinery applied to the vocabulary itself). Intake
+    refusals during the interim name the pending proposal when one exists, so authors see that the term
+    is on its way rather than in a void.'
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Have vocabulary extension in canonical-only estates run through standard change control, with
+    interim refusals citing pending proposals
+  success_criteria:
+  - Canonical-only profiles have no mint path — intake can bind existing elements only
+  - 'Vocabulary extension is a governed change: proposal, approval, and window under the estate''s change
+    policy'
+  - An intake refusal for a term with a pending proposal names that proposal and its state
+  - The vocabulary change, once adopted, follows normal element lifecycle (rotation, provenance, promotion
+    rules)
+  - The audit trail connects the refused intakes to the proposal they motivated — demand evidence for
+    curation
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: vocabulary itself is under change control in canonical-only estates
+  - domain: data
+    interaction: pending proposals are visible to the refusing intake
+  - domain: audit
+    interaction: refusals link to the proposals they motivated
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: vocabulary-intake-2026-07-25
+  timestamp: '2026-07-26T05:00:00Z'
+tags:
+- hammer
+- vocabulary-intake
+- canonical-only
+- change-control
+- regulated

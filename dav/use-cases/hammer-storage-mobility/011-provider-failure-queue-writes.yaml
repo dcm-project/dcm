@@ -1,0 +1,59 @@
+uuid: uc-hammer-storage-mobility-011
+handle: storage-mobility/provider-failure-queue-writes
+scenario:
+  description: 'A storage provider backing an active Storage.Volume becomes unreachable mid-operation
+    while the pipeline is dispatching a batch of allocation and resize intents. The system must not drop
+    or silently fail the in-flight intents: it must hold them in a durable pending state, mark the provider
+    unhealthy, and reconcile the queued intents when the provider recovers — without creating duplicates.
+    This exercises the recovery policy and the durability of intent under a single-provider failure, a
+    core promise of an intent-driven model.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Preserve and replay in-flight storage intents across a provider outage
+  success_criteria:
+  - Provider unreachability is detected and the provider is marked unhealthy
+  - In-flight intents are held in a durable pending state, not dropped or errored away
+  - No intent is lost or silently discarded during the outage
+  - On recovery, queued intents are reconciled against realized state
+  - Reconciliation is idempotent — no duplicate volumes or double-applied resizes
+  - Audit trail records the outage window and the replay outcome per intent
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provider health tracked, dispatch suspended on failure and resumed on recovery
+  - domain: data
+    interaction: in-flight intents persisted in durable pending state
+  - domain: policy
+    interaction: recovery policy governs hold, replay, and idempotent reconciliation
+  - domain: audit
+    interaction: outage window and per-intent replay outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- provider-failure
+- durability
+- recovery
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

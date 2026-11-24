@@ -1,0 +1,64 @@
+uuid: uc-hammer-supply-chain-promotion-008
+handle: supply-chain-promotion/bad-promote-rollback-ocpvirt
+scenario:
+  description: 'A golden VM image was promoted to canonical in the controlled repo for Compute.VM.OCPVirt,
+    but shortly after promotion an out-of-band review finds the SBOM was incomplete and the image
+    actually bundles a vulnerable component that the scan missed. An SRE must drive a rollback: demote
+    the image out of canonical in the controlled repo, block any new Compute.VM.OCPVirt provisioning
+    from it, and reconcile any resource already realized on the bad image. The recovery policy governs
+    the rollback so the repo returns to a known-good state.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - compliance-auditor
+  intent: Roll a bad image back out of the controlled repo after it was already promoted
+  success_criteria:
+  - The bad SoftwareImage is identified as incorrectly promoted after canonical admission
+  - Recovery policy drives a rollback demoting the image out of canonical in the controlled repo
+  - New Compute.VM.OCPVirt provisioning from the rolled-back image is blocked
+  - Resources already realized on the bad image are flagged for reconciliation
+  - The controlled repo returns to a known-good canonical state for that image line
+  - 'Rollback cause, image digest, and remediation targets are recorded'
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: rollback_required
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: recovery policy authorizes and drives the demotion/rollback
+  - domain: data
+    interaction: SoftwareImage demoted from canonical; corrected SBOM/CVE linkage recorded
+  - domain: provider
+    interaction: Compute.VM.OCPVirt blocked from provisioning on the rolled-back image
+  - domain: audit
+    interaction: rollback cause, digest, and affected realized resources recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-vm
+- rollback
+- recovery-policy
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - Image is canonical but was promoted on an incomplete SBOM that missed a vulnerable component
+  - A recovery policy governs post-promotion rollback of the controlled repo
+  postconditions:
+  - Image demoted out of canonical; new provisioning blocked; realized resources flagged
+  - Controlled repo restored to a known-good state and rollback is auditable
+  note: batch=supply-chain-promotion-2026-07-22

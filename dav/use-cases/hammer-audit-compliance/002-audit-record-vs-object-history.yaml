@@ -1,0 +1,54 @@
+uuid: uc-hammer-audit-002
+handle: audit/audit-record-vs-object-history
+scenario:
+  description: 'A security officer investigating an incident needs two distinct answers about a load balancer:
+    what the object looked like at each point in time (object history — the sequence of realized states),
+    and what the system recorded about who acted on it and what was decided (audit record — the immutable
+    trail of requests, evaluations, and dispatches). The architecture must keep these as separate, independently
+    queryable concerns and must not conflate a reconstructed object snapshot with an audit entry. This
+    tests whether the model distinguishes state-over-time from the governance record of how that state
+    came to be.
+
+    '
+  actor:
+    persona: security-officer
+    profile: prod
+  perspectives:
+    - compliance-auditor
+  intent: Retrieve object history and audit record as two distinct, non-conflated views
+  success_criteria:
+  - Object history returns the ordered realized-state snapshots of the resource
+  - Audit record returns the ordered governance events (request, evaluation, dispatch)
+  - The two views are produced by distinct queries against distinct stores
+  - An object snapshot is never returned as if it were an audit entry
+  - Each object-history transition can be correlated to the audit event that caused it
+  - A change present in object history without a corresponding audit event is flagged
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: realized-state history assembled as object snapshots over time
+  - domain: audit
+    interaction: governance event trail returned as a separate, correlatable view
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- object-history
+- separation-of-concerns
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

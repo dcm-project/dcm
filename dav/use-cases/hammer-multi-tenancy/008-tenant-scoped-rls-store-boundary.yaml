@@ -1,0 +1,57 @@
+uuid: uc-hammer-tenancy-008
+handle: tenancy/tenant-scoped-rls-store-boundary
+scenario:
+  description: 'An SRE issues a broad, unfiltered list query against the four-state stores while authenticated
+    as a principal scoped to a single tenant. The store boundary must apply row-level tenant scoping so
+    the result contains only that tenant''s records — even though the query itself specified no tenant
+    filter. This tests whether isolation is enforced at the store boundary (default-deny, scope-injected)
+    rather than depending on every caller remembering to filter. The guarantee must hold for intent, realized,
+    and dependency views alike.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - compliance-auditor
+    - tenancy-authority
+  intent: Verify the store enforces tenant row-level scoping on an unfiltered query
+  success_criteria:
+  - An unfiltered list query returns only the caller's tenant records
+  - Tenant scope is injected at the store boundary, not left to the caller
+  - The guarantee holds across intent, realized, and dependency store views
+  - No foreign-tenant rows appear even in aggregate counts
+  - A platform-scoped principal can still query across tenants when authorized
+  - Store-level scope enforcement is observable in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: store injects tenant row-level scope into every query by default
+  - domain: policy
+    interaction: default-deny scoping rule governs which principals may cross tenant scope
+  - domain: audit
+    interaction: scoped-query enforcement recorded for the querying principal
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- isolation
+- row-level-security
+- store-boundary
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

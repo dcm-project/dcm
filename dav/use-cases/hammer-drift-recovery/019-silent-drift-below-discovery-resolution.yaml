@@ -1,0 +1,67 @@
+uuid: uc-hammer-drift-recovery-019
+handle: drift-recovery/silent-drift-below-discovery-resolution
+scenario:
+  description: 'A compliance auditor needs assurance that a realized firewall''s rule ordering matches
+    intent. The provider''s discovery interface reports the rule set but not the internal ordering — the
+    drifted attribute lives below the resolution of what discovery can observe. A provider-side reorder
+    therefore produces real drift that the Realized-vs-Discovered diff cannot see. The engine must not
+    report a false clean bill of health; it must recognize that the intent covers a field discovery cannot
+    verify and flag the resource as unverifiable for that attribute. This probes a likely-unsupported
+    gap: drift on fields beneath discovery resolution.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - security-officer
+  intent: Detect that a governed field is unverifiable because discovery cannot observe it
+  success_criteria:
+  - Intent governs firewall rule ordering
+  - Discovery reports the rule set but cannot observe internal ordering
+  - A provider-side reorder constitutes real drift invisible to the field diff
+  - The engine does NOT report a false clean/no-drift verdict for the unverifiable field
+  - The resource is flagged as unverifiable for the rule-ordering attribute
+  - The verifiability gap is recorded in the audit trail for the auditor
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent covers a field the Discovered state cannot express; diff cannot cover it
+  - domain: policy
+    interaction: field flagged unverifiable rather than defaulted to no-drift
+  - domain: provider
+    interaction: discovery interface cannot surface internal rule ordering
+  - domain: audit
+    interaction: verifiability gap recorded for the auditor
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- discovery-resolution
+- unverifiable-field
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Intent governs a field discovery cannot observe (firewall rule ordering)
+  - A provider-side reorder occurred
+  postconditions:
+  - No false no-drift verdict issued
+  - Field flagged unverifiable
+  - Verifiability gap recorded
+  note: batch=framework-hammer-2026-07-16

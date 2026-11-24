@@ -1,0 +1,56 @@
+uuid: uc-hammer-provider-portability-012
+handle: provider-portability/cross-cousin-composite-mixed-vm-container-baremetal
+scenario:
+  description: A composite service mixes cousin Compute Types — a Compute.BareMetal database, Compute.VM app servers,
+    and Compute.Container front-ends — realized together as one ordered flow. The mix of cousin Types under the
+    Compute Base is coordinated by the dependency graph and a mixed provider landscape.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Realize a composite whose constituents are VM, Container and BareMetal cousins
+  success_criteria:
+  - The composite declares VM, Container and BareMetal constituents
+  - Each cousin Type is realized by its own provider
+  - The dependency graph orders the mixed realization
+  - Realized payloads flow between the cousin tiers
+  - The composite is healthy only when all cousin tiers are up
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: orders the mixed cousin realization
+  - domain: provider
+    interaction: bare-metal, VM and container providers each realize a tier
+  - domain: data
+    interaction: composite_health tracks all cousin tiers
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-cousin
+- portability
+- composite-service
+- mixed-compute
+- three-tier
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The composite mixes BareMetal, VM and Container tiers
+  postconditions:
+  - The composite runs across all three cousin Types
+  note: batch=portability-enrich-2026-07-22

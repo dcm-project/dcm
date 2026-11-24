@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-005
+handle: audit/audit-store-outage-gap-record
+scenario:
+  description: 'The audit store becomes unreachable for ninety seconds during a burst of provisioning
+    activity. When it recovers, the architecture must not present an unbroken trail as if nothing happened.
+    Instead it must emit an explicit gap record: a first-class, tamper-evident marker stating that audit
+    continuity was interrupted, for how long, and that some events may be unrecorded — with the hash chain
+    sealing the boundary on both sides. Silent loss is the failure. This tests whether the audit substrate
+    models its own unavailability honestly rather than papering over it.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - compliance-auditor
+  intent: Ensure an audit-store outage yields an explicit gap record, never silent loss
+  success_criteria:
+  - The outage is detected and its start and end are timestamped
+  - An explicit gap record is written to the trail on recovery
+  - The gap record states that events during the window may be unrecorded
+  - The hash chain seals the entries immediately before and after the gap
+  - The trail contains no fabricated entries claiming continuity across the gap
+  - The gap record is itself tamper-evident and cannot be silently removed
+  - Downstream compliance queries surface the gap rather than hiding it
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: audit
+    interaction: outage detected and an explicit tamper-evident gap record written
+  - domain: data
+    interaction: affected requests marked as potentially unrecorded pending reconciliation
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- outage
+- gap-record
+- continuity
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

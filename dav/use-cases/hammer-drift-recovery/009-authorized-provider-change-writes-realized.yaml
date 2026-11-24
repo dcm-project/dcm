@@ -1,0 +1,64 @@
+uuid: uc-hammer-drift-recovery-009
+handle: drift-recovery/authorized-provider-change-writes-realized
+scenario:
+  description: 'A provider performs a sanctioned maintenance action — rotating a backing volume to new
+    hardware and reporting the new volume id back through the pipeline as an authorized change. Unlike
+    unsanctioned drift, this change arrives with a valid provider-originated authorization event, so the
+    engine must accept it, write a new immutable Realized snapshot capturing the new volume id, and record
+    that Realized advanced without ever classifying it as drift. This validates the distinction between
+    an authorized provider write to Realized and an unsanctioned divergence.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+  intent: Accept an authorized provider-originated change as a legitimate Realized update, not drift
+  success_criteria:
+  - The provider change arrives with a valid provider-originated authorization event
+  - The engine matches the change to its authorization rather than flagging drift
+  - A new immutable Realized snapshot is written capturing the new volume id
+  - The prior Realized snapshot is retained in history (not mutated in place)
+  - The resource is NOT marked drifted and no remediation is generated
+  - The authorized Realized advance is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: provider reports a sanctioned volume rotation with an authorization event
+  - domain: policy
+    interaction: change matched to authorization and admitted as authorized, not drift
+  - domain: data
+    interaction: new immutable Realized snapshot written; prior snapshot retained in history
+  - domain: audit
+    interaction: authorized Realized advance recorded with provider authorization reference
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- authorized-change
+- realized-write
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource is realized with a known Realized snapshot
+  - Provider issues a sanctioned change with an authorization event
+  postconditions:
+  - New Realized snapshot written; prior retained
+  - Resource not marked drifted
+  - Authorized advance recorded
+  note: batch=framework-hammer-2026-07-16

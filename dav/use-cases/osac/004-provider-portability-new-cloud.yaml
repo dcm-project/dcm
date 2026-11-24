@@ -1,0 +1,59 @@
+uuid: uc-df8ecf5a-a5d2-46a5-923e-43eeb2b21af3
+handle: osac/provider-portability-new-cloud
+version: 1.0.0
+scenario:
+  description: >-
+    A second sovereign cloud (OSAC) is brought online and offered as a provider alongside the first.
+    Existing consumer intent — written in portable terms, with no provider-native detail — becomes
+    eligible to place onto the new cloud with no change to the intent, the substrate, or the other
+    providers. The new cloud naturalizes that portable intent into its own native form at its edge,
+    so adding it is purely additive: a placement target appears, portability is preserved, and a
+    workload can be rebuilt provider-portably onto it. This is the OSAC thesis made operational —
+    building a new sovereign cloud provider extends where intent can land without bending the model
+    toward any one cloud's vocabulary.
+  actor:
+    persona: cloud-operator
+    profile: sovereign
+  perspectives:
+    - solution-architect
+    - application-team-member
+    - provider-owner
+    - integrator
+  intent: >-
+    Bring a new sovereign cloud online as an additional provider so existing portable intent can
+    place onto it with no rewrite — the cloud naturalizing at its edge, the substrate unchanged
+  success_criteria:
+  - Existing portable intent becomes eligible for the new cloud with no change to the intent
+  - Adding the cloud changes neither the substrate nor the other providers — it is additive
+  - The new cloud naturalizes portable intent into its native form at its own edge
+  - A workload can be rebuilt provider-portably onto the new cloud from the same declaration
+  - No provider-native vocabulary from the new cloud enters the portable model
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: multi_validation
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_constrained
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: consumer intent stays portable; the new provider is another eligible target for the same intent
+  - domain: policy
+    interaction: placement re-evaluates eligibility to include the new cloud without changing the intent
+  - domain: provider
+    interaction: the new cloud naturalizes portable intent at its edge and stays swappable (T9 / ADR-023)
+  - domain: audit
+    interaction: the added provider and the provider-portable placement are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- osac
+- cloud-operator
+- provider-portability
+- naturalization
+- placement

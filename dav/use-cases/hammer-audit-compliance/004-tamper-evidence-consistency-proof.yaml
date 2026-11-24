@@ -1,0 +1,59 @@
+uuid: uc-hammer-audit-004
+handle: audit/tamper-evidence-consistency-proof
+scenario:
+  description: 'A regulator recorded the operator''s signed audit tree head last quarter and records it
+    again this quarter. Before trusting any new inclusion proofs, the regulator demands an RFC-9162 consistency
+    proof showing the newer log is a strict append-only superset of the older one — nothing that was committed
+    has been removed, reordered, or rewritten. The system must prove append-only evolution between two
+    tree heads. This is the harder tamper-evidence property: not that an entry exists, but that history
+    was never edited. It likely exposes whether the architecture only asserts immutability rather than
+    proving it.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - regulator
+  intent: Prove the audit log evolved append-only between two signed tree heads
+  success_criteria:
+  - Both the old and new signed tree heads are retrievable
+  - A consistency proof between the two tree heads is returned
+  - The proof verifies the new log is a superset of the old with no rewrites
+  - Verification fails if any previously committed entry was removed or reordered
+  - The proof binds monotonically increasing tree sizes
+  - No entry committed under the old head is missing under the new head
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: audit
+    interaction: consistency proof generated between two signed tree heads
+  - domain: data
+    interaction: both tree heads are retrieved from the append-only audit store and their versions ordered
+  - domain: policy
+    interaction: append-only invariant policy asserts no entries were rewritten between the two heads
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- tamper-evidence
+- merkle
+- rfc-9162
+- consistency-proof
+- append-only
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

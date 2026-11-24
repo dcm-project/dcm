@@ -1,0 +1,56 @@
+uuid: uc-hammer-audit-006
+handle: audit/governance-honesty-ungoverned-not-passed
+scenario:
+  description: 'A request is submitted for a resource type that no policy is scoped to evaluate. Zero
+    policies match, so nothing rejects it. The architecture must record this outcome honestly as ungoverned
+    — "0 policies applied" — and must not report it as "passed" or "compliant." A green checkmark for
+    an unevaluated request is a governance lie that corrodes every audit conclusion built on it. This
+    tests whether the decision record distinguishes "evaluated and allowed" from "never evaluated," a
+    distinction FSI and sovereign auditors treat as load-bearing.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - sovereignty-authority
+  intent: Confirm a request no policy applied to is recorded as ungoverned, not passed
+  success_criteria:
+  - The evaluation records the count of policies that matched the request (zero)
+  - The outcome is labeled ungoverned, not passed or compliant
+  - The audit record distinguishes "evaluated and allowed" from "not evaluated"
+  - A compliance query can filter for ungoverned requests
+  - No green/pass status is emitted for the unevaluated request
+  - The absence of applicable policy is itself surfaced as a governance finding
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: zero matching policies detected and recorded as an ungoverned outcome
+  - domain: audit
+    interaction: outcome recorded as ungoverned, explicitly distinct from passed
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- audit
+- governance-honesty
+- ungoverned
+- no-policy
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

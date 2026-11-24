@@ -1,0 +1,59 @@
+uuid: uc-fb444232-1717-48ad-baf2-3209b3433acf
+handle: intent-fulfillment/surface-names-root
+version: 1.0.0
+scenario:
+  description: >-
+    A chain fails — a PVC is refused, taking down the container that operationally depends on it
+    and the app above — and the platform surfaces only the immediate member: "container failed."
+    This is REFUSED as insufficient surfacing. The surfacing contract requires naming the ROOT
+    unsatisfied dependency (the PVC and its violated rule) and the chain it took down, so the
+    consumer can act on the actual cause instead of chasing the symptom. Telling the consumer the
+    container failed, without naming that the container was blocked-permanent because its PVC was
+    refused, sends them to fix the wrong thing. A surface that stops at the immediate member and
+    does not name the root dependency plus the chain does not satisfy the contract, even though it
+    did emit a warning. Naming the proximate failure is not the same as naming the root.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: >-
+    Refuse a chain-failure surface that names only the immediate member and not the root
+    unsatisfied dependency plus the chain — the root and chain are the mandatory content of the
+    surface
+  success_criteria:
+  - A surface naming only the immediate member ("container failed") without the root dependency is refused as insufficient surfacing
+  - The required surface names the ROOT unsatisfied dependency (the PVC and its violated rule) and the operational chain it took down
+  - Emitting a warning is not sufficient if it does not name the root — content, not just presence, is the contract
+  - '"The consumer could have traced the chain themselves" is explicitly not a sufficient defense'
+  - The root-naming requirement holds on every chain-failure path, transient or permanent
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: multi_dependent
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the surfacing contract requires the root dependency plus chain; naming only the proximate member is refused
+  - domain: data
+    interaction: the surface must carry the root unsatisfied dependency and the transitive chain, not just the immediate member
+  - domain: audit
+    interaction: the insufficient (root-less) surface is recorded as a refusal
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- surfacing
+- must-reject
+- root-cause

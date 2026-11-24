@@ -1,0 +1,66 @@
+uuid: uc-hammer-dr-rehydration-014
+handle: dr-rehydration/dependency-cycle-ordering
+scenario:
+  description: 'A platform engineer rehydrates an environment whose stored dependency graph contains a
+    cycle: resource A hard-depends on B while B hard-depends on A (an accidental mutual reference that
+    was tolerated at steady state because both already existed). Rehydration derives build order by topologically
+    sorting the dependency graph, and a cycle makes a valid order impossible. The system must detect the
+    cycle before dispatching anything, refuse to guess an order or deadlock mid-rebuild, and report the
+    specific participating resources so an operator can break the cycle. This probes whether the rebuild
+    planner validates the graph''s acyclicity up front; it likely returns unsupported for the cyclic subgraph.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Rehydrate an environment whose dependency graph contains a cycle
+  success_criteria:
+  - The rebuild planner attempts to derive a topological build order from the graph
+  - A dependency cycle is detected before any provider dispatch occurs
+  - The system refuses to guess an order or enter a mid-rebuild deadlock
+  - The specific resources participating in the cycle are named in the output
+  - Acyclic portions of the graph are reported as buildable versus the blocked cyclic subgraph
+  - The cycle detection and blocked outcome are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: orchestration_flow_static
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph read; cycle detected during topological ordering
+  - domain: policy
+    interaction: orchestration ordering policy refuses to plan a cyclic subgraph
+  - domain: provider
+    interaction: no dispatch issued for the cyclic resources
+  - domain: audit
+    interaction: participating resources and blocked outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- dependency-cycle
+- ordering
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Stored dependency graph contains a mutual (cyclic) hard dependency
+  - Resources are destroyed and awaiting rebuild
+  postconditions:
+  - Cycle detected before dispatch; cyclic subgraph blocked
+  - Participating resources named and recorded
+  note: batch=framework-hammer-2026-07-16

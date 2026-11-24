@@ -1,0 +1,56 @@
+uuid: uc-hammer-provider-portability-010
+handle: provider-portability/cross-base-class-block-to-fileshare-storage-cousins
+scenario:
+  description: During a workload migration the data must move from a block Storage.Volume to a Storage.FileShare
+    — cousin Types under the Storage Base Class. The portable Storage Base requirements (tier, capacity) carry;
+    the access-shape changes from block to file, and a third-party data-migration provider repopulates the share.
+  actor:
+    persona: storage-admin
+    profile: standard
+  perspectives:
+    - sre
+    - provider-owner
+  intent: Re-home data from Storage.Volume to Storage.FileShare during a migration
+  success_criteria:
+  - The Storage Base requirements (tier, capacity) carry across
+  - The data re-homes from Storage.Volume to Storage.FileShare
+  - The access-shape change (block to file) is recorded
+  - A data-migration provider repopulates the file share
+  - Dependents are re-pointed to the file share
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: re-scopes Storage Base requirements across cousin Types
+  - domain: provider
+    interaction: storage provider realizes the file share; mover repopulates it
+  - domain: data
+    interaction: records the access-shape change and re-points dependents
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-type-class
+- portability
+- storage-volume
+- storage-fileshare
+- storage-cousins
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source data lives on a block Storage.Volume
+  postconditions:
+  - The data is served from a Storage.FileShare
+  note: batch=portability-enrich-2026-07-22

@@ -1,0 +1,54 @@
+uuid: uc-b19e1b7a-6f56-4d92-898c-cbd223384fa6
+handle: class-versioning/provider-underdeclared-surface-change-refused
+version: 1.1.0
+scenario:
+  description: 'A provider stops populating a declared output it previously supplied — consumers bind
+    to that output — but submits the change under its already-published version. The gate refuses on both
+    counts: the surface diff classifies the dropped output as breaking (insufficient bump, same refusal
+    shape as an under-declared class change), and republishing a published (identity, version) with
+    different bytes is an integrity failure against the publish law (ADR-051 — the pin manifest''s
+    recorded digest is the detector). The refusal names the dropped output, the consumers bound to it
+    (from the estate''s bindings), and the required bump. Nothing propagates from a refused change.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Have an under-declared provider surface change refused with the dropped output, its bound consumers,
+    and the required bump named
+  success_criteria:
+  - Dropping a populated output classifies breaking; a revision bump is refused as insufficient
+  - A changed provider definition republished under its already-published version is refused as a publish-law
+    violation (recorded digest mismatch)
+  - The refusal names the dropped output and the consumers whose bindings depend on it
+  - The refusal states the required bump — typed and actionable
+  - No downstream impact entry is created from a refused change
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: surface classification + publish law refuse the under-declared change
+  - domain: data
+    interaction: bound consumers are derived from bindings, giving the refusal its blast context
+  - domain: audit
+    interaction: the refusal is a recorded gate outcome
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-26T00:00:00Z'
+tags:
+- hammer
+- class-versioning
+- provider-versioning
+- surface-versioning
+- must-reject

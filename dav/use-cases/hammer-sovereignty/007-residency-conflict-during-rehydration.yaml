@@ -1,0 +1,70 @@
+uuid: uc-hammer-sovereignty-007
+handle: sovereignty/residency-conflict-during-rehydration
+scenario:
+  description: 'Following a disaster, an SRE rehydrates a full environment to a new set of providers because
+    the original providers are gone. The stored intent pins several resources to a named jurisdiction,
+    but the only providers available in the recovery region cannot satisfy that residency constraint.
+    The architecture must, during provider-portable rehydration, re-evaluate the sovereignty policy against
+    the new provider landscape, detect the residency conflict, and refuse to re-realize the conflicting
+    resources on a non-compliant provider — surfacing the conflict as a blocked rehydration rather than
+    silently relaxing residency to complete recovery. This probes the tension between availability (finish
+    the rebuild) and sovereignty (never violate residency) during DR.
+
+    '
+  actor:
+    persona: sre
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+    - sovereignty-authority
+  intent: Rehydrate to new providers without violating pinned residency constraints
+  success_criteria:
+  - Rehydration derives a rebuild plan from stored intent including residency constraints
+  - Sovereignty policy is re-evaluated against the new recovery-region provider landscape
+  - The residency conflict is detected before any conflicting resource is realized
+  - Conflicting resources are NOT re-realized on a non-compliant provider to force completion
+  - Compliant resources still rehydrate; the blocked set is surfaced explicitly
+  - The residency conflict, blocked resources, and unmet jurisdictions are recorded
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: sovereignty_enforced
+    failure_mode: provider_failure
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: stored intent with residency constraints read for the rebuild plan
+  - domain: policy
+    interaction: sovereignty re-evaluated against new providers; conflict blocks non-compliant re-realization
+  - domain: provider
+    interaction: compliant resources realized; no dispatch for the conflicting set
+  - domain: audit
+    interaction: residency conflict and blocked resource set recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- rehydration
+- residency-conflict
+- disaster-recovery
+- edge
+- likely-unsupported
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Original providers are destroyed; recovery region lacks a compliant provider for some resources
+  - Stored intent pins those resources to a named jurisdiction
+  postconditions:
+  - Compliant resources rehydrated; conflicting resources blocked, not forced
+  - Residency conflict surfaced and recorded
+  note: batch=framework-hammer-2026-07-16

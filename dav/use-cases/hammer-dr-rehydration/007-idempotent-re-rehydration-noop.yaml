@@ -1,0 +1,63 @@
+uuid: uc-hammer-dr-rehydration-007
+handle: dr-rehydration/idempotent-re-rehydration-noop
+scenario:
+  description: 'A rehydration run is interrupted and retried — a common operational reality when a DR
+    playbook is re-invoked after a partial success or an operator re-runs it out of caution. By the time
+    the second run executes, several resources are already re-realized and match intent. The system must
+    recognize the already-rehydrated resources and produce a no-op for them (no duplicate dispatch, no
+    UUID churn) while completing only the resources that are still missing. This validates that rehydration
+    is idempotent and safely re-runnable, which is a hard requirement for any real DR procedure.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Re-run a rehydration safely so completed resources are no-ops
+  success_criteria:
+  - System compares current realized state against intent for each resource on the retry
+  - Already-rehydrated resources matching intent produce a no-op with no new dispatch
+  - No duplicate resources are created and no UUIDs are reassigned
+  - Only resources still missing or non-matching are re-realized
+  - The environment converges to full intent match regardless of retry count
+  - No-op and completion decisions are both recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: per-resource realized state compared against intent on retry
+  - domain: provider
+    interaction: dispatch issued only for missing resources; matched ones skipped
+  - domain: audit
+    interaction: no-op and completion decisions recorded per resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- idempotency
+- retry-safe
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A prior rehydration run partially completed
+  - Some resources already match intent, others are still destroyed
+  postconditions:
+  - Completed resources are no-ops on retry; missing ones re-realized
+  - Environment fully converged with no duplicates
+  - Audit trail records per-resource decisions
+  note: batch=framework-hammer-2026-07-16

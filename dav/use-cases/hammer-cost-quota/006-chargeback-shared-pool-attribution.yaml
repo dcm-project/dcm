@@ -1,0 +1,65 @@
+uuid: uc-hammer-cost-quota-006
+handle: cost-quota/chargeback-shared-pool-attribution
+scenario:
+  description: 'Two tenants run workloads on a single shared storage pool. A finance-analyst needs a defensible
+    chargeback that splits the pool''s cost between the tenants by their actual consumption, not an even
+    split. The system must attribute a shared resource''s cost across multiple owning stakes, each proportional
+    to that stake''s declared or measured share. The mechanism under test is multi-owner cost attribution
+    over a shared allocatable — a case UDLM''s single-owner assumptions may not cleanly express, so expect
+    partial support.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - tenancy-authority
+  intent: Split a shared pool's cost across tenants by proportional consumption
+  success_criteria:
+  - The shared pool and its multiple consuming tenants are identified
+  - Each tenant's share of the pool (declared allocation or measured use) is resolved
+  - Pool cost is split proportionally across the consuming tenants
+  - The split sums exactly to the pool's total cost with no leakage or double-count
+  - Tenants with a stake but no cost mapping are surfaced as a gap
+  - The attribution basis and the resulting split are recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: shared pool, its stakes, and per-stake share resolved from the model
+  - domain: policy
+    interaction: attribution rule splits pool cost proportionally across stakes
+  - domain: audit
+    interaction: attribution basis and per-tenant split recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- chargeback
+- shared-pool
+- attribution
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A shared pool is consumed by two or more tenants
+  - Per-stake shares are declared or measurable
+  postconditions:
+  - Pool cost is split with no leakage or double-counting
+  - Any missing stake-to-cost mapping is reported as a gap
+  note: batch=framework-hammer-2026-07-16

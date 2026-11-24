@@ -1,0 +1,68 @@
+uuid: uc-hammer-drift-recovery-014
+handle: drift-recovery/drift-detection-provider-disconnect
+scenario:
+  description: 'An SRE runs a reconciliation pass but the provider hosting the resource is unreachable,
+    so fresh Discovery cannot complete. The engine cannot diff Realized against a Discovered state it
+    never obtained. It must NOT assume no-drift (silently declaring health) and must NOT assume worst-case
+    drift and remediate blindly against an unreachable target. The correct behavior is to mark reconciliation
+    indeterminate, hold the last known Realized snapshot, and surface a discovery-unavailable condition.
+    This likely probes an unsupported edge: safe handling of drift detection when the ground truth is
+    unobtainable.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - federation-peer-operator
+  intent: Reconcile a resource whose provider is unreachable without asserting a false drift verdict
+  success_criteria:
+  - Discovery fails because the provider is unreachable
+  - The engine does not diff against a missing Discovered state
+  - The engine does not silently declare the resource healthy (no-drift assumed)
+  - The engine does not blindly remediate against the unreachable provider
+  - Reconciliation is marked indeterminate and the last known Realized snapshot is held
+  - The discovery-unavailable condition is surfaced and recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: recovery_policy
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery attempt fails; provider unreachable, no live state obtained
+  - domain: data
+    interaction: last known Realized snapshot held; no Discovered state to diff against
+  - domain: policy
+    interaction: recovery policy declines to remediate against an unobservable target
+  - domain: audit
+    interaction: indeterminate reconciliation and discovery-unavailable condition recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- discovery-unavailable
+- provider-disconnect
+- unsupported-probe
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource is realized; provider is currently unreachable
+  - A recovery policy exists but requires observed state to act
+  postconditions:
+  - Reconciliation marked indeterminate
+  - No false verdict asserted; Realized snapshot held
+  - Discovery-unavailable condition recorded
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,64 @@
+uuid: uc-hammer-federation-018
+handle: federation/rehydrate-when-original-peer-gone
+scenario:
+  description: 'A disaster destroys resources that were originally realized by a peer DCM which has since
+    left the federation and no longer exists. During rehydration, the platform engineer needs the stored
+    intent re-realized, but the original provider (the departed peer) is unreachable and unrecoverable.
+    The system must rehydrate provider-portably: re-run placement against the CURRENT federation, bind
+    the intent to a different eligible peer (or local capacity), and preserve identity — without hard-coding
+    the departed peer. If nothing else can satisfy the intent, it must report the gap rather than fail
+    opaquely. This likely surfaces a portability edge.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - federation-peer-operator
+  intent: Rehydrate resources whose original peer-provider has left the federation
+  success_criteria:
+  - Stored intent and dependency graph are available for the destroyed resources
+  - The original peer-provider is recognized as gone/unreachable
+  - Placement is re-run against the current federation, not the departed peer
+  - Intent is re-bound to a different eligible provider (peer or local) preserving identity
+  - No rehydration step hard-depends on the departed peer
+  - If no current provider can satisfy the intent, the gap is reported as unsupported
+  - The portable rehydration (or the gap) is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: stored intent read; departed peer's realized handles recognized as unrecoverable
+  - domain: policy
+    interaction: validation re-evaluated; portability rule forbids binding to the departed peer
+  - domain: provider
+    interaction: placement re-runs against current federation and re-binds intent
+  - domain: audit
+    interaction: portable rehydration or unsupported-gap finding recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- rehydration
+- provider-portable
+- likely-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

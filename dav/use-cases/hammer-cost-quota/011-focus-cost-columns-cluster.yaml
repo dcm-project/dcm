@@ -1,0 +1,62 @@
+uuid: uc-hammer-cost-quota-011
+handle: cost-quota/focus-cost-columns-cluster
+scenario:
+  description: 'A finance-analyst wants a cluster''s cost exported in FOCUS (FinOps Open Cost and Usage
+    Specification) shape: rows keyed by resource with the FOCUS columns BilledCost, EffectiveCost, ListCost,
+    BillingAccountId, ServiceCategory, ResourceId and ChargePeriod. The system must project its internal
+    cost and ownership data onto the FOCUS schema for a single cluster. The mechanism under test is whether
+    the model carries the fields FOCUS requires — several FOCUS columns (billed vs effective vs list cost,
+    billing account) have no obvious UDLM source, so expect a partial mapping with named gaps.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Export a cluster's cost in FOCUS-conformant columns
+  success_criteria:
+  - The cluster's resources are enumerated as FOCUS rows keyed by ResourceId
+  - ResourceId, ServiceCategory and ChargePeriod are populated from the model
+  - BillingAccountId is resolved from the owning tenant or reported as absent
+  - BilledCost, EffectiveCost and ListCost are distinguished, not collapsed to one
+  - FOCUS columns with no UDLM source are named explicitly as gaps
+  - The export's FOCUS-conformance coverage is recorded in audit
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: cluster resources and ownership projected onto FOCUS columns
+  - domain: policy
+    interaction: FOCUS-conformance validation checks required columns are populated
+  - domain: audit
+    interaction: conformance coverage and unmapped FOCUS columns recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- cost-quota
+- focus
+- finops
+- export
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A cluster with owned resources exists in the model
+  postconditions:
+  - A FOCUS-shaped export is produced with gaps named
+  note: batch=framework-hammer-2026-07-16

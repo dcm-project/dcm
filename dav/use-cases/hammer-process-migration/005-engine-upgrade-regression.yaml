@@ -1,0 +1,51 @@
+uuid: uc-process-migration-005
+handle: process-migration/engine-upgrade-regression
+version: 1.0.0
+scenario:
+  description: 'The blue/green verification mechanism applied to an engine''s own upgrade: before moving
+    automation from engine version N to N+1, the org runs the same idempotent process types through both
+    versions against converged targets and diffs the typed outputs. An empty delta clears the upgrade;
+    a non-empty delta is a behavioral regression in the engine itself, caught with production automation
+    before production exposure. The engine is regression-tested by its own workload, continuously, with
+    no dedicated test suite to maintain.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - compliance-auditor
+    - security-officer
+  intent: Regression-test an automation engine upgrade by blue/green-diffing the same process types across
+    engine versions before adopting the upgrade
+  success_criteria:
+  - Engine N and N+1 run the same process types against converged targets
+  - Output deltas between versions are mechanical to produce and attribute
+  - A non-empty delta blocks the upgrade with the diverging behavior identified
+  - "The mechanism reuses the migration verification path \u2014 no dedicated harness"
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: typed outputs across engine versions are the compared evidence
+  - domain: policy
+    interaction: upgrade adoption is gated on the empty-delta result
+  - domain: provider
+    interaction: two versions of one engine are treated as two providers of the type
+  - domain: audit
+    interaction: upgrade verification evidence is recorded per engine version
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: process-migration-2026-07-25
+  timestamp: '2026-07-25T02:00:00.000000+00:00'
+tags:
+- process-migration
+- engine-upgrade
+- regression
+- blue-green

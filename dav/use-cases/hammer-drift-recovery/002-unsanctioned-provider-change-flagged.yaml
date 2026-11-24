@@ -1,0 +1,65 @@
+uuid: uc-hammer-drift-recovery-002
+handle: drift-recovery/unsanctioned-provider-change-flagged
+scenario:
+  description: 'A provider-side operator manually resizes a realized VM outside the DCM pipeline, bumping
+    its memory allocation without any intent change. On the next reconciliation pass the fresh Discovery
+    reports a memory value that diverges from the immutable Realized snapshot. Because no sanctioned modification
+    produced this delta, the engine must classify the divergence as unsanctioned drift rather than an
+    authorized change, mark the resource drifted, and surface it for evaluation. This validates that any
+    divergence lacking a matching pipeline event is treated as drift until proven otherwise.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+  intent: Detect a manual out-of-pipeline provider change and classify it as drift
+  success_criteria:
+  - Fresh Discovery reports a memory value differing from the Realized snapshot
+  - Engine finds no sanctioned modification event that would explain the delta
+  - The divergence is classified as unsanctioned drift, not an authorized change
+  - The resource is marked drifted and flagged for evaluation
+  - The offending field, old value, and discovered value are captured
+  - The drift finding is recorded in the audit trail with its detection basis
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: discovered memory value diverges from immutable Realized snapshot
+  - domain: policy
+    interaction: divergence checked against sanctioned-change ledger and classified as drift
+  - domain: provider
+    interaction: provider live state read; unsanctioned resize observed
+  - domain: audit
+    interaction: unsanctioned drift finding recorded with offending field and values
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- unsanctioned-change
+- detection
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource is realized with a known Realized snapshot
+  - A provider-side change was made outside the pipeline
+  postconditions:
+  - Resource marked drifted; delta captured
+  - No authorization record exists for the change
+  - Drift finding recorded for downstream evaluation
+  note: batch=framework-hammer-2026-07-16

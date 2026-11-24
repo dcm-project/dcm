@@ -1,0 +1,69 @@
+uuid: uc-hammer-sovereignty-016
+handle: sovereignty/cross-tenant-residency-isolation
+scenario:
+  description: 'On a shared sovereign platform, a tenant admin modifies a service to add a shared cache
+    tier. The requested cache would be backed by a pooled resource that also serves a tenant bound to
+    a different, stricter jurisdiction — creating a path where one tenant''s residency-constrained data
+    could co-reside with another''s under a jurisdiction that violates one of the two mandates. The architecture
+    must evaluate the governance matrix across both tenants'' residency constraints, detect the cross-tenant
+    residency conflict in the shared backing resource, and refuse the modification that would co-mingle
+    data across incompatible jurisdictions. This probes whether sovereignty is enforced at shared-resource
+    boundaries, not just per-tenant in isolation.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - sre
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Add a shared tier without co-mingling data across incompatible jurisdictions
+  success_criteria:
+  - The shared backing resource's existing tenant residency constraints are resolved
+  - The governance matrix is evaluated across both tenants' jurisdictions
+  - A cross-tenant residency conflict on the shared resource is detected
+  - The modification that would co-mingle incompatible jurisdictions is refused
+  - No shared backing is provisioned that violates either tenant's mandate
+  - The conflict, the two jurisdictions, and the refusal are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: data_inconsistency
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: existing tenant residency constraints on the shared resource resolved
+  - domain: policy
+    interaction: governance matrix detects incompatible-jurisdiction co-mingling and refuses
+  - domain: provider
+    interaction: no shared backing provisioned that violates either mandate
+  - domain: audit
+    interaction: cross-tenant conflict and refusal recorded with both jurisdictions
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- sovereignty
+- cross-tenant
+- residency-isolation
+- governance-matrix
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A shared backing resource serves tenants under different jurisdictions
+  - The requested tier would co-mingle data across those jurisdictions
+  postconditions:
+  - Modification refused; no incompatible co-mingling provisioned
+  - Cross-tenant conflict recorded
+  note: batch=framework-hammer-2026-07-16

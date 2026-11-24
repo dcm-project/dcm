@@ -1,0 +1,58 @@
+uuid: uc-hammer-credentials-003
+handle: credentials/jit-issuance
+scenario:
+  description: 'An SRE runs a dispatch whose policy forbids standing credentials: the provider interaction
+    requires a credential to be minted just-in-time at dispatch, scoped to that single interaction, and
+    automatically expired seconds after use. The system must issue the credential inline as part of the
+    dispatch flow, bind it to the exact provider call, and record its short-lived lifecycle. This tests
+    whether credential issuance can be an inline step of an orchestration flow rather than a standing
+    resource created ahead of time.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - security-officer
+  intent: Mint a single-use credential just-in-time inside a provider dispatch
+  success_criteria:
+  - No standing credential exists before the dispatch begins
+  - Credential is issued inline as a step of the dispatch flow
+  - Scope is bound to exactly one provider interaction
+  - Validity window is short-lived and recorded
+  - Credential is marked expired/consumed immediately after the interaction
+  - The full JIT issue-use-expire arc is captured in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: orchestration_flow_static
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: policy mandates JIT issuance and forbids standing credentials
+  - domain: provider
+    interaction: provider interaction consumes the freshly minted credential
+  - domain: data
+    interaction: short-lived credential metadata created and retired within the flow
+  - domain: audit
+    interaction: issue-use-expire lifecycle recorded as one arc
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- jit
+- ephemeral
+- orchestration
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

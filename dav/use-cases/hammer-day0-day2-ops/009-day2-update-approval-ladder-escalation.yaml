@@ -1,0 +1,61 @@
+uuid: uc-hammer-day0-day2-ops-009
+handle: day0-day2-ops/day2-update-approval-ladder-escalation
+scenario:
+  description: 'A platform operator requests a day-2 configuration update to a production FSI payments
+    service. Because the change touches a compliance-gated resource, it cannot proceed on the operator''s
+    authority alone: the policy requires a human approval ladder (operator -> change-manager -> security-officer)
+    before the bound Automation.Job may run. The system must hold the process at the gate, request the
+    escalating approvals, and only dispatch the update once all rungs approve.'
+  actor:
+    persona: platform-operator
+    profile: fsi
+  perspectives:
+    - security-officer
+  intent: Gate a day-2 update behind a human approval ladder before the bound process runs
+  success_criteria:
+  - The update is recognized as touching a compliance-gated resource
+  - The bound update job is held at the gate and not dispatched on operator authority alone
+  - A human approval ladder (operator, change-manager, security-officer) is required
+  - The process only dispatches after every ladder rung approves
+  - A rejection at any rung stops the update and records who rejected and why
+  - Each approval and the final dispatch decision are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: enforces the human approval ladder before allowing dispatch
+  - domain: audit
+    interaction: records each approval rung and the final gate decision
+  - domain: provider
+    interaction: dispatches the update job only after full approval
+  - domain: data
+    interaction: records the held-then-approved process state against the resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- modification
+- approval-ladder
+- escalation
+- compliance
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - The resource is marked compliance-gated
+  - An approval ladder policy is configured
+  postconditions:
+  - The update runs only after all approvals
+  - Every approval and the dispatch are auditable
+  note: batch=day0-day2-ops-2026-07-22

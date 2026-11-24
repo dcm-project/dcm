@@ -1,0 +1,60 @@
+uuid: uc-375cba80-b1e8-42f2-9951-3e616f450b08
+handle: integration/external-consumer-conformance
+version: 1.0.0
+scenario:
+  description: >-
+    An integrator builds an external system on the UDLM data model — consuming the estate graph and
+    reacting to realized state. They declare the read surface they depend on (the named types and
+    the versions they verified against), and the registry gates on it: every type they consume
+    exists and no version they require is ahead of the registry. When the registry later adds a
+    field the integrator does not consume, the integrator is unaffected — must-ignore-unknown means
+    forward change does not break a conforming reader. And because the contract is versioned with a
+    compatibility promise, the integrator can pin to a version and trust that a same-major change
+    stays wire-compatible. The integrator's demand is stability under change: they integrate once
+    and are not broken by the platform's forward evolution.
+  actor:
+    persona: integrator
+    profile: standard
+  perspectives:
+    - platform-engineer
+    - compliance-auditor
+    - security-officer
+  intent: >-
+    Consume the UDLM data model from an external system with a declared read surface, unbroken by
+    forward change — unknown fields ignored, the versioned contract pinnable to a compatibility
+    promise
+  success_criteria:
+  - The integrator declares the types and versions it consumes, and the registry gates that surface
+  - A registry-added field the integrator does not consume never breaks it (must-ignore-unknown)
+  - The integrator pins to a version and a same-major change stays wire-compatible (ADR-051)
+  - A required version ahead of the registry is refused, not silently accepted
+  - The integrator integrates once and survives the platform's forward evolution
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the integrator's declared read surface (types + verified versions) is recorded as a consumer declaration
+  - domain: policy
+    interaction: the registry gates the declared surface (types exist, versions not ahead); must-ignore-unknown holds
+  - domain: provider
+    interaction: n/a — the integrator is an external consumer of the data model, not a provider
+  - domain: audit
+    interaction: the declared surface and the pinned version are recorded for the integration
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: osac-persona-coverage-2026-07-27
+  timestamp: '2026-07-27T19:00:00Z'
+tags:
+- integration
+- integrator
+- consumer-conformance
+- must-ignore-unknown
+- versioning

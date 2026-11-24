@@ -1,0 +1,63 @@
+uuid: uc-hammer-networking-019
+handle: networking/sovereign-egress-region-lock
+scenario:
+  description: 'Under a sovereign mandate, a regulated tenant''s segment must never route to an uplink
+    or NAT that egresses outside the national boundary. An operator requests a Network.Gateway whose uplink
+    resolves to a peer/region flagged out-of-territory. The system must evaluate the gateway''s egress
+    path against a sovereignty policy and deny (or hold) the routing intent because it would carry traffic
+    across the border. This probes whether egress/routing topology is subject to data-sovereignty constraints,
+    or whether sovereignty is only enforced on data-at-rest and placement while the network path escapes
+    governance.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: sovereign
+  perspectives:
+    - provider-owner
+    - federation-peer-operator
+    - sovereignty-authority
+    - tenancy-authority
+  intent: Prevent a gateway from routing a sovereign tenant's traffic out of territory
+  success_criteria:
+  - The gateway's egress/uplink path and its territory are resolved from the model
+  - Sovereignty policy evaluates the egress path, not just data placement
+  - An out-of-territory egress route is denied or held for escalation
+  - No cross-border routing/NAT is realized for the sovereign segment
+  - The denial cites the sovereignty boundary and the offending egress
+  - If egress-path sovereignty is not modelled, the gap is reported explicitly
+  - The evaluation and outcome are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: sovereignty policy evaluates the gateway egress path and territory
+  - domain: provider
+    interaction: cross-border routing/NAT is not realized
+  - domain: audit
+    interaction: sovereignty evaluation and denial recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- gateway
+- sovereignty
+- egress
+- routing
+- edge
+- gap-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

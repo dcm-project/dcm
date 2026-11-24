@@ -1,0 +1,60 @@
+uuid: uc-hammer-tenancy-013
+handle: tenancy/noisy-neighbor-fair-share
+scenario:
+  description: 'Multiple tenants draw from a shared provider whose capacity is finite. Tenant A submits
+    a burst of requests that would consume most of the provider''s remaining capacity, starving tenants
+    B and C. The system must enforce a fair-share or per-tenant capacity reservation at placement time
+    so that one tenant cannot monopolize a shared provider. This probes whether the placement engine reasons
+    about per-tenant capacity fairness, or whether shared capacity is first-come-first-served and therefore
+    vulnerable to a noisy neighbor.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - provider-owner
+    - tenancy-authority
+  intent: Prevent one tenant from monopolizing shared provider capacity
+  success_criteria:
+  - Placement evaluates per-tenant consumption against the shared provider's capacity
+  - Tenant A's burst is throttled or partially deferred to preserve fair share
+  - Tenants B and C retain their reserved or fair-share capacity
+  - The placement decision cites the fairness constraint that limited tenant A
+  - Requests beyond fair share are deferred, not silently dropped
+  - Fair-share enforcement decisions are recorded in audit
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: placement engine weighs per-tenant capacity against shared provider limits
+  - domain: policy
+    interaction: fair-share constraint caps a single tenant's draw on shared capacity
+  - domain: data
+    interaction: per-tenant capacity consumption tracked against the shared provider
+  - domain: audit
+    interaction: fair-share throttling decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- fair-share
+- noisy-neighbor
+- capacity
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

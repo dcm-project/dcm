@@ -1,0 +1,51 @@
+uuid: uc-a74fd0b0-3655-453f-9ff1-b6986f025835
+handle: binding-surface/worked-example-currency-per-type
+version: 1.0.0
+scenario:
+  description: "An engineer adopting a resource type starts from its worked example. A registry survey\
+    \ found examples drifting behind their specs (the VM example predated the type's reshape entirely\
+    \ \u2014 zero mentions of its current surface). This stresses the usability twin of the outputs gap:\
+    \ every type's worked example must exercise the CURRENT spec surface, and staleness must be detectable\
+    \ rather than discovered by a confused adopter."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Adopt a resource type via its worked example and find the example exercises the type's current
+    specification surface
+  success_criteria:
+  - Every registered type has at least one worked example
+  - The example validates against the type's current spec version
+  - Example staleness (fields absent from the example that the spec added) is mechanically detectable
+  - The example demonstrates the type's outputs being consumed where the type declares them
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: "the example is validated data, not prose \u2014 it tracks the spec"
+  - domain: policy
+    interaction: a currency gate can hold examples to the spec version
+  - domain: provider
+    interaction: examples show realistic provider interactions for the type
+  - domain: audit
+    interaction: example validation results are recordable
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: binding-surface-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- worked-examples
+- usability
+- currency
+- documentation

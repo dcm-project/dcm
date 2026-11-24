@@ -1,0 +1,51 @@
+uuid: uc-97ff267a-8a57-4f8e-ac0c-8c3369a48ed3
+handle: class-versioning/breaking-base-underdeclared-bump-refused
+version: 1.0.0
+scenario:
+  description: 'A registry maintainer changes the SHAPE of an existing Base Class element (string to object)
+    but declares only a patch bump. The compat gate must refuse the change: shape changes are breaking,
+    the declared version increment is insufficient, and the refusal names the element, the classification,
+    and the required bump. The change never reaches the registry.'
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+  intent: Have an under-declared breaking Base Class change refused at the gate with the required bump
+    named
+  success_criteria:
+  - The compat gate classifies the element shape change as breaking
+  - The change is refused because the declared bump is insufficient for the classification
+  - 'The refusal is typed and actionable: it names the element, the breaking classification, and the minimum
+    required bump'
+  - No downstream artifact is regenerated from the refused change
+  - The refusal exists as a durable typed gate-outcome record naming the change, the classification, and the declared-vs-required bumps
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: internal_audit
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the element diff is classified breaking by deterministic comparison
+  - domain: policy
+    interaction: the version-sufficiency rule refuses the under-declared bump
+  - domain: audit
+    interaction: the gate refusal and its classification are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- base-class
+- breaking-change
+- must-reject

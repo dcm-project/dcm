@@ -1,0 +1,68 @@
+uuid: uc-hammer-dr-rehydration-013
+handle: dr-rehydration/policy-changed-pinned-config-preserved
+scenario:
+  description: 'The counterpart to the RHY-001 current-policy default: a security officer needs to rehydrate
+    a resource exactly as it ran under the policy in force at original realization, because a legal hold
+    or an in-flight audit requires reproducing the historical state verbatim — even though policy has
+    since changed. This UC tests whether the architecture offers a pinned-config rehydration mode that
+    binds to the historical policy version rather than the current one, and whether such a mode is itself
+    governed (who may authorize resurrecting a superseded policy, and under what audit controls). If the
+    architecture only supports current-policy evaluation, this returns unsupported — a meaningful finding
+    about legal-hold and forensic DR needs.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Rehydrate under the historical pinned policy for a legal hold
+  success_criteria:
+  - The request specifies pinned-config mode bound to the historical policy version
+  - System resolves which policy version was in force at original realization
+  - If supported, the resource is rebuilt under the pinned historical policy, not the current one
+  - Authorization to invoke pinned mode is itself checked and governed
+  - The deviation from current-policy default is recorded with the authorizing identity
+  - If pinned mode is unsupported, the limitation is surfaced explicitly as a finding
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    governance_context: audit_heavy
+    provider_landscape: multiple_eligible
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: historical policy version resolved and pinned mode authorization checked
+  - domain: data
+    interaction: stored intent and the in-force-at-realization policy version read
+  - domain: provider
+    interaction: resource re-realized under the pinned historical policy if supported
+  - domain: audit
+    interaction: pinned-mode invocation, authorizing identity, and deviation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- pinned-config
+- legal-hold
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource was realized under a policy version since superseded
+  - A legal hold requires reproducing the historical state verbatim
+  postconditions:
+  - Resource rebuilt under pinned historical policy, or limitation surfaced
+  - Pinned-mode authorization and deviation recorded
+  note: batch=framework-hammer-2026-07-16

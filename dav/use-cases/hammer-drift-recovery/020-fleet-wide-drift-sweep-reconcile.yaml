@@ -1,0 +1,68 @@
+uuid: uc-hammer-drift-recovery-020
+handle: drift-recovery/fleet-wide-drift-sweep-reconcile
+scenario:
+  description: 'An SRE launches a scheduled fleet-wide reconciliation across a full-stack estate spanning
+    many resources and providers. The engine must discover every resource, diff each against its immutable
+    Realized snapshot, classify each drift by severity, and apply the governance matrix uniformly: tolerate
+    minor, auto-remediate significant, and freeze-and-escalate critical — all within one sweep, producing
+    a consolidated drift report. This validates that detection, severity classification, and policy-driven
+    response compose at fleet scale without per-resource special-casing, and that the sweep terminates
+    with an actionable summary.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - compliance-auditor
+  intent: Run a fleet-wide drift sweep that classifies and responds to each resource under one governance
+    matrix
+  success_criteria:
+  - Every in-scope resource is discovered and diffed against its immutable Realized snapshot
+  - Each detected drift is classified by severity (minor, significant, critical)
+  - The governance matrix is applied uniformly across the fleet
+  - Minor drift is tolerated, significant is auto-remediated, critical is frozen and escalated
+  - A consolidated drift report summarizes findings and actions per resource
+  - The sweep terminates with per-resource outcomes recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: composite_service
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: mixed
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: every resource discovered across mixed providers in one sweep
+  - domain: data
+    interaction: each resource diffed against its immutable Realized snapshot
+  - domain: policy
+    interaction: governance matrix classifies severity and selects response per resource
+  - domain: audit
+    interaction: consolidated drift report and per-resource outcomes recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- fleet-sweep
+- governance-matrix
+- severity-classification
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A full-stack estate is realized across mixed providers
+  - A governance matrix maps severity bands to responses
+  postconditions:
+  - Fleet swept; each drift classified and handled per matrix
+  - Consolidated drift report produced
+  - Per-resource outcomes recorded
+  note: batch=framework-hammer-2026-07-16

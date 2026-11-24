@@ -1,0 +1,61 @@
+uuid: uc-hammer-decommission-020
+handle: decommission/cross-domain-dangling-payload
+scenario:
+  description: 'A platform engineer decommissions a composite application whose one constituent — an object-storage
+    bucket — is still referenced by a payload-carried dependency from OUTSIDE the composite: a scheduled
+    analytics job in another team''s environment writes to it nightly. The dependency is expressed in
+    the resource payload, not as a top-level graph edge. The system must detect the cross-domain payload
+    reference before destroying the bucket, refuse to strand the external writer, and surface the external
+    dependent. This probes whether the dependency graph sees payload-embedded references, a common blind
+    spot that likely returns partially supported or unsupported.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+  intent: Decommission a composite without stranding an external payload-referenced dependent
+  success_criteria:
+  - System scans resource payloads, not just top-level edges, for references to the bucket
+  - The external analytics job's cross-domain reference to the bucket is detected
+  - The bucket is not destroyed while the external writer still references it
+  - The external dependent is surfaced to the requester as a blocker
+  - The rest of the composite tears down only if it can do so without stranding the external reference
+  - The payload-reference detection and the block are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: resource payloads scanned for cross-domain references to the bucket
+  - domain: policy
+    interaction: payload-reference constraint blocks destroying a still-referenced constituent
+  - domain: provider
+    interaction: composite teardown withheld on the referenced bucket
+  - domain: audit
+    interaction: payload-dependent detection and block recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- payload-dependency
+- cross-domain
+- composite
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

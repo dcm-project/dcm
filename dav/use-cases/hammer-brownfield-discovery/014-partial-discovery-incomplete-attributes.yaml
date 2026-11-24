@@ -1,0 +1,61 @@
+uuid: uc-hammer-brownfield-014
+handle: brownfield-discovery/partial-discovery-incomplete-attributes
+scenario:
+  description: 'A discovery source returns a partial record — it knows a host''s MAC and IP but its credentials
+    were rejected, so CPU, memory, and firmware are unknown. The system must ingest the entity with the
+    attributes it has, mark the missing attributes as unknown (not zero, not defaulted), and hold the
+    entity in an incomplete-discovery state that blocks adoption until the record is completed. A later
+    scan that fills the gaps must upgrade the same entity in place. This probes whether the model distinguishes
+    unknown from absent/zero and whether incompleteness gates adoption rather than silently producing
+    a wrong entity.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Ingest a partially-discovered resource without defaulting unknown attributes
+  success_criteria:
+  - Known attributes (MAC, IP) are ingested; unknown attributes are marked unknown, not defaulted to zero
+  - The entity is held in an incomplete-discovery state that blocks adoption
+  - The reason for incompleteness (credential rejection) is recorded on the entity
+  - A later completing scan upgrades the same entity in place, preserving its UUID
+  - Adoption becomes possible only once required attributes are no longer unknown
+  - The incomplete-discovery condition and its later resolution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: provider
+    interaction: discovery source returns a partial record after credential rejection
+  - domain: data
+    interaction: entity ingested with unknown-marked attributes and an incomplete-discovery state
+  - domain: policy
+    interaction: completeness policy gates adoption until required attributes are known
+  - domain: audit
+    interaction: incompleteness cause and later completion recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- brownfield-discovery
+- partial-discovery
+- unknown-vs-absent
+- completeness-gate
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

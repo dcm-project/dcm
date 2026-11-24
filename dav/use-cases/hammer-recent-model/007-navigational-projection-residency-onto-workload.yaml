@@ -1,0 +1,65 @@
+uuid: uc-hammer-recent-model-007
+handle: recent-model/navigational-projection-residency-onto-workload
+scenario:
+  description: "A platform engineer provisions a sovereign workload whose placement policy needs the residency\
+    \ of\n    the DataCenter it will run in. Rather than the requester restating residency, the pipeline\
+    \ projects\n    it via the navigational coordinate self.datacenter.residency, pulling the residency\
+    \ field from the\n    related DataCenter entity into the request at evaluation time. The dereference\
+    \ is governed: the\n    projection is only permitted because policy authorizes reading residency across\
+    \ that relation. This\n    probes that a field can be injected FROM a related entity INTO the pipeline\
+    \ by coordinate, and that\n    the cross-entity read is policy-governed rather than free."
+  actor:
+    persona: platform-engineer
+    profile: sovereign
+  perspectives:
+    - provider-owner
+    - sovereignty-authority
+  intent: Project the DataCenter residency onto a sovereign workload via self.datacenter.residency at
+    evaluation time
+  success_criteria:
+  - The projection self.datacenter.residency resolves to the related DataCenter's residency value
+  - The residency is injected into the request pipeline, not restated by the requester
+  - The cross-entity dereference is authorized by policy before the value is read
+  - The placement decision uses the projected residency
+  - The projected value's provenance (source entity and field path) is retained
+  - The governed dereference is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: sovereignty_enforced
+    failure_mode: happy_path
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: data
+    interaction: self.datacenter.residency is dereferenced from the related DataCenter entity
+  - domain: policy
+    interaction: policy authorizes the cross-relation read and applies the projected residency to placement
+  - domain: provider
+    interaction: the eligible provider places the workload consistent with the projected residency
+  - domain: audit
+    interaction: the governed dereference and its provenance are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- navigational-projection
+- self-relation-fieldpath
+- governed-dereference
+- residency-injection
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - The workload has a resolvable datacenter relation
+  - The DataCenter entity exposes a residency field
+  postconditions:
+  - The workload is placed per its DataCenter's residency
+  - The projection's source path and value are retained on the entity
+  note: batch=recent-model-2026-07-22

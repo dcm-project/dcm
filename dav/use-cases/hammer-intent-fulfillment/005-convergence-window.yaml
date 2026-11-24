@@ -1,0 +1,63 @@
+uuid: uc-670360d1-cd6a-427e-953f-a46cb270548f
+handle: intent-fulfillment/convergence-window
+version: 1.0.0
+scenario:
+  description: >-
+    The same transiently-unsatisfiable member (a container whose PVC has no capacity yet) under
+    three settings of the convergence window w — the only converge-versus-fail-fast dial in the
+    model. At w=0 (fail-fast) the member is given up immediately: it does not wait for the
+    transient blocker, it is refused now, and its operational dependents are dependency-cancelled.
+    At w=N (converge-then-give-up) the member waits and converges if the blocker clears within the
+    bound; if the window expires first, it is given up like w=0. At w=infinity (defer) the member
+    waits indefinitely, held pending, converging whenever the blocker clears. The member status is
+    transient throughout — the window governs how long a transient member is allowed to converge,
+    not whether it can. A permanent member would be refused immediately under every w; the window
+    modulates transient members only. Each setting produces a distinct, correct outcome the
+    consumer chooses.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: >-
+    Have the same transient member behave as fail-fast at w=0, converge-then-give-up at w=N, and
+    defer indefinitely at w=infinity — the window being the sole dial over how long a transient
+    member may converge
+  success_criteria:
+  - At w=0 the transient member is given up immediately (fail-fast) and its operational dependents are dependency-cancelled
+  - At w=N the member converges if its transient blocker clears within the bound, else is given up when the window expires
+  - At w=infinity the member is held pending and converges whenever the blocker clears — no deadline
+  - The member status stays transient across all three; the window governs how long it may converge, not whether it can
+  - A permanent member would be refused immediately regardless of w — the window modulates transient members only
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: multiple_interacting
+    provider_landscape: none_eligible
+    governance_context: standard_governance
+    failure_mode: timeout
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the convergence window w is an intent field on the member; member status (transient|permanent) is separate
+  - domain: policy
+    interaction: w=0 fail-fast, w=N converge-then-give-up, w=infinity defer — the sole converge-vs-fail-fast dial, applied to transient members
+  - domain: provider
+    interaction: the reconciliation loop re-attempts the member until it converges or the window expires
+  - domain: audit
+    interaction: the window setting, the convergence or give-up, and any dependency-cancellation are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: intent-fulfillment-nature-2026-07-27
+  timestamp: '2026-07-27T18:00:00Z'
+tags:
+- hammer
+- intent-fulfillment
+- convergence-window
+- fail-fast
+- defer

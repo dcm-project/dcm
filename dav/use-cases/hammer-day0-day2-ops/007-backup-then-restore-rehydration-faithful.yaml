@@ -1,0 +1,62 @@
+uuid: uc-hammer-day0-day2-ops-007
+handle: day0-day2-ops/backup-then-restore-rehydration-faithful
+scenario:
+  description: 'An SRE takes a scheduled backup of a stateful FSI database via an Automation.Job bound
+    to that database, producing a restore point. Later the database is corrupted, and a restore process
+    rehydrates it faithfully from that backup — same identity, same provider, byte-faithful state as of
+    the restore point. This is a two-process arc: the backup process produces the artifact the restore
+    process consumes, both bound to the same resource identity.'
+  actor:
+    persona: sre
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - compliance-auditor
+  intent: Back up a stateful resource and later faithfully rehydrate it from that backup
+  success_criteria:
+  - The backup job is bound to the database and produces a referenceable restore point
+  - The restore process consumes exactly that restore-point artifact
+  - 'Rehydration is faithful: same resource identity and same owning provider'
+  - The rehydrated state matches the backup as of the restore-point timestamp
+  - Backup and restore are recorded as two bound processes over one resource identity
+  - The chain of custody from backup artifact to restore is auditable
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: provider
+    interaction: runs the backup job and later the faithful restore against the same database
+  - domain: data
+    interaction: records the restore point and re-establishes the rehydrated realized state
+  - domain: policy
+    interaction: enforces the FSI backup/restore policy chain (retention, integrity check)
+  - domain: audit
+    interaction: records the backup artifact chain of custody through to restore
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- rehydration_faithful
+- backup
+- restore
+- fsi
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - A backup schedule and restore-point store exist
+  - The database identity is stable across the arc
+  postconditions:
+  - A restore point is produced and later consumed
+  - The database is faithfully rehydrated and auditable
+  note: batch=day0-day2-ops-2026-07-22

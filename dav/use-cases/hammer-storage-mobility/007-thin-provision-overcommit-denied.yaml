@@ -1,0 +1,59 @@
+uuid: uc-hammer-storage-mobility-007
+handle: storage-mobility/thin-provision-overcommit-denied
+scenario:
+  description: 'A finance-analyst-driven capacity plan thin-provisions volumes on a Storage.Pool such
+    that the sum of declared logical sizes (5 TiB) exceeds physical pool capacity (3 TiB), betting on
+    low real utilization. A subsequent write burst pushes actual usage toward the physical ceiling. The
+    system must model the difference between declared (logical) and allocated (physical) capacity, admit
+    overcommit as an intentional policy, and enforce a guard that denies or throttles new writes before
+    the pool physically fills. This probes whether thin provisioning and overcommit ratios are expressible,
+    or whether the model only understands thick allocation.
+
+    '
+  actor:
+    persona: finance-analyst
+    profile: prod
+  perspectives:
+    - provider-owner
+  intent: Thin-provision volumes beyond physical capacity and guard against fill
+  success_criteria:
+  - Logical (declared) and physical (allocated) capacity are modeled distinctly
+  - Overcommit is admitted only under an explicit thin-provisioning policy
+  - The overcommit ratio is recorded against the pool
+  - A guard denies or throttles allocation/writes as physical usage nears the ceiling
+  - If thin provisioning is not expressible, the gap is reported as unsupported
+  - No silent data loss occurs when physical capacity is reached
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: logical vs physical capacity and overcommit ratio tracked per pool
+  - domain: policy
+    interaction: thin-provisioning policy admits overcommit and enforces fill guard
+  - domain: provider
+    interaction: provider reports physical utilization to the fill guard
+  - domain: audit
+    interaction: overcommit admission and guard actions recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- thin-provisioning
+- overcommit
+- capacity
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

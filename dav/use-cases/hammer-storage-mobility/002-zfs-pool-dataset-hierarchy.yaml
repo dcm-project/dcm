@@ -1,0 +1,55 @@
+uuid: uc-hammer-storage-mobility-002
+handle: storage-mobility/zfs-pool-dataset-hierarchy
+scenario:
+  description: 'An SRE declares a ZFS-style storage hierarchy: a Storage.Pool composed of vdevs, with
+    nested Storage.Dataset resources (parent tank, child tank/home, grandchild tank/home/chris) each carrying
+    inherited and overridden properties (compression, recordsize, quota). The system must model arbitrary-depth
+    parent/child containment where child datasets inherit properties from ancestors unless overridden.
+    This stresses whether the data model expresses a recursive dataset tree, property inheritance, and
+    the pool-as-root invariant rather than a flat volume list.
+
+    '
+  actor:
+    persona: sre
+    profile: standard
+  perspectives: []
+  intent: Model a nested ZFS pool and dataset hierarchy with property inheritance
+  success_criteria:
+  - Storage.Pool is created as the root of the hierarchy
+  - Datasets nest to arbitrary depth via parent/child containment
+  - Each dataset resolves properties through ancestor inheritance
+  - An overridden property on a child does not mutate the ancestor's declared value
+  - Dependency ordering realizes ancestors before descendants
+  - The full hierarchy is reconstructable from stored intent alone
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: recursive dataset tree persisted with parent/child containment and inherited properties
+  - domain: provider
+    interaction: ZFS provider realizes pool then datasets in ancestor-first order
+  - domain: audit
+    interaction: hierarchy creation recorded with inheritance resolution
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- zfs
+- dataset-hierarchy
+- inheritance
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

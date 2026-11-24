@@ -1,0 +1,61 @@
+uuid: uc-hammer-day0-day2-ops-013
+handle: day0-day2-ops/ttl-expiry-triggers-decommission-process
+scenario:
+  description: A finance analyst set a 14-day TTL on a set of dev sandbox VMs to cap spend. At expiry,
+    the system must autonomously enforce the TTL by firing a decommission Automation.Job bound to each
+    expired VM — the expiry policy triggers a bound teardown process, it does not merely flag the resource.
+    The process runs to a terminal outcome, the realized state is cleared, and the intent is marked expired,
+    closing the cost exposure without a human ticket.
+  actor:
+    persona: finance-analyst
+    profile: dev
+  perspectives:
+    - security-officer
+  intent: Enforce a resource TTL at expiry by firing a bound decommission process
+  success_criteria:
+  - At TTL expiry the policy autonomously fires a decommission job bound to each expired VM
+  - Expiry triggers a bound teardown process, not merely a flag on the resource
+  - Each decommission process runs to a terminal outcome (COMPLETED)
+  - Realized state for the expired VMs is cleared and intent marked expired
+  - The cost exposure is closed without a manual ticket
+  - The expiry trigger and the teardown are linked in the audit trail
+  dimensions:
+    lifecycle_phase: expiry_enforcement
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: policy
+    interaction: evaluates the TTL and fires the expiry-enforcement decommission trigger
+  - domain: provider
+    interaction: runs the bound decommission job on each expired VM
+  - domain: data
+    interaction: clears realized state and marks intent expired
+  - domain: audit
+    interaction: links the expiry trigger to each teardown outcome
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: day0-day2-ops-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- day0-day2
+- expiry_enforcement
+- ttl
+- decommission
+- cost
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-day0-day2-ops
+  preconditions:
+  - Dev VMs carry a 14-day TTL
+  - A decommission job is registered
+  postconditions:
+  - Expired VMs are torn down at TTL
+  - Intent marked expired and the arc auditable
+  note: batch=day0-day2-ops-2026-07-22

@@ -1,0 +1,61 @@
+uuid: uc-hammer-credentials-010
+handle: credentials/decommission-blocked-unrevocable
+scenario:
+  description: 'A platform engineer decommissions an entity whose credential cannot be revoked — the issuing
+    provider is unreachable, or the credential was minted by an offline HSM that is no longer available
+    to process a revocation. Policy forbids completing a decommission while a live credential remains
+    un-revocable, because that leaves a dangling secret that can still authenticate. The system must block
+    the decommission, explain why, and require human escalation. This likely surfaces as unsupported or
+    human_escalation_required — a finding about un-revocable credentials.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Decommission an entity whose credential cannot be revoked
+  success_criteria:
+  - The credential tied to the entity is found to be un-revocable
+  - The decommission is blocked rather than completed with a dangling secret
+  - The reason (issuer unreachable / offline HSM) is clearly surfaced
+  - Human escalation is required to force or defer the decommission
+  - No entity state is destroyed while the credential remains live
+  - The blocked decommission and escalation are recorded in audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: provider_failure
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: policy blocks decommission while a credential is un-revocable
+  - domain: provider
+    interaction: revocation attempt fails; issuer/HSM is unreachable
+  - domain: data
+    interaction: entity retained; decommission not applied
+  - domain: audit
+    interaction: blocked decommission and escalation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- decommission
+- unrevocable
+- escalation
+- likely-unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

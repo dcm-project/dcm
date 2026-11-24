@@ -1,0 +1,58 @@
+uuid: uc-hammer-peer-dcm-008
+handle: peer-dcm/disconnected-peer-unreachable-placement-fallback
+scenario:
+  description: Placement selects a peer DCM to host a workload, but the peer is unreachable at dispatch. A recovery
+    policy re-evaluates placement across the remaining candidates — local or another peer — and realizes there,
+    recording the peer disconnect and the fallback.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+    - federation-peer-operator
+  intent: Fall back to another candidate when the peer that would host is unreachable
+  success_criteria:
+  - Placement selects a peer that is then unreachable at dispatch
+  - The peer disconnect is detected before realization
+  - A recovery policy re-evaluates the remaining candidates
+  - The workload realizes on a reachable candidate (local or another peer)
+  - The disconnect and fallback are recorded
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: mixed
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: the first-choice peer is unreachable; another candidate realizes
+  - domain: policy
+    interaction: recovery policy re-evaluates placement on disconnect
+  - domain: audit
+    interaction: the disconnect and fallback recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- disconnected
+- peer-dcm-disconnect
+- fallback
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - The first-choice peer is unreachable at dispatch; other candidates exist
+  postconditions:
+  - The workload runs on a reachable candidate; fallback recorded
+  note: batch=peer-dcm-2026-07-23

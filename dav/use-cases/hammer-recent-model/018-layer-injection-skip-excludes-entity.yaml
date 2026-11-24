@@ -1,0 +1,65 @@
+uuid: uc-hammer-recent-model-018
+handle: recent-model/layer-injection-skip-excludes-entity
+scenario:
+  description: "A tenant admin modifies a governed workload under a compliance-gated profile. A broad\
+    \ data layer in\n    the from_layers set covers the entire tenant, but this specific workload is listed\
+    \ in the layer's skip\n    set because it is under a separate regulatory hold. Effective injection\
+    \ is from_layers MINUS skip, so\n    the broad layer's values must NOT be injected onto this workload\
+    \ even though covers would otherwise\n    include it. With the broad layer skipped, only a narrower\
+    \ compliant layer contributes, so the workload\n    is modified with a reduced value set. This stresses\
+    \ the skip-subtraction side of layer injection under\n    a governance matrix."
+  actor:
+    persona: tenant-admin
+    profile: fsi
+  perspectives:
+    - tenancy-authority
+    - regulator
+  intent: Exclude a workload from a covering layer via skip, so effective injection is from_layers minus
+    skip
+  success_criteria:
+  - The broad layer covers the workload's tenant via covers
+  - The workload is listed in the broad layer's skip set
+  - Effective injection is computed as from_layers minus skip
+  - The broad layer's values are NOT injected onto the skipped workload
+  - A narrower compliant layer still contributes its values
+  - The skip subtraction and the reduced injected set are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: multiple_eligible
+    governance_context: compliance_gated
+    failure_mode: partial_fulfillment
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: the effective layer set is computed as from_layers minus the skip set
+  - domain: policy
+    interaction: the governance matrix enforces the regulatory hold that drives the skip
+  - domain: provider
+    interaction: the workload is modified with the reduced, compliant value set
+  - domain: audit
+    interaction: the skip subtraction and reduced injected set are recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- layer-injection
+- from-layers
+- skip
+- exclusion
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - A broad layer covers the tenant and lists this workload in skip
+  - The workload is under a separate regulatory hold
+  postconditions:
+  - The broad layer's values were not injected onto the workload
+  - Only the narrower compliant layer contributed values
+  note: batch=recent-model-2026-07-22

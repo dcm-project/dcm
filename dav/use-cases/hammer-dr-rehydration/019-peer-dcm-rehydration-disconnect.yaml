@@ -1,0 +1,67 @@
+uuid: uc-hammer-dr-rehydration-019
+handle: dr-rehydration/peer-dcm-rehydration-disconnect
+scenario:
+  description: 'Part of a tenant''s stack was originally realized through a peer DCM in a federated arrangement
+    — the local DCM holds the intent and dependency graph, but the actual realization was delegated across
+    the federation boundary. During DR, an SRE rehydrates, but the peer DCM is unreachable (the disaster
+    or a network partition took it down too). The local DCM can rebuild everything it owns directly, yet
+    the peer-delegated resources cannot be re-realized without the peer. The system must rehydrate the
+    local portion, detect the peer disconnect, hold the peer-delegated resources and their dependents
+    cleanly, and not pretend the federated resources were restored. This likely returns partially_supported
+    or unsupported for the peer portion.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - federation-peer-operator
+    - tenancy-authority
+  intent: Rehydrate a federated stack while the peer DCM is disconnected
+  success_criteria:
+  - Locally owned resources are rehydrated directly by the local DCM
+  - The system detects the peer DCM is unreachable before attempting peer-delegated rebuilds
+  - Peer-delegated resources are held cleanly, not falsely marked realized
+  - Dependents of peer-delegated resources are not built on missing prerequisites
+  - The federation boundary and which resources are blocked on the peer are made explicit
+  - The peer disconnect and the partial outcome are recorded for resumption when the peer returns
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent and federation ownership map read; peer-delegated resources identified
+  - domain: policy
+    interaction: validation runs locally; peer-delegated resources held pending the peer
+  - domain: provider
+    interaction: local providers re-realize local resources; peer DCM unreachable for the rest
+  - domain: audit
+    interaction: peer disconnect, blocked resources, and partial outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- dr-rehydration
+- federation
+- peer-disconnect
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Part of the stack was realized via a peer DCM across a federation boundary
+  - The peer DCM is unreachable during rehydration
+  postconditions:
+  - Local resources rehydrated; peer-delegated ones cleanly held
+  - Peer disconnect and partial outcome recorded for resumption
+  note: batch=framework-hammer-2026-07-16

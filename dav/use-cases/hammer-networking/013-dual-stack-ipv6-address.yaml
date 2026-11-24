@@ -1,0 +1,55 @@
+uuid: uc-hammer-networking-013
+handle: networking/dual-stack-ipv6-address
+scenario:
+  description: 'An existing service currently has a single IPv4 Network.IPAddress. The team modifies it
+    to dual-stack: keep the static IPv4 and add an IPv6 Network.IPAddress (allocation: static or auto)
+    on the same Hardware.NetworkInterface. The system must model two distinct address records distinguished
+    by ip_family on one interface, apply the change as a modification (not a rebuild), and preserve the
+    existing IPv4 UUID. This tests that address family is a first-class discriminator and that dual-stack
+    is additive rather than a replace-the-interface operation.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Add an IPv6 address to an interface that already has an IPv4 address (go dual-stack)
+  success_criteria:
+  - A second Network.IPAddress is created with ip_family ipv6 on the same interface
+  - The existing IPv4 Network.IPAddress record and its UUID are preserved unchanged
+  - Both records coexist on the one Hardware.NetworkInterface, distinguished by ip_family
+  - The change is processed as a modification, not a destroy/rebuild of the interface
+  - Realized state shows both families active on the interface
+  - The additive change is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: second IPAddress (ipv6) added; ipv4 record preserved by ip_family discriminator
+  - domain: provider
+    interaction: interface reconfigured additively to carry both families
+  - domain: audit
+    interaction: additive dual-stack modification recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- ip-address
+- ipv6
+- dual-stack
+- modification
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

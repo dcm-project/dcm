@@ -1,0 +1,58 @@
+uuid: uc-hammer-capacity-020
+handle: capacity/gpu-class-scored-multi-provider
+scenario:
+  description: 'A data-science tenant requests a training workload requiring a specific GPU class with
+    a minimum count and interconnect capability. Several providers offer GPUs of differing generations
+    and free counts; the engine must filter to providers meeting the GPU-class and count floor, score
+    the survivors on capability fit and capacity headroom, and reserve on the best fit. This tests capability-typed,
+    quantity-constrained scoring for a scarce specialized resource under audit-heavy governance.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: prod
+  perspectives:
+    - provider-owner
+    - compliance-auditor
+    - tenancy-authority
+  intent: Select the best GPU-class provider meeting a count and interconnect floor
+  success_criteria:
+  - The required GPU class, minimum count, and interconnect capability are resolved
+  - Providers not meeting the GPU class or count floor are excluded
+  - Surviving providers are scored on capability fit and capacity headroom
+  - The best-fit provider is reserved for the full requested GPU count
+  - A provider with the right GPU class but insufficient count is not partially placed
+  - The GPU capability scoring and selection are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: GPU-class and count floor filtered, survivors scored and reserved
+  - domain: policy
+    interaction: capability and quantity validation gates the candidate set
+  - domain: audit
+    interaction: GPU capability scoring and selection recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:20.000000+00:00'
+tags:
+- capacity
+- provider-selection
+- gpu
+- capability-scoring
+- scarce-resource
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

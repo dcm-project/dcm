@@ -1,0 +1,57 @@
+uuid: uc-hammer-tenancy-006
+handle: tenancy/ownership-transfer-whole-allocation
+scenario:
+  description: 'A realized resource with a whole_allocation stake (an entire allocatable unit held by
+    one tenant, not a subdivisible share) must be transferred from tenant A to tenant B — for example,
+    a dedicated block reassigned during a business-unit reorganization. The platform engineer requests
+    the transfer. The system must reassign ownership atomically, preserve the resource UUID and realized
+    state, revoke tenant A''s access, and grant tenant B''s, without a destroy/recreate. This probes whether
+    ownership is mutable metadata that can move between tenants while identity and realization are held
+    fixed.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - compliance-auditor
+    - tenancy-authority
+  intent: Transfer a whole_allocation resource from one tenant to another in place
+  success_criteria:
+  - Ownership field moves from tenant A to tenant B atomically
+  - Resource UUID and realized state are preserved (no destroy/recreate)
+  - Tenant A loses all access to the resource after transfer
+  - Tenant B gains full ownership access after transfer
+  - The transfer is rejected if the allocation is subdivided and not wholly owned
+  - Before/after ownership and the initiating principal are captured in audit
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: ownership attribute updated atomically while UUID and realized state are held constant
+  - domain: policy
+    interaction: transfer policy verifies whole_allocation and both tenants' eligibility
+  - domain: audit
+    interaction: ownership change recorded with prior owner, new owner, and initiator
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- ownership-transfer
+- whole-allocation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

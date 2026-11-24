@@ -1,0 +1,50 @@
+uuid: uc-ec36271c-de3a-456a-8826-30be80453634
+handle: class-versioning/element-scope-move-is-breaking
+version: 1.0.0
+scenario:
+  description: A registry maintainer moves an element from Base Class scope to Provider Class scope with
+    only a minor bump. Because portability is DERIVED from element scope, narrowing an element's scope
+    shrinks the portable surface of every type that carried it — a breaking change to the portability
+    contract even though no schema shape changed. The gate must classify scope narrowing as breaking and
+    refuse the under-declared bump.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - sre
+  intent: Have an element scope narrowing classified as breaking because it shrinks the derived portable
+    surface
+  success_criteria:
+  - Moving an element to a narrower scope is classified breaking regardless of schema-shape stability
+  - The under-declared bump is refused with the portability impact named
+  - The refusal enumerates the types whose portable surface the move would shrink
+  - Scope widening (Provider to Type, Type to Base) is classified compatible
+  - The classification rule is deterministic gate logic, not review judgment
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_with_deps
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: policy_violation
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: element scope position derives the portable surface
+  - domain: policy
+    interaction: scope narrowing is breaking by rule; the gate refuses the insufficient bump
+  - domain: audit
+    interaction: the refused move and its portability impact are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: class-versioning-2026-07-25
+  timestamp: '2026-07-25T15:00:00Z'
+tags:
+- hammer
+- class-versioning
+- portability
+- element-scope
+- must-reject

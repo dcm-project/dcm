@@ -1,0 +1,66 @@
+uuid: uc-hammer-drift-recovery-018
+handle: drift-recovery/correct-immutable-realized-directly
+scenario:
+  description: 'A platform engineer, seeing that a resource has drifted, asks the system to simply overwrite
+    the immutable Realized snapshot to match the newly discovered value — treating drift as a data-entry
+    error to be edited away. The architecture holds Realized snapshots immutable and advanced only by
+    authorized provider writes, so a direct hand-edit of a historical Realized record must be refused.
+    The engine must reject the in-place mutation and steer the operator to the legitimate paths: adopt
+    the discovered value into intent, or remediate the resource back to intent. This probes an edge that
+    should come back unsupported: mutating an immutable record.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+  intent: Attempt to hand-edit an immutable Realized snapshot to erase a drift
+  success_criteria:
+  - The request asks to overwrite the immutable Realized snapshot in place
+  - The engine refuses to mutate the historical Realized record
+  - The refusal cites the immutability guarantee of Realized snapshots
+  - No new false snapshot is written to paper over the drift
+  - The operator is steered to legitimate paths (adopt-into-intent or remediate-to-intent)
+  - The rejected mutation attempt is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: single_no_deps
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: in-place edit of an immutable Realized snapshot requested and refused
+  - domain: policy
+    interaction: immutability guarantee enforced; legitimate adopt/remediate paths offered
+  - domain: audit
+    interaction: rejected mutation attempt recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- immutability
+- realized-snapshot
+- unsupported-probe
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Resource has drifted; a Realized snapshot exists
+  - Operator requests a direct edit of that snapshot
+  postconditions:
+  - Direct mutation refused; immutability upheld
+  - Operator steered to adopt-or-remediate
+  - Rejected attempt recorded
+  note: batch=framework-hammer-2026-07-16

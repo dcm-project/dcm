@@ -1,0 +1,59 @@
+uuid: uc-hammer-provider-portability-017
+handle: provider-portability/cross-provider-class-nonportable-native-standard-surfaced
+scenario:
+  description: A workload's type adopts a provider-native standard as a type-scope element. When the org re-ports
+    to a different Provider Class, that native-standard element has no equivalent on the target and is surfaced
+    as non-portable. The portable subset re-realizes; the native-standard remainder is flagged for a decision. (The
+    org may choose to keep, remap, or drop it — the engine surfaces, it does not decide.)
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: A type adopting a provider-native standard is surfaced as non-portable at re-port
+  success_criteria:
+  - The portable Base/Type subset re-realizes on the target
+  - The provider-native standard element has no target equivalent
+  - The native-standard element is surfaced as non-portable
+  - The portable result records the surfaced remainder
+  - The decision on the remainder is left to the org
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: identifies the provider-native element with no target equivalent
+  - domain: provider
+    interaction: target realizes the portable subset only
+  - domain: data
+    interaction: records the surfaced native-standard remainder
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- provider-native-standard
+- partial-fulfillment
+- neutrality
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source type carries a provider-native standard element
+  postconditions:
+  - Portable subset ported; native-standard remainder surfaced
+  note: batch=portability-enrich-2026-07-22

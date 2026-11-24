@@ -1,0 +1,61 @@
+uuid: uc-hammer-provider-portability-001
+handle: provider-portability/cross-provider-class-vm-vmware-to-ocpvirt-portable
+scenario:
+  description: A VM was requested at the Type Class (Compute.VM) with only Base/Type SharedDataElements — cpu, memory,
+    os_image by standard identity, a portable network requirement. The org re-ports it from the VMware Provider
+    Class to the OCPVirt Provider Class. Because every element is Base/Type-scoped, the requirement set carries
+    wholesale; placement selects OCPVirt and the workload re-realizes with no requirement loss. A third-party mover
+    repopulates the disk.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Re-port a portable Compute.VM from VMware to OCPVirt across Provider Classes
+  success_criteria:
+  - The stored intent is replayed against the OCPVirt Provider Class
+  - Every Base/Type requirement re-realizes with no loss
+  - Placement selects OCPVirt as the eligible provider of the Type
+  - The data-migration provider moves the disk contents
+  - The re-realized resource records its lineage to the source
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: portable requirement set re-scoped against OCPVirt capabilities
+  - domain: provider
+    interaction: OCPVirt realizes the VM; a data-migration provider moves the disk
+  - domain: data
+    interaction: new realized entity records source_record_uuid lineage
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- compute-vm
+- migration
+- portable-baseline
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source VM was realized at the Compute.VM Type Class with portable requirements
+  - OCPVirt is an eligible provider of Compute.VM
+  postconditions:
+  - The workload runs on OCPVirt with the full requirement set satisfied
+  - Lineage to the source is recorded
+  note: batch=portability-enrich-2026-07-22

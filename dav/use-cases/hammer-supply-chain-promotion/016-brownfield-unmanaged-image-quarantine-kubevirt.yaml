@@ -1,0 +1,68 @@
+uuid: uc-hammer-supply-chain-promotion-016
+handle: supply-chain-promotion/brownfield-unmanaged-image-quarantine-kubevirt
+scenario:
+  description: 'During brownfield ingestion of an existing estate, a security officer discovers a
+    Compute.Container.KubeVirt workload running a container image that was never promoted through the
+    governed controlled repository: it was side-loaded from an external registry and has no SBOM, no
+    scan record, and no provenance. The admission model must treat this unmanaged image as failing the
+    ingress firewall retroactively: it is quarantined, blocked from backing new requests, and queued
+    for scan-and-promote or replacement, rather than being silently accepted because it is already
+    running.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - compliance-auditor
+  intent: Reconcile an already-running image that never went through governed promotion
+  success_criteria:
+  - Brownfield ingestion identifies a running image with no SBOM, scan, or provenance record
+  - The image is recognized as never having crossed the controlled-repo ingress firewall
+  - The unmanaged image is quarantined rather than silently accepted as canonical
+  - It is blocked from backing new Compute.Container.KubeVirt requests
+  - The image is queued for scan-and-promote or replacement to become compliant
+  - 'The quarantine, missing provenance, and affected workload are recorded'
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: single_no_deps
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: ingested image has no SBOM/scan/provenance linkage; recorded as unmanaged
+  - domain: policy
+    interaction: governance matrix retroactively fails the un-admitted image and quarantines it
+  - domain: provider
+    interaction: Compute.Container.KubeVirt blocked from backing new requests with the image
+  - domain: audit
+    interaction: quarantine, missing provenance, and affected workload recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-container
+- brownfield
+- quarantine
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - A running workload uses an image side-loaded outside the controlled repo
+  - The image has no SBOM, scan record, or provenance attestation
+  postconditions:
+  - Unmanaged image quarantined and blocked from new requests
+  - Image queued for scan-and-promote or replacement; finding is auditable
+  note: batch=supply-chain-promotion-2026-07-22

@@ -1,0 +1,61 @@
+uuid: uc-hammer-storage-mobility-010
+handle: storage-mobility/migrate-target-capability-mismatch
+scenario:
+  description: 'A platform engineer attempts to migrate a Storage.Volume that carries live snapshots and
+    a strong-consistency guarantee to a target provider that supports neither snapshot lineage nor strong
+    consistency. The system must compare the source resource''s realized capabilities against the target
+    provider''s declared capability set and refuse a migration that would silently drop snapshots or downgrade
+    the consistency contract. This probes capability-aware placement and whether the architecture prevents
+    lossy migrations — likely surfacing an unsupported verdict.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Migrate a volume to a provider that cannot honor its capabilities
+  success_criteria:
+  - Source volume's required capabilities (snapshots, strong consistency) are enumerated
+  - Target provider's declared capability set is evaluated against them
+  - Migration is refused because the target cannot preserve required capabilities
+  - The specific unmet capabilities are named in the verdict
+  - No data is copied and no cutover is attempted on refusal
+  - Source volume remains fully intact and bound to its current provider
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: target provider capability set compared against source requirements
+  - domain: policy
+    interaction: capability-preservation constraint blocks lossy migration
+  - domain: data
+    interaction: source volume and its snapshot lineage left unchanged
+  - domain: audit
+    interaction: refusal recorded with the specific unmet capabilities
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- migration
+- capability-mismatch
+- unsupported
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

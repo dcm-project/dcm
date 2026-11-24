@@ -1,0 +1,62 @@
+uuid: uc-hammer-recent-model-005
+handle: recent-model/references-edge-baremetal-in-datacenter
+scenario:
+  description: "During brownfield ingestion a BareMetal host is linked to the DataCenter dc-east through\
+    \ a\n    classified, dereferenceable references-context edge (edge class located_in), rather than\
+    \ by copying\n    the datacenter's attributes onto the host. The edge must be typed, must resolve\
+    \ to the real\n    DataCenter entity on dereference, and must let a reader navigate host -> DataCenter\
+    \ without the host\n    duplicating any datacenter-owned field. This probes that orthogonal context\
+    \ is modeled as a\n    first-class classified edge, keeping the host record free of denormalized context."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Link a discovered BareMetal host to its DataCenter via a classified dereferenceable references
+    edge
+  success_criteria:
+  - A located_in references-context edge is created from the host to DataCenter dc-east
+  - The edge is classified (typed) and dereferences to the real DataCenter entity
+  - No datacenter-owned attribute is copied onto the host record
+  - Navigation from host to DataCenter succeeds through the edge
+  - The edge survives re-scan without duplication or reassignment
+  - The edge creation is recorded with its class and endpoints in the audit trail
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: a classified located_in edge is persisted from the host to the DataCenter entity
+  - domain: provider
+    interaction: a discovery provider supplies the host-to-datacenter association
+  - domain: policy
+    interaction: a single validation confirms the edge class and endpoints are well-formed
+  - domain: audit
+    interaction: the edge class and endpoints are recorded at ingestion
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: recent-model-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- references-context-edge
+- classified-edge
+- dereferenceable
+- datacenter
+- recent-model
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-recent-model
+  preconditions:
+  - The DataCenter dc-east entity exists
+  - A discovery source reports the host's datacenter location
+  postconditions:
+  - The host references dc-east through a dereferenceable edge
+  - The host record holds no denormalized datacenter fields
+  note: batch=recent-model-2026-07-22

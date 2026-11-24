@@ -1,0 +1,58 @@
+uuid: uc-hammer-storage-mobility-017
+handle: storage-mobility/cross-tenant-volume-leakage-denied
+scenario:
+  description: 'On a Storage.Pool shared by multiple tenants, tenant-b attempts to attach or snapshot
+    a Storage.Volume owned by tenant-a — for instance by referencing tenant-a''s volume UUID or a residual
+    provider-native id after a prior deallocation. The system must enforce tenant ownership on every volume
+    operation so that no cross-tenant attach, snapshot, or read binding is permitted, and must ensure
+    freed blocks are not readable across the tenant boundary. This probes multi-tenant isolation on shared
+    storage and likely returns a denied/unsupported verdict for the crossing.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - compliance-auditor
+    - tenancy-authority
+  intent: Attempt to access another tenant's volume on a shared pool
+  success_criteria:
+  - Every volume operation is authorized against the requesting tenant's ownership
+  - Cross-tenant attach, snapshot, and read-binding attempts are denied
+  - Referencing another tenant's volume UUID does not grant access
+  - Freed blocks are scrubbed or barred from cross-tenant reuse-read
+  - The denied cross-tenant attempt is recorded with both tenant identities
+  - Tenant-a's volume state is entirely unaffected by the attempt
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: tenant-ownership authorization denies the cross-tenant operation
+  - domain: data
+    interaction: tenant-a volume and freed blocks protected from cross-tenant read
+  - domain: audit
+    interaction: denied cross-tenant attempt recorded with both identities
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- storage-mobility
+- multi-tenancy
+- isolation
+- leakage
+- denied
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

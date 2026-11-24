@@ -1,0 +1,64 @@
+uuid: uc-hammer-policy-override-004
+handle: policy-override/policy-blocked-resolution-options
+scenario:
+  description: 'An application-team-member submits a request that a soft-enforcement policy blocks (an
+    oversized ephemeral volume on a cost-capped profile). Rather than a bare denial, the engine must return
+    a POLICY_BLOCKED verdict that carries the actionable resolution options the actor may take: modify
+    the request to conform, request an override, cancel, or escalate. Each option must state what it would
+    require (e.g. override needs an authorized approver; modify needs the volume under the cap). The actor
+    picks modify and resubmits a conforming request that passes. The mechanism under test is a blocked
+    verdict that is a decision surface with typed next steps, not a dead end.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: standard
+  perspectives:
+    - sre
+  intent: Resolve a soft-policy block by choosing among offered resolution options
+  success_criteria:
+  - The blocking policy produces a POLICY_BLOCKED verdict, not a bare error
+  - The verdict enumerates modify, override, cancel, and escalate as options
+  - Each option states its precondition (e.g. override requires an authorized approver)
+  - Options that are unavailable to this actor are marked unavailable, not hidden
+  - The actor selects modify and resubmits a conforming request that passes
+  - The original block, the chosen option, and the resolving request are audit-linked
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: soft policy emits POLICY_BLOCKED with typed resolution options
+  - domain: policy
+    interaction: option preconditions evaluated for this actor and profile
+  - domain: data
+    interaction: block, chosen option, and resolving request linked as a chain
+  - domain: audit
+    interaction: resolution path recorded from block through conforming resubmission
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- policy-override
+- policy-blocked
+- resolution-options
+- self-service
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A soft-enforcement policy blocks the initial request
+  postconditions:
+  - The actor resolves via modify and a conforming request passes
+  - The full resolution chain is auditable
+  note: batch=framework-hammer-2026-07-16

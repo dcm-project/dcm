@@ -1,0 +1,50 @@
+uuid: uc-hammer-decommission-012
+handle: decommission/unrealized-intent-discard
+scenario:
+  description: 'An application team cancels a request that was submitted but never realized — the intent
+    exists in the data model but no provider ever built anything. Decommissioning it must be a pure data-model
+    operation: mark the intent retired, issue no destroy to any provider, and touch no realized state
+    (there is none). This probes whether the architecture distinguishes decommissioning a realized resource
+    from discarding an unrealized intent, without emitting a spurious provider call.
+
+    '
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives: []
+  intent: Discard an intent that was never realized without calling any provider
+  success_criteria:
+  - System confirms the intent has no realized state and no provider footprint
+  - The intent is marked retired without any destroy being dispatched
+  - No provider call is emitted (nothing to destroy)
+  - No realized-state store is modified because none existed
+  - The discard decision and rationale are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: single_no_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: data
+    interaction: intent confirmed unrealized, marked retired with no state change
+  - domain: audit
+    interaction: discard-of-unrealized-intent recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- unrealized
+- discard
+- simple
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

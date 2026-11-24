@@ -1,0 +1,60 @@
+uuid: uc-hammer-networking-020
+handle: networking/network-fabric-rehydration-ordering
+scenario:
+  description: 'After total loss, an environment is rehydrated from stored intent. The rebuild must reconstruct
+    the network fabric first — VLANs, the DHCP/DNS AddressService, static IPAddress reservations, and
+    the gateway — before any compute or storage is re-realized, because addresses, DNS names, and L2/L3
+    reachability are preconditions for everything downstream. The system must derive this ordering from
+    the dependency graph, preserve address/reservation UUIDs so hosts return on their original addresses,
+    and re-realize the fabric faithfully. This tests that network is a first-class, correctly-ordered
+    participant in rehydration, not an assumed-present substrate.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Rehydrate the full environment and verify the network fabric is rebuilt first and faithfully
+  success_criteria:
+  - Rebuild plan is derived from stored intent and the dependency graph (not a static replay)
+  - Network fabric (VLANs, AddressService, reservations, gateway) is realized before compute/storage
+  - Static Network.IPAddress reservation UUIDs and addresses are preserved so hosts return unchanged
+  - The DHCP/DNS AddressService is healthy before dependent hosts re-boot
+  - Downstream compute/storage attach to the already-realized fabric
+  - Post-rehydration realized network state matches the original intent
+  - The rehydration ordering is recorded in the audit trail
+  dimensions:
+    lifecycle_phase: rehydration_faithful
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph orders fabric upstream; reservation UUIDs preserved
+  - domain: provider
+    interaction: network providers re-realize VLANs, AddressService, and gateway before downstream
+  - domain: audit
+    interaction: rehydration ordering and preserved identities recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- networking
+- rehydration
+- ordering
+- fabric
+- address-service
+- full-stack
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

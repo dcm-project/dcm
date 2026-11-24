@@ -1,0 +1,66 @@
+uuid: uc-hammer-drift-recovery-007
+handle: drift-recovery/critical-drift-halt-and-freeze
+scenario:
+  description: 'A security officer on an FSI profile oversees a realized database whose discovered encryption-at-rest
+    setting has flipped from enabled to disabled — a control the compliance posture treats as inviolable.
+    The engine must classify this as critical drift, and critical drift must NOT be silently auto-remediated:
+    the resource is frozen from further modification, an escalation is raised to a human owner, and the
+    compliance domain is notified before any corrective action. This validates the top severity band where
+    the safe action is halt-and-escalate, not blind self-healing.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Detect a critical control regression and halt-and-escalate rather than auto-heal
+  success_criteria:
+  - Discovery reports encryption-at-rest disabled against a Realized snapshot showing it enabled
+  - The drift is classified as critical severity
+  - Automatic silent remediation is NOT taken for a critical control regression
+  - The resource is frozen against further modification pending review
+  - A human escalation is raised and the compliance domain is notified
+  - Critical classification, freeze, and escalation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: encryption-at-rest field divergence detected against Realized snapshot
+  - domain: policy
+    interaction: severity model classifies critical; escalation policy blocks silent auto-remediation
+  - domain: audit
+    interaction: critical classification, freeze, and human escalation recorded
+  - domain: provider
+    interaction: no corrective dispatch issued until human review completes
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- severity-classification
+- critical
+- human-escalation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - FSI database is realized with encryption-at-rest enabled in the Realized snapshot
+  - Discovery reports the control disabled
+  postconditions:
+  - Drift classified critical; resource frozen
+  - Human escalation raised, compliance notified
+  - No auto-remediation dispatched pre-review
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,71 @@
+uuid: uc-6082a4e3-e69f-4c29-b96b-7fe1a2af2630
+handle: must-reject/sovereignty-egress-refused
+version: 1.0.0
+scenario:
+  description: 'A tenant admin operating under a sovereign profile submits an intent that
+    would realize a hard dependency on a peer estate outside the tenant''s declared
+    sovereignty boundary — realizing it would project residency-classified fields across the
+    boundary to satisfy the peer''s placement. The egress gate (policy in its
+    information-firewall role, ADR-041: sovereignty is inherently egress, the data owner''s
+    pre-crossing call) must refuse at request time, before any data crosses — a refusal after
+    the crossing is a disclosure that cannot be taken back. Success is a refusal that is
+    itself non-leaking: the error states that a sovereignty egress policy refused the
+    crossing and which boundary was hit, but must not include the masked field values, nor
+    enumerate the protected fields in a way that discloses what it protects. The refusal is
+    typed (sovereignty egress denial), actionable (names the declared boundary and the
+    policy, so the tenant can seek an in-boundary alternative), and auditable in the
+    tenant''s own audit store.'
+  actor:
+    persona: tenant-admin
+    profile: sovereign
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+    - federation-peer-operator
+  intent: Realize a resource whose dependency requires projecting residency-classified data
+    to a peer estate across the tenant's declared sovereignty boundary
+  success_criteria:
+  - The egress gate refuses at request time; no data crosses the boundary and nothing is
+    realized on the peer
+  - The refusal is a typed sovereignty egress denial naming the declared boundary and the
+    refusing policy
+  - The refusal payload contains none of the masked field values and does not enumerate
+    protected content — information-firewall behavior holds on the error path itself
+  - The structural surface is sufficient to refuse — the decision matches on the target
+    authority in the reference, without dereferencing the protected data
+  - An audit record of the refusal exists in the tenant's audit store, recording the
+    crossing attempted and the gate that refused, without the protected values
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: sovereignty_enforced
+    failure_mode: policy_violation
+  profile: sovereign
+  expected_domain_interactions:
+  - domain: policy
+    interaction: the egress gate refuses the crossing on the structural surface (target
+      authority in the address) before resolution
+  - domain: data
+    interaction: no protected value is resolved for, or embedded in, the refusal payload
+  - domain: provider
+    interaction: no peer dispatch occurs; the peer never observes the refused intent's
+      protected content
+  - domain: audit
+    interaction: the refused crossing and the refusing gate are recorded in-boundary,
+      values excluded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: must-reject-2026-07-24
+  timestamp: '2026-07-24T12:00:00.000000+00:00'
+tags:
+- must-reject
+- refusal-contract
+- sovereignty
+- information-firewall
+- egress

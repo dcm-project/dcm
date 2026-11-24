@@ -1,0 +1,67 @@
+uuid: uc-hammer-drift-recovery-015
+handle: drift-recovery/concurrent-drift-during-modification
+scenario:
+  description: 'A platform engineer submits an intent modification to a resource at the same moment a
+    reconciliation pass detects unsanctioned drift on an overlapping field. The engine now holds two competing
+    sources of change: a sanctioned in-flight modification and a drift remediation, both targeting the
+    same field. It must serialize them coherently — not double-dispatch, not let remediation revert the
+    sanctioned modification, and not let the modification mask the drift finding. The engine must resolve
+    precedence and reach a single consistent Realized snapshot. This probes concurrency safety between
+    the modification and drift-detection paths.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Safely resolve a sanctioned modification racing with a drift remediation on the same field
+  success_criteria:
+  - A sanctioned modification and a drift remediation target the same field concurrently
+  - The engine detects the overlap rather than dispatching both blindly
+  - The two changes are serialized with a defined precedence rule
+  - Remediation does not silently revert the sanctioned modification
+  - The modification does not suppress or erase the drift finding
+  - A single consistent Realized snapshot and the conflict resolution are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: cross_domain_constraint
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: overlapping field targeted by both an in-flight modification and a drift remediation
+  - domain: policy
+    interaction: precedence rule serializes the two changes into one coherent outcome
+  - domain: provider
+    interaction: a single reconciled dispatch issued rather than two conflicting ones
+  - domain: audit
+    interaction: conflict, precedence decision, and final Realized snapshot recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- concurrency
+- modification-race
+- unsupported-probe
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - A sanctioned modification is in flight on a resource
+  - Reconciliation detects drift on the same field simultaneously
+  postconditions:
+  - Changes serialized with defined precedence
+  - Single consistent Realized snapshot reached
+  - Conflict resolution recorded
+  note: batch=framework-hammer-2026-07-16

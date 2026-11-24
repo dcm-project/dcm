@@ -1,0 +1,64 @@
+uuid: uc-hammer-supply-chain-promotion-015
+handle: supply-chain-promotion/firmware-package-attested-promote-metal3
+scenario:
+  description: 'A platform engineer promotes a vendor BIOS/firmware update package into the approved
+    firmware repository so it can be applied during Compute.BareMetal.Metal3 host provisioning. The
+    governance matrix requires a verified vendor signature, a provenance attestation tracing the binary
+    to the vendor release, and a check that the firmware version is on the approved baseline. All gates
+    pass, the SoftwarePackage crosses the ingress firewall from proposed to canonical, and Metal3 hosts
+    become eligible to receive the update on their next reprovision.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - compliance-auditor
+    - security-officer
+  intent: Promote an attested vendor firmware package for bare-metal host provisioning
+  success_criteria:
+  - Vendor signature on the firmware package verifies against a trusted vendor key
+  - Provenance attestation traces the binary to the named vendor release
+  - Governance matrix confirms the firmware version is on the approved baseline
+  - SoftwarePackage transitions proposed to canonical in the approved firmware repo
+  - Compute.BareMetal.Metal3 becomes eligible to apply the firmware on next reprovision
+  - 'Signature, provenance, and baseline evidence are recorded on the admission crossing'
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: governance_matrix_enforcement
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: governance matrix enforces vendor signature, provenance, and approved baseline
+  - domain: data
+    interaction: SoftwarePackage recorded by purl and moved proposed to canonical
+  - domain: provider
+    interaction: Compute.BareMetal.Metal3 bound as an eligible consumer of the firmware package
+  - domain: audit
+    interaction: signature, provenance, and baseline checks recorded on admission
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-baremetal
+- firmware
+- promotion-happy-path
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - Firmware package is vendor-signed with a provenance attestation
+  - The firmware version is on the organization's approved baseline
+  postconditions:
+  - Firmware package canonical and eligible for Compute.BareMetal.Metal3 provisioning
+  - Attestation and baseline evidence retained for audit
+  note: batch=supply-chain-promotion-2026-07-22

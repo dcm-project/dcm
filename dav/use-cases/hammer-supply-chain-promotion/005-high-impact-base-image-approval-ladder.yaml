@@ -1,0 +1,65 @@
+uuid: uc-hammer-supply-chain-promotion-005
+handle: supply-chain-promotion/high-impact-base-image-approval-ladder
+scenario:
+  description: 'A platform operator promotes a new organization-wide base container image that hundreds
+    of downstream Compute.Container.KubeVirt workloads will inherit from. Because the artifact is
+    high-impact, the promotion policy requires an approval ladder: the automated gates (SBOM, CVE,
+    signature, license) pass, but final admission to canonical is held pending sign-off from a named
+    approver above the automated tier. The pipeline must escalate to a human, block the canonical
+    transition until approval is granted, and only then admit the image across the ingress firewall.
+
+    '
+  actor:
+    persona: platform-operator
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - security-officer
+  intent: Promote a high-impact base image that requires human approval before it goes canonical
+  success_criteria:
+  - Automated gates (SBOM, CVE, signature, license) all pass and are recorded
+  - Because the image is high-impact, the policy escalates to a required human approver
+  - Canonical transition is held until the named approver signs off, not auto-completed
+  - On approval the SoftwareImage becomes canonical and available to Compute.Container.KubeVirt
+  - 'If approval is withheld the image stays proposed: the estate cannot consume it'
+  - Escalation, approver identity, and decision are recorded on the admission crossing
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: policy
+    interaction: high-impact rule triggers human escalation and holds the canonical transition
+  - domain: data
+    interaction: SoftwareImage stays proposed until an approval record is attached
+  - domain: provider
+    interaction: Compute.Container.KubeVirt gains the image as a consumer only after approval
+  - domain: audit
+    interaction: escalation, approver identity, and final decision recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-container
+- approval-ladder
+- human-escalation
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - Base image is classified high-impact, requiring an approval ladder above automated gates
+  - All automated scan and verification gates pass
+  postconditions:
+  - Image goes canonical only after the named approver signs off
+  - Escalation and approval decision are fully auditable
+  note: batch=supply-chain-promotion-2026-07-22

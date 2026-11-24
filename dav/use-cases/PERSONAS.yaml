@@ -1,0 +1,195 @@
+# Canonical persona set — the single source of truth for `scenario.actor.persona`.
+#
+# Why this file exists: the persona a use case is written from was a free string, enforced
+# nowhere, and had drifted to 12 distinct values across udlm + dcm (auditor vs compliance-auditor
+# vs compliance-officer; storage-admin/individual-developer singletons; sovereign-tenant-admin vs
+# tenant-admin). A DAV-private persona list would be the same fork DIM-001 just closed for the
+# dimension vocabulary, under a different name. This publishes the canonical set the model already
+# recognizes (docs/flows/by-persona.md) as a closed, single-sourced, CI-gated contract (PER-001),
+# so a consumer analyzing "from every stakeholder perspective" reads ONE list, not its own.
+#
+# `tier` groups personas by the NATURE of their stake, so a consumer's union-across-lenses can
+# treat a gap in one tier as different in kind from another:
+#   operational — build, operate, and consume the mechanism
+#   governance  — set, enforce, and validate the rules the platform must honor
+#   oversight   — accountable for outcomes; decide on risk and spend (the management chain)
+# The oversight tier demands aggregate/attestation/rollup surfaces, not per-resource mechanisms —
+# which is exactly what catches "the model surfaces a broken dependency to the operator but has no
+# portfolio-level gap rollup for the director."
+#
+# Each persona carries `objectives`: what a conforming spec must give that role — the platform
+# DEMANDS the persona makes. These are the per-lens analysis targets. Note the pleasing circularity
+# (DAV, 2026-07-27): ADR-003's own refusal-contract elements ARE implicit persona demands —
+# typed→platform-engineer, actionable→application-team-member, non-leaking→security-officer,
+# auditable→compliance-auditor, whole→application-team-member.
+#
+# Provenance: docs/flows/by-persona.md (the authored roles) + the high-frequency, clearly-distinct
+# roles already in dcm use (sre, security-officer, tenant-admin, finance-analyst); the oversight
+# chain (executive, director, manager); and the stakeholders the platform's own contracts imply but
+# no persona spoke for — provider-owner (ADR-005 / OIS), cloud-operator (OSAC — building sovereign
+# cloud providers, UC-04), information-provider-owner (INF- contract, change-control/013),
+# federation-peer-operator (FED- contract / peer DCMs), integrator (ADR-044 consumer surface),
+# sovereignty-authority (the
+# sovereignty-first data model), tenancy-authority (ADR-014 isolation + cross-tenant XTA), regulator
+# (AUD-006 external verification).
+# Mirror this file byte-identical to dav/use-cases/PERSONAS.yaml in croadfeldt/dcm.
+version: "1.0.0"
+
+personas:
+  # ---- operational: build, operate, and consume the mechanism ----
+  - id: solution-architect
+    tier: operational
+    framing: "an architect decomposing a whole architecture into ordered, portable resource requests"
+    objectives:
+      - "a whole architecture decomposes into typed resources with their dependency edges preserved"
+      - "portability holds — the same intent realizes across providers without a rewrite"
+
+  - id: application-team-member
+    tier: operational
+    framing: "an application owner whose team requests and consumes platform resources"
+    objectives:
+      - "I ask in portable terms and the system realizes it — no provider-native detail leaks up to me"
+      - "an unsatisfiable intent is surfaced to me, not buried in a field (actionable — ADR-003)"
+      - "a partial outcome is a whole, coherent result, never a silent half-realization (whole — ADR-003)"
+
+  - id: platform-operator
+    tier: operational
+    framing: "an operator modeling, registering, and running the estate"
+    objectives:
+      - "the dependency graph and realization ordering are first-class data I can query, not tribal knowledge"
+      - "a broken dependency surfaces with its blast radius before realization, naming the root"
+
+  - id: platform-engineer
+    tier: operational
+    framing: "an engineer building on and running day-2 of the platform"
+    objectives:
+      - "typed, stable error contracts I can branch on (typed — ADR-003)"
+      - "the dependency model distinguishes request vs operational natures (ADR-052)"
+
+  - id: sre
+    tier: operational
+    framing: "an SRE operating the running platform"
+    objectives:
+      - "defined enforcement points — no check-then-act races (ADR-011 validate-and-reserve)"
+      - "cascades are bounded and observable — a failure's reach is computed, not discovered in an incident"
+
+  - id: tenant-admin
+    tier: operational
+    framing: "a tenant administrator governing isolation and quota for a tenant"
+    objectives:
+      - "tenant isolation holds — no cross-tenant read or dispatch without an explicit, audited authorization"
+      - "quota and override are declared data, enforced at defined points, not ad hoc"
+
+  - id: finance-analyst
+    tier: operational
+    framing: "a finance analyst accountable for cost and usage"
+    objectives:
+      - "cost and usage are adopted from a standard (FOCUS) by reference, joinable to realized resources (T5)"
+      - "spend attributes to tenant, resource, and time without a bespoke parallel cost model"
+
+  - id: provider-owner
+    tier: operational
+    framing: "the owner operating a Service Provider that DCM registers and dispatches to"
+    objectives:
+      - "a stable, typed provider contract (OIS) I implement once — capability declared as data, not hard-coded into the platform (ADR-005)"
+      - "a sandbox-to-production graduation path with the conformance bar stated up front, so activation is predictable"
+      - "my provider stays swappable — the substrate never bakes in my native format; naturalization happens at my edge (T9 / DCM ADR-023)"
+
+  - id: cloud-operator
+    tier: operational
+    framing: "an operator building and running a sovereign cloud (e.g. OSAC) offered to the platform as a provider"
+    objectives:
+      - "my cloud's capacity and capabilities are declared as data and advertised for placement — the platform routes intent to me on capability, not hard-coded knowledge (PRV capability/capacity advertisement, §8.1a)"
+      - "building a new cloud provider adds a placement target without changing the substrate — intent places through the portable model, I naturalize at my edge and stay swappable (UC-04 OSAC placement; T9 / DCM ADR-023)"
+      - "my cloud is itself a UDLM-modeled estate — buildable and rehydratable from declared intent, its sovereignty (residency, jurisdiction) declared and provable"
+
+  - id: information-provider-owner
+    tier: operational
+    framing: "the owner operating an Information Provider that contributes authoritative data to the platform"
+    objectives:
+      - "my authoritative data is adopted by reference, not copied — the platform carries the join key and a version-pinned conformance reference (T5)"
+      - "my authority scope is respected — consumers resolve to me for the data I own, and my layer's provenance is preserved"
+
+  - id: federation-peer-operator
+    tier: operational
+    framing: "the operator of a peer DCM in a federation, receiving dispatched intent from other instances"
+    objectives:
+      - "cross-instance dispatch is sovereignty-scoped and on-behalf-of — I receive only what a peer is authorized to send, with the requester's identity intact"
+      - "I stay forward-compatible — unknown fields from a newer peer don't break me (must-ignore-unknown, ADR-044 / federation forward-compat)"
+
+  - id: integrator
+    tier: operational
+    framing: "an integrator building an external system on the UDLM data model — consuming or federating it"
+    objectives:
+      - "I declare the read surface I depend on and the registry gates on it; unknown fields I don't consume never break me (must-ignore-unknown, ADR-044)"
+      - "the contract is versioned with a compatibility promise I can pin to (ADR-051), so forward change doesn't silently break my integration"
+
+  # ---- governance: set, enforce, and validate the rules ----
+  - id: compliance-auditor
+    tier: governance
+    framing: "an auditor validating platform behavior after the fact"
+    objectives:
+      - "every decision and refusal leaves a tamper-evident record naming the identities and the deciding policy (auditable — ADR-003)"
+      - "field-level provenance traces every realized value to its origin"
+      - "audit integrity is provable — RFC 9162 Merkle inclusion/consistency proofs, not assertion (AUD-006)"
+
+  - id: security-officer
+    tier: governance
+    framing: "a security officer governing data exposure and trust boundaries"
+    objectives:
+      - "no reference or value leaves a boundary it was not released for (non-leaking — ADR-003; the policy information firewall)"
+      - "credential material is referenced, never carried inline in portable data"
+
+  - id: sovereignty-authority
+    tier: governance
+    framing: "a sovereignty authority accountable for where data and workloads may reside and move"
+    objectives:
+      - "residency and jurisdiction are declared constraints on the data, enforced before realization and on every cross-boundary move — not asserted after the fact"
+      - "a cross-border data flow is an explicit, governable edge I can see and deny (T4), never an opaque transfer"
+
+  - id: tenancy-authority
+    tier: governance
+    framing: "the party accountable for tenant isolation and cross-tenant authorization across the whole estate"
+    objectives:
+      - "tenant isolation holds across the whole estate — no tenant can read or dispatch into another, provable from the model, not asserted per-tenant (ADR-014)"
+      - "every cross-tenant flow is an explicit, audited authorization grant (the XTA capability), never an implicit reach"
+
+  - id: regulator
+    tier: governance
+    framing: "an external regulator or assessor validating platform behavior without trusting the operator"
+    objectives:
+      - "I verify audit integrity from a signed tree head and an inclusion proof alone — no access to the operator's database (RFC 9162 external verification, AUD-006)"
+      - "provenance and decisions are attributable to named identities and policies, independently checkable against the immutable record (ADR-051)"
+
+  # ---- oversight: accountable for outcomes; decide on risk and spend ----
+  - id: executive
+    tier: oversight
+    framing: "a CIO/CTO/CISO accountable for the platform's outcomes, risk, and spend at the organization level"
+    objectives:
+      - "I can trust that what is running is what was approved — attestation and immutable provenance, not a report someone typed (ADR-051, AUD-006)"
+      - "organizational risk exposure is computed and rolled up — sovereignty posture, blast radius, unmet obligations — not assembled by hand"
+      - "cost is governed at the org level against a standard, not reconciled from spreadsheets (T5/FOCUS)"
+
+  - id: director
+    tier: oversight
+    framing: "a director accountable for a portfolio of services and the teams that run them"
+    objectives:
+      - "my portfolio is one rolled-up view — health, compliance, and gaps across teams — derived from the graph, not chased team by team"
+      - "a gap or drift anywhere in the portfolio surfaces with its blast radius and the responsible team, before it becomes an incident"
+
+  - id: manager
+    tier: oversight
+    framing: "a manager accountable for a team's services — their delivery and operational health"
+    objectives:
+      - "my team's blocked or unsatisfiable intents surface with the root cause and owner (ADR-052 surfacing, scoped to the team)"
+      - "my team's capacity, cost, and policy posture are visible without standing up a bespoke report"
+
+# Drift → canonical. A use-case `scenario.actor.persona` may carry any key here; the PER-001 gate
+# resolves it to the canonical id. All folds ruled 2026-07-27 — each drift value decomposes into an
+# existing persona (rationale per line), so none needed its own.
+folded_aliases:
+  auditor: compliance-auditor              # by-persona.md names the role "compliance-auditor / auditor"
+  compliance-officer: compliance-auditor   # single-use drift synonym
+  individual-developer: application-team-member  # a solo consumer makes the same platform demands as a team consumer — no distinct lens
+  storage-admin: platform-operator         # operating one resource class is platform-operator scoped — no distinct nature
+  sovereign-tenant-admin: tenant-admin     # decomposes into tenant-admin + the sovereignty-authority lens; no separate persona

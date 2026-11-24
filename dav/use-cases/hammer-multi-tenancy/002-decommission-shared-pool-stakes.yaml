@@ -1,0 +1,60 @@
+uuid: uc-hammer-tenancy-002
+handle: tenancy/decommission-shared-pool-stakes
+scenario:
+  description: 'Tenant A is being decommissioned, but it is the declared owner of a shareable IPAddressPool
+    from which tenants B and C hold active IPAddress allocations. The platform engineer requests full
+    decommission of tenant A. The system must detect that the owned pool still has live cross-tenant stakes
+    and refuse to destroy it, or require an ownership hand-off first. This probes whether decommission
+    understands that ownership and consumption are separable, and whether a shared allocatable resource
+    can outlive the tenant that provisioned it.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - application-team-member
+    - sre
+    - tenancy-authority
+  intent: Decommission a tenant that owns a shared pool still consumed by other tenants
+  success_criteria:
+  - Decommission enumerates resources owned by tenant A, including the shared pool
+  - System detects live IPAddress allocations held by tenants B and C against the pool
+  - Full decommission is blocked or gated pending pool ownership hand-off
+  - Tenant B and C allocations are never orphaned or silently revoked
+  - Blocking rationale distinguishes ownership from consumption
+  - The blocked decommission and its dependency findings are recorded in audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: dependency graph traversed to find cross-tenant consumers of the owned pool
+  - domain: policy
+    interaction: decommission-safety policy blocks destruction of a pool with foreign stakes
+  - domain: provider
+    interaction: provider is not asked to release the pool while allocations remain
+  - domain: audit
+    interaction: blocked decommission recorded with the offending cross-tenant dependencies
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- multi-tenancy
+- decommission
+- shared-pool
+- dangling-dependents
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

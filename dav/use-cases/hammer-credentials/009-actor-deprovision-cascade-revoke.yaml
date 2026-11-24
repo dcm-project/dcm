@@ -1,0 +1,61 @@
+uuid: uc-hammer-credentials-009
+handle: credentials/actor-deprovision-cascade-revoke
+scenario:
+  description: 'A tenant admin deprovisions an actor (a departing engineer''s service identity). Every
+    credential issued to that actor must be revoked as a cascade, and any resource that depended on those
+    credentials must be flagged so it can be re-credentialed under a new owner rather than silently losing
+    access. The system must find all credentials keyed to the actor, revoke them, and expose the downstream
+    impact. This tests whether actor lifecycle is coupled to credential lifecycle.
+
+    '
+  actor:
+    persona: tenant-admin
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - compliance-auditor
+    - security-officer
+  intent: Revoke all of a deprovisioned actor's credentials and surface the blast radius
+  success_criteria:
+  - All credentials issued to the actor are enumerated
+  - Every one of those credentials is revoked on deprovision
+  - Resources depending on the revoked credentials are flagged for re-credentialing
+  - No credential keyed to the actor remains valid afterward
+  - Downstream services are not silently left without access
+  - The cascade revocation and impacted resources are recorded in audit
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: all credentials keyed to the actor and their dependents enumerated
+  - domain: policy
+    interaction: deprovision policy mandates cascade revocation
+  - domain: provider
+    interaction: providers stop honoring the revoked actor credentials
+  - domain: audit
+    interaction: cascade revocation and re-credentialing flags recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- credentials
+- deprovision
+- cascade
+- revocation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

@@ -1,0 +1,57 @@
+uuid: uc-hammer-federation-005
+handle: federation/cross-signed-audit-checkpoint
+scenario:
+  description: 'A compliance auditor requires that every federation interaction produce an audit checkpoint
+    signed by BOTH peers, so neither can later repudiate a cross-boundary operation. When peer A dispatches
+    an order to peer B, each side records the same checkpoint (order hash, timestamps, outcome) and cross-signs
+    it with its own key, yielding a tamper-evident record verifiable by either party independently. This
+    tests whether the audit domain can produce and verify cross-signed checkpoints between peers rather
+    than isolated per-estate logs.
+
+    '
+  actor:
+    persona: compliance-auditor
+    profile: fsi
+  perspectives:
+    - federation-peer-operator
+    - regulator
+  intent: Produce and verify a mutually cross-signed audit checkpoint for a federation interaction
+  success_criteria:
+  - A cross-boundary operation triggers a checkpoint recorded on both peers
+  - Each peer signs the checkpoint with its own key
+  - The checkpoint content (order hash, outcome) is identical on both sides
+  - Either peer can independently verify the other's signature over the shared content
+  - A tampered or missing counter-signature is detectable and flagged
+  - The cross-signed checkpoint is retained in both audit trails
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: audit_heavy
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: provider
+    interaction: cross-boundary operation dispatched to the peer
+  - domain: audit
+    interaction: both peers record and cross-sign an identical checkpoint; signatures verifiable
+  - domain: policy
+    interaction: policy requires a valid counter-signature before the interaction is deemed complete
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- audit
+- cross-signed
+- non-repudiation
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

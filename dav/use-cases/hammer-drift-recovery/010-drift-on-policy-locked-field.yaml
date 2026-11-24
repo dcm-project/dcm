@@ -1,0 +1,66 @@
+uuid: uc-hammer-drift-recovery-010
+handle: drift-recovery/drift-on-policy-locked-field
+scenario:
+  description: 'A compliance policy locks the network-tier field of a realized service to an approved
+    segmented VLAN; the lock declares the field non-negotiable and any deviation a policy breach. A provider-side
+    change moves the service onto a flat network. Reconciliation must detect drift on a field that is
+    not merely intent-governed but policy-locked, and treat it with elevated priority: the remediation
+    must restore the locked value AND the breach of the lock must be recorded as a governance event, not
+    just a routine drift fix. This validates that drift detection is aware of field-level policy locks.
+
+    '
+  actor:
+    persona: security-officer
+    profile: fsi
+  perspectives:
+    - platform-operator
+    - sre
+  intent: Detect and remediate drift on a policy-locked field and record the lock breach
+  success_criteria:
+  - The network-tier field is marked policy-locked to an approved value
+  - Discovery reports the field moved off the locked value
+  - The engine recognizes the drift is on a policy-locked field, not just intent
+  - Remediation restores the locked value with elevated priority
+  - The breach of the field lock is recorded as a distinct governance event
+  - Drift, lock breach, and remediation are all captured in the audit trail
+  dimensions:
+    lifecycle_phase: drift_detection
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: compliance_gated
+    failure_mode: data_inconsistency
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: network-tier divergence detected against Realized snapshot
+  - domain: policy
+    interaction: field lock recognized; drift flagged as a lock breach and prioritized for remediation
+  - domain: provider
+    interaction: remediation dispatch restores the locked network-tier value
+  - domain: audit
+    interaction: drift, distinct lock-breach governance event, and remediation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- drift-recovery
+- policy-lock
+- governance
+- compliance
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  preconditions:
+  - Network-tier field is policy-locked to an approved segmented VLAN
+  - Provider moved the service onto a flat network
+  postconditions:
+  - Locked value restored
+  - Lock breach recorded as a governance event
+  - Full arc captured in audit
+  note: batch=framework-hammer-2026-07-16

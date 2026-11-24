@@ -1,0 +1,59 @@
+uuid: uc-hammer-provider-portability-016
+handle: provider-portability/cross-provider-class-rehydration-portable-new-uuid
+scenario:
+  description: The provider that held a workload is offline, so it cannot be restored in place. The workload is
+    rebuilt from its stored intent on a currently-available Provider Class — a Provider-Portable rehydration. The
+    replacement is a new realized entity with a new UUID; lineage links it to the source record, and dependents
+    re-point to the replacement.
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - sre
+    - provider-owner
+  intent: Rehydrate a workload onto a different provider when the original is offline (new UUID)
+  success_criteria:
+  - The original provider is offline; no in-place restore is possible
+  - The workload is rebuilt from stored intent on an available provider
+  - The replacement is a new entity with a new UUID
+  - Lineage links the replacement to the source record
+  - Dependents re-point to the replacement
+  dimensions:
+    lifecycle_phase: rehydration_provider_portable
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: re-evaluates sovereignty/tenancy under current policy on rehydration
+  - domain: provider
+    interaction: the original is offline; an available provider realizes the rebuild
+  - domain: data
+    interaction: new UUID recorded with source_record_uuid lineage
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-provider-class
+- portability
+- rehydration
+- new-uuid
+- provider-failure
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The original provider is offline; the stored intent is available
+  postconditions:
+  - A new entity runs on an available provider, traceable to the source
+  note: batch=portability-enrich-2026-07-22

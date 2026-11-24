@@ -1,0 +1,57 @@
+uuid: uc-hammer-peer-dcm-020
+handle: peer-dcm/dev-cross-dcm-dependency-test
+scenario:
+  description: A dev-profile scenario validates that a resource depending on a peer-owned resource resolves correctly
+    across the boundary — the peer's realized facts cross as a payload and the local criteria resolve — with a single
+    gating check appropriate to a development estate.
+  actor:
+    persona: application-team-member
+    profile: dev
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+  intent: Test cross-DCM dependency resolution in the dev profile
+  success_criteria:
+  - A dev resource depends on a peer-owned resource
+  - The peer's realized facts cross the boundary as a payload
+  - The local resource's criteria resolve from the peer payload
+  - The cross-DCM dependency resolves under a single gating check
+  - The resolution is recorded for validation
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: cross_dependency_payload
+    policy_complexity: single_validation
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: dev
+  expected_domain_interactions:
+  - domain: data
+    interaction: peer realized facts cross the boundary as a payload
+  - domain: policy
+    interaction: a single gating check appropriate to a dev estate
+  - domain: provider
+    interaction: the peer owns the depended-on resource
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: peer-dcm-2026-07-23
+  timestamp: '2026-07-23T08:00:00.000000+00:00'
+tags:
+- peer-dcm
+- federation
+- dev
+- cross-dependency
+- connected
+- peer-dcm
+- hammer-2026-07-23
+version: 1.0.0
+metadata:
+  author: dav-peer-dcm
+  preconditions:
+  - Dev profile; a depended-on resource is owned by a peer
+  postconditions:
+  - The cross-DCM dependency resolves in the dev estate
+  note: batch=peer-dcm-2026-07-23

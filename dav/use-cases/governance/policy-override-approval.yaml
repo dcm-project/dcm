@@ -1,0 +1,64 @@
+uuid: uc-seed-005a
+handle: governance/policy-override-approval
+scenario:
+  description: A platform engineer requests a time-bounded override of a soft-enforcement
+    governance policy that is currently blocking a business-critical deployment. The
+    override request must be evaluated against the policy's override eligibility rules,
+    routed for approval by the authorized approver role, and the resulting override
+    (if granted) must be recorded with scope, duration, and rationale. Hard-enforcement
+    policies must remain unoverridable. This exercises the override_requests workflow
+    as a modification to the policy-application state for the matched request scope.
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - executive
+  intent: Obtain time-bounded override of a soft policy to unblock a business-critical
+    deployment
+  success_criteria:
+  - Override eligibility is evaluated against the policy's own override rules, not
+    globally permitted
+  - Approval is routed to the role authorized for this override class, not the requester
+  - Granted overrides are scoped in time and narrowed to the specific matched request
+  - Hard-enforcement policies are rejected as unoverridable without approval attempt
+  - Override grant and subsequent policy-suppressed events are audit-linked
+  dimensions:
+    lifecycle_phase: modification
+    resource_complexity: single_no_deps
+    policy_complexity: human_escalation_required
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: policy
+    interaction: override request evaluated against policy's override eligibility
+      declaration
+  - domain: policy
+    interaction: approval routed to authorized approver role
+  - domain: data
+    interaction: override record created with scope, duration, approver, rationale
+  - domain: policy
+    interaction: subsequent policy evaluations honor active override for matched scope
+  - domain: audit
+    interaction: override grant and every suppressed policy event are linked for review
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-04-23T04:45:00.000000+00:00'
+tags:
+- governance
+- policy
+- override
+- human-in-loop
+- prod-profile
+- approval-workflow
+version: 1.0.0
+metadata:
+  admitted_at: '2026-04-23T04:45:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt

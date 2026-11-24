@@ -1,0 +1,49 @@
+uuid: uc-bare-metal-001
+handle: bare-metal/provision-host-from-intent
+version: 1.0.0
+scenario:
+  description: "A platform engineer declares a bare-metal host's full provisioning intent \u2014 image\
+    \ (url + checksum), root device hints, boot MAC, power target, boot mode \u2014 and the provider (Metal3/Ironic-class)\
+    \ provisions the physical machine from exactly that declaration. Nothing about the provisioned result\
+    \ depends on state outside the record: the intent IS the build instruction. Downstream, cluster bring-up\
+    \ binds on the provisioning_state output rather than polling provider internals."
+  actor:
+    persona: platform-engineer
+    profile: standard
+  perspectives: []
+  intent: Provision a physical host entirely from declared intent and bind downstream ordering on its
+    provisioning_state output
+  success_criteria:
+  - The provisioning request carries image, root_device_hints, boot_mac_address, online, boot_mode from
+    the record alone
+  - The provider reaches provisioned and the provisioning_state output publishes it
+  - A cluster/node-pool consumer binds on provisioning_state = provisioned, contract-checked
+  - The realized host's discovered facts (smbios, serial) correlate back to the record
+  dimensions:
+    lifecycle_phase: provisioning
+    resource_complexity: single_with_deps
+    policy_complexity: system_defaults_only
+    provider_landscape: single_eligible
+    governance_context: no_governance
+    failure_mode: happy_path
+  profile: standard
+  expected_domain_interactions:
+  - domain: data
+    interaction: the provisioning intent is complete, portable record content
+  - domain: policy
+    interaction: validation confirms image checksum and admitted provider before dispatch
+  - domain: provider
+    interaction: a Metal3/Ironic-class provider executes the declaration verbatim
+  - domain: audit
+    interaction: the provision path and binding resolution are recorded
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: claude
+  prompt_version: bare-metal-2026-07-24
+  timestamp: '2026-07-24T23:00:00.000000+00:00'
+tags:
+- bare-metal
+- provisioning-intent
+- metal3
+- binding

@@ -1,0 +1,58 @@
+uuid: uc-hammer-capacity-017
+handle: capacity/provider-failure-mid-dispatch-rollback
+scenario:
+  description: 'The engine reserves capacity on the winning provider and begins dispatch, but the provider
+    fails mid-realization (API error, node lost). The engine must roll back the now-void reservation,
+    either retry on the next-best scored candidate or fail closed, and never leave the resource half-realized
+    or the reservation stranded. This tests the provider-failure recovery path on the dispatch boundary
+    — reservation integrity when a chosen provider dies after selection.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - application-team-member
+    - platform-operator
+    - provider-owner
+  intent: Recover placement when the selected provider fails mid-dispatch
+  success_criteria:
+  - Capacity is reserved on the winning provider and dispatch begins
+  - The provider fails partway through realization
+  - The void reservation is rolled back on the failed provider
+  - The engine either re-places on the next-best candidate or fails closed
+  - The resource is never left half-realized
+  - The failure, rollback, and re-placement (or fail-closed) are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: provider_failure
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: selected provider fails mid-dispatch, reservation rolled back
+  - domain: policy
+    interaction: recovery policy re-places on next candidate or fails closed
+  - domain: audit
+    interaction: failure, rollback, and re-placement outcome recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:17.000000+00:00'
+tags:
+- capacity
+- provider-failure
+- rollback
+- recovery
+- dispatch
+- complex
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

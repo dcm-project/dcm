@@ -1,0 +1,66 @@
+uuid: uc-hammer-supply-chain-promotion-003
+handle: supply-chain-promotion/os-package-missing-attestation-reject-metal3
+scenario:
+  description: 'A platform engineer promotes a new kernel/OS RPM into the approved-package repository so
+    it can feed Compute.BareMetal.Metal3 host provisioning. The package scans clean for CVEs, but it
+    arrives unsigned and without a provenance attestation tying it to a trusted build system. The
+    provenance and signature-verification gates must reject the promotion regardless of a clean CVE
+    result, because an unattested artifact cannot cross the ingress firewall into the controlled repo.
+    The estate keeps its prior canonical package unchanged.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - application-team-member
+    - sre
+    - compliance-auditor
+    - security-officer
+  intent: Promote an OS package that lacks a signature and provenance attestation
+  success_criteria:
+  - SBOM and CVE scan run and return no gating vulnerabilities
+  - Signature verification fails because the package is unsigned
+  - Provenance attestation gate fails because no trusted build provenance is present
+  - Promotion is rejected even though the CVE scan was clean
+  - No canonical SoftwarePackage transition occurs and Compute.BareMetal.Metal3 keeps its prior package
+  - 'Rejection reason is recorded: missing signature and missing attestation'
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: single_eligible
+    governance_context: audit_heavy
+    failure_mode: policy_violation
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: SoftwarePackage identified by purl; SBOM recorded but attestation absent
+  - domain: policy
+    interaction: signature and provenance gates deny admission despite a clean CVE scan
+  - domain: provider
+    interaction: Compute.BareMetal.Metal3 continues to reference the prior canonical package
+  - domain: audit
+    interaction: rejection recorded citing missing signature and missing provenance attestation
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: supply-chain-promotion-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- supply-chain
+- compute-baremetal
+- provenance
+- policy-violation
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-supply-chain-promotion
+  preconditions:
+  - Promotion requires both a valid signature and a provenance attestation
+  - Candidate OS package is unsigned and carries no attestation
+  postconditions:
+  - Promotion rejected on provenance/signature grounds despite a clean CVE scan
+  - Prior canonical package remains in force for Compute.BareMetal.Metal3
+  note: batch=supply-chain-promotion-2026-07-22

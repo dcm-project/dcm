@@ -1,0 +1,82 @@
+uuid: uc-seed-008a
+handle: cross-domain/tenant-onboarding
+scenario:
+  description: A platform engineer onboards a new tenant into a DCM deployment whose
+    instance profile is fsi. Onboarding is a single atomic operation that provisions
+    the tenant identity boundary, binds the tenant to the instance's resolved profile
+    (the platform default — near-term the instance applies one profile deployment-wide),
+    composes the appropriate compliance/sovereignty overlay (Sovereignty Zone +
+    Accreditation — a SEPARATE axis from the profile) for the tenant's declared
+    regulatory scope, establishes storage and compute quota allocations, and configures
+    the tenant's auth-provider claims mapping (identity is delegated to the IdP; DCM
+    holds the claims-mapping reference, not a membership store). There is no separate
+    bespoke tenant-to-profile mapping table — the binding is the profile (a capability
+    set) bound via a policy_profile DCMGroup; profile selection per tenant is a future
+    capability. Either all onboarding steps complete or none persist.
+  actor:
+    persona: platform-engineer
+    profile: fsi
+  perspectives:
+    - compliance-auditor
+    - sovereignty-authority
+    - tenancy-authority
+    - regulator
+  intent: Onboard a new tenant as an atomic operation, bound to the instance profile
+    with its compliance overlay and quotas, before it can request any resources
+  success_criteria:
+  - Tenant identity boundary is created and bound to the instance's resolved profile
+    (the platform default) via a policy_profile DCMGroup — no separate mapping artifact
+  - The compliance/sovereignty overlay (Sovereignty Zone + Accreditation) for the
+    tenant's declared regulatory scope is composed with the profile, not folded into it
+  - Storage and compute quotas are allocated with the requested ceilings
+  - Auth-provider claims mapping is configured (delegated identity; DCM stores the
+    reference, not cached membership)
+  - Partial onboarding is not observable downstream; either the tenant is fully
+    governed or the partial state is rolled back
+  - The instance profile's policies are active on the tenant before its first request
+  dimensions:
+    lifecycle_phase: new_request
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: mixed
+    governance_context: compliance_gated
+    failure_mode: happy_path
+  profile: fsi
+  expected_domain_interactions:
+  - domain: data
+    interaction: tenant identity boundary (tenant_boundary DCMGroup) created, bound
+      to the instance profile (policy_profile DCMGroup)
+  - domain: policy
+    interaction: instance-profile policies + composed compliance/sovereignty overlay
+      bound to the tenant
+  - domain: data
+    interaction: storage and compute quota allocations recorded against the tenant
+  - domain: provider
+    interaction: auth provider configured with the tenant claims-mapping reference
+      (delegated identity)
+  - domain: policy
+    interaction: onboarding atomicity enforced by an orchestration flow policy
+  - domain: audit
+    interaction: single onboarding record stitches all sub-operations together
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: seed-1.0
+  timestamp: '2026-04-23T04:45:00.000000+00:00'
+tags:
+- cross-domain
+- tenant
+- onboarding
+- fsi-profile
+- atomic-composition
+- approved-list-profile
+- compliance-overlay-separate-axis
+version: 1.1.0
+metadata:
+  admitted_at: '2026-04-23T04:45:00.000000+00:00'
+  admitted_dcm_version: preview
+  promoted_from_run: null
+  initial_baseline_path: null
+  author: chris@croadfeldt
+  edited: '2026-06-29 — instance-profile binding (approved-list model), drop bespoke mapping, compliance as separate axis (Piotr PR-65 #5 / DR-B)'

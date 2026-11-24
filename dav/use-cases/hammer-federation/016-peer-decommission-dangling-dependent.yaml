@@ -1,0 +1,60 @@
+uuid: uc-hammer-federation-016
+handle: federation/peer-decommission-dangling-dependent
+scenario:
+  description: 'A platform engineer decommissions a resource realized by a peer DCM, but a workload in
+    a THIRD peer''s estate still depends on it. The local DCM must not let the peer tear down a resource
+    with a live cross-DCM dependent: it must discover the dangling dependent across the federation, block
+    or stage the decommission, and require the dependent be resolved first. Worse, if the dependent''s
+    owning peer is unreachable, the system cannot even confirm the dependency is gone. This tests cross-DCM
+    decommission safety with a dangling dependent and a possibly-unreachable peer.
+
+    '
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - platform-operator
+    - sre
+    - federation-peer-operator
+  intent: Safely decommission a peer-realized resource that a third peer still depends on
+  success_criteria:
+  - Decommission target is a peer-realized resource with a cross-DCM dependent
+  - The system discovers the dangling dependent in the third peer's estate
+  - Teardown is blocked or staged while a live dependent exists
+  - The dependent must be resolved before the decommission proceeds
+  - If the dependent's owning peer is unreachable, decommission is held as indeterminate, not forced
+  - The blocked decommission and dependency findings are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: composite_service
+    policy_complexity: cross_domain_constraint
+    provider_landscape: peer_dcm_required
+    governance_context: standard_governance
+    failure_mode: peer_dcm_disconnect
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: cross-DCM dependency graph queried; dangling dependent discovered
+  - domain: policy
+    interaction: decommission-safety policy blocks teardown with a live dependent
+  - domain: provider
+    interaction: dependent's owning peer unreachable, so removal cannot be confirmed
+  - domain: audit
+    interaction: blocked decommission and dependency findings recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- federation
+- decommission
+- dangling-dependent
+- failure-mode
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16

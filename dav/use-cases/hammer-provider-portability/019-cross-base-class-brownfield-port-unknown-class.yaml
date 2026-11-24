@@ -1,0 +1,56 @@
+uuid: uc-hammer-provider-portability-019
+handle: provider-portability/cross-base-class-brownfield-port-unknown-class
+scenario:
+  description: A resource discovered in the field carries only its native construct, not the intent behind it. To
+    re-port it, greening first reverse-derives the workload's Base/Type class and requirements (imperfectly); the
+    recovered intent is then re-realized on the target. The port is only as good as the recovered intent, and any
+    unrecoverable native specifics are surfaced.
+  actor:
+    persona: sre
+    profile: standard
+  perspectives:
+    - application-team-member
+  intent: Green a brownfield resource and re-port it, recovering its Base/Type class first
+  success_criteria:
+  - The brownfield resource is discovered with only its native construct
+  - Greening reverse-derives its Base/Type class and requirements
+  - The recovered intent is re-realized on the target
+  - Unrecoverable native specifics are surfaced
+  - The port quality reflects the recovered intent
+  dimensions:
+    lifecycle_phase: brownfield_ingestion
+    resource_complexity: hard_dependencies
+    policy_complexity: multi_policy_chain
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: partial_fulfillment
+  profile: standard
+  expected_domain_interactions:
+  - domain: policy
+    interaction: greening reverse-derives the class and requirements
+  - domain: provider
+    interaction: the target realizes the recovered intent
+  - domain: data
+    interaction: records recovered intent and unrecoverable specifics
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: portability-enrich-2026-07-22
+  timestamp: '2026-07-22T12:00:00.000000+00:00'
+tags:
+- cross-type-class
+- portability
+- brownfield
+- greening
+- partial-fulfillment
+- provider-portability
+- hammer-2026-07-22
+version: 1.0.0
+metadata:
+  author: dav-portability-enrich
+  preconditions:
+  - The source is a brownfield resource with no captured intent
+  postconditions:
+  - The recovered intent is re-realized; unrecoverable specifics surfaced
+  note: batch=portability-enrich-2026-07-22

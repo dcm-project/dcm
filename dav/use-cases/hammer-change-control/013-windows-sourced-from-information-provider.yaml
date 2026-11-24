@@ -1,0 +1,56 @@
+uuid: uc-de27309a-b44c-4f1d-b33c-2ecdc29cb003
+handle: change-control/windows-sourced-from-information-provider
+version: 1.0.0
+scenario:
+  description: 'An organization''s maintenance windows and freeze calendar are not authored inside the
+    estate''s policies — they live in the organization''s change-management system (an ITSM-archetype
+    source of record). An information provider declares the change-calendar knowledge type as a capability
+    and supplies window and freeze records as Knowledge-family entities: schedule, scope, source, and
+    validity. The estate''s validation policy references those knowledge records by handle (adopt-by-reference,
+    never a re-typed copy); the window gate evaluates policy-against-knowledge at decision time; and when
+    the calendar changes upstream, the provider refreshes the records — the policy text never changes.'
+  actor:
+    persona: platform-engineer
+    profile: prod
+  perspectives:
+    - information-provider-owner
+  intent: Source maintenance windows and freezes from an information provider as Knowledge-family records
+    the validation policy references, never copies
+  success_criteria:
+  - Window and freeze definitions are Knowledge-family records with schedule, scope, source, and validity
+    surfaces
+  - An information provider (provider kind information) declares the change-calendar knowledge type as
+    a capability it supplies
+  - The estate's validation policy references the knowledge records by handle — no window literal is re-typed
+    into policy text
+  - A calendar change upstream flows as a knowledge-record refresh; the referencing policy is untouched
+  - The gate's decision record cites the knowledge record revision it evaluated against
+  dimensions:
+    lifecycle_phase: day2_operations
+    resource_complexity: single_with_deps
+    policy_complexity: multiple_interacting
+    provider_landscape: multiple_eligible
+    governance_context: standard_governance
+    failure_mode: happy_path
+  profile: prod
+  expected_domain_interactions:
+  - domain: data
+    interaction: windows/freezes are Knowledge records with validity, referenced by handle
+  - domain: policy
+    interaction: the validation policy evaluates against referenced knowledge at decision time
+  - domain: provider
+    interaction: an information provider declares and refreshes the knowledge type
+  - domain: audit
+    interaction: decisions cite the knowledge revision they read
+generated_by:
+  mode: authoring
+  source: human-authored
+  model: null
+  prompt_version: change-control-2026-07-25
+  timestamp: '2026-07-25T23:00:00Z'
+tags:
+- hammer
+- change-control
+- knowledge-source
+- information-provider
+- change-calendar

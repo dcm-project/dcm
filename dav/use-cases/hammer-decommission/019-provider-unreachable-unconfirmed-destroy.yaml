@@ -1,0 +1,59 @@
+uuid: uc-hammer-decommission-019
+handle: decommission/provider-unreachable-unconfirmed-destroy
+scenario:
+  description: 'An SRE decommissions a resource whose owning provider is unreachable, so the destroy is
+    dispatched but never acknowledged — the system cannot confirm whether the resource was actually destroyed.
+    It must NOT clear realized state on an unconfirmed destroy, which would create a data inconsistency
+    (the model says gone, the world may still have it running and billing). It must hold the resource
+    in a destroy-pending state, reconcile when the provider returns, and never assume success. This probes
+    how teardown handles unacknowledged provider calls and the truth gap they open.
+
+    '
+  actor:
+    persona: sre
+    profile: prod
+  perspectives:
+    - platform-operator
+    - finance-analyst
+  intent: Decommission a resource whose provider cannot confirm the destroy
+  success_criteria:
+  - Destroy is dispatched but the owning provider does not acknowledge
+  - Realized state is NOT cleared on the unconfirmed destroy
+  - The resource is held in a destroy-pending state rather than marked gone
+  - When the provider returns, the system reconciles actual state against the pending destroy
+  - The unconfirmed destroy is flagged as a data-inconsistency risk, not silent success
+  - The pending state and eventual reconciliation are recorded in the audit trail
+  dimensions:
+    lifecycle_phase: decommission
+    resource_complexity: hard_dependencies
+    policy_complexity: recovery_policy
+    provider_landscape: single_eligible
+    governance_context: standard_governance
+    failure_mode: data_inconsistency
+  profile: prod
+  expected_domain_interactions:
+  - domain: provider
+    interaction: destroy dispatched but unacknowledged by unreachable provider
+  - domain: data
+    interaction: realized state held destroy-pending, not cleared
+  - domain: policy
+    interaction: recovery policy drives reconciliation on provider return
+  - domain: audit
+    interaction: unconfirmed destroy and reconciliation recorded
+generated_by:
+  mode: authoring
+  source: llm-guided
+  model: claude
+  prompt_version: hammer-1.0
+  timestamp: '2026-07-16T06:00:00.000000+00:00'
+tags:
+- decommission
+- provider-failure
+- unconfirmed-destroy
+- data-inconsistency
+- edge
+- hammer-2026-07-16
+version: 1.0.0
+metadata:
+  author: dav-hammer
+  note: batch=framework-hammer-2026-07-16
