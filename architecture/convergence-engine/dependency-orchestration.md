@@ -336,7 +336,7 @@ don't fit a predefined composite pattern.
 
 ---
 
-## 10. Policy IDs (DCM realization)
+## 10. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

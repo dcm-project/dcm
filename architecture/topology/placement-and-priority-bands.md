@@ -381,7 +381,7 @@ require a new version to change.
 
 ---
 
-## 8. Policy IDs (DCM realization)
+## 8. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

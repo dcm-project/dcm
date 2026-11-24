@@ -12,7 +12,7 @@ Maps to: udlm/contracts/provider-callback-auth.md
 > UDLM defines the mechanism-neutral two-layer authentication contract: any
 > callback MUST be validated via two independent identity factors. DCM
 > picks **mTLS as Layer 1** and **interaction credential as Layer 2** as
-> its specific realization. A peer DCM realization could pick different
+> its specific realization. A peer DCM implementation could pick different
 > layers (JWT + signed assertion, hardware-backed tokens, etc.) and remain
 > UDLM-conformant — provided it declares its chosen mechanism via the
 > schema-sharing protocol
@@ -32,7 +32,7 @@ DCM realizes UDLM's two-layer auth contract with:
 Both layers are required on every callback. mTLS alone proves identity but
 not authorization; credential alone proves authorization but not identity.
 
-This mechanism is **DCM-specific**. A federation peer's DCM realization must
+This mechanism is **DCM-specific**. A federation peer's DCM implementation must
 declare its chosen mechanism via the schema-sharing bundle so federated peers
 can verify each other.
 
@@ -404,7 +404,7 @@ negotiation includes mechanism compatibility checks.
 
 ---
 
-## 11. Policy IDs (DCM realization)
+## 11. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

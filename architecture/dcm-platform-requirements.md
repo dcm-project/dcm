@@ -150,7 +150,7 @@ An administrator configures deployment profiles that govern operational behavior
 | fsi | field | 48h | sovereignty + all core | Financial services |
 | sovereign | field (synchronous) | 72h | all policies on all ops | Government, classified |
 
-**Success criteria:** Profile assignment per tenant governs audit depth, override windows, and policy enforcement minimums. Profile changes take effect on next request.
+**Success criteria:** The active profile governs audit depth, override windows, and policy enforcement minimums. Profiles are platform-scoped: one active profile per DCM instance, with no per-tenant override ([policy-profiles §3.4](governance-enforcement/policy-profiles.md); UDLM ADR-007 §5). Environments that need different postures run separate DCM instances. Profile changes take effect on next request.
 
 ---
 

@@ -16,7 +16,7 @@ Maps to: udlm/design-principles/infrastructure-optimization.md
 > PostgreSQL, Crunchy Postgres) as its required persistence infrastructure.
 
 This is a **DCM-level architectural decision**, not a UDLM contract. A peer
-DCM realization could pick a different SQL category (or a non-SQL category
+DCM implementation could pick a different SQL category (or a non-SQL category
 entirely) and still satisfy the UDLM persistence contract, provided it
 honors immutability, queryability, and the wire-level data formats.
 
@@ -171,14 +171,14 @@ PostgreSQL is **DCM's choice**, not a UDLM requirement. UDLM requires:
 - Versioning is supported for Realized
 - Schema-sharing protocol permits federation peers to exchange schemas
 
-A peer DCM realization could pick:
+A peer DCM implementation could pick:
 
 - A purpose-built database (e.g., a wide-column store + audit chain)
 - A multi-engine architecture (e.g., separate ledger + queryable cache)
 - A different SQL category (MySQL, MariaDB, SQL Server)
 
 ...and remain UDLM-conformant, provided the four-domain queryability and
-immutability invariants are honored. This DCM realization deliberately
+immutability invariants are honored. This DCM implementation deliberately
 picks a single well-understood SQL category and avoids abstraction-over-SQL.
 
 For implementation details — table structures, schema, query optimization,

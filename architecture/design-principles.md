@@ -168,12 +168,12 @@ DCM-side documents must:
 6. State fit-for-purpose scope explicitly
 
 These are operational documentation standards, not UDLM contract requirements.
-A peer DCM realization is free to organize its internal documentation
+A peer DCM implementation is free to organize its internal documentation
 differently.
 
 ---
 
-## 6. System policies (DCM realization)
+## 6. System policies (DCM implementation)
 
 | Policy | Rule |
 |--------|------|

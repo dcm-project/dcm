@@ -29,7 +29,7 @@ until the split lands so its repo references can be made concrete.)
 For each file or section, the test is:
 
 > *"Could a peer of DCM, built independently, choose to do this differently and
-> still be a valid realization of the same data?"*
+> still be a valid implementation of the same data?"*
 
 - **Yes →** belongs in **dcm** (it's an implementation choice)
 - **No, it would break interop or invalidate the data →** belongs in **udlm**
@@ -55,7 +55,7 @@ Concretely:
   exchange — **versioning applicability rules withstanding**.
 - Federation between peers is **literal interop**, not "architecturally similar
   systems requiring adapters."
-- A peer realization's storage, internal APIs, control-plane components, and
+- A peer implementation's storage, internal APIs, control-plane components, and
   runtime mechanics are NOT constrained by udlm — those are dcm-layer choices.
 
 **Implications for udlm spec authoring:**
@@ -152,7 +152,7 @@ authored during the split — see "Newly identified udlm contracts" below.)
 ```
 udlm/
 ├── README.md                       # what udlm is, who consumes it, how to extend
-├── CONFORMANCE.md                  # NEW — what a conformant realization must provide (wire contract surface)
+├── CONFORMANCE.md                  # NEW — what a conformant implementation must provide (wire contract surface)
 ├── foundations/
 │   ├── context-and-purpose.md
 │   ├── foundations.md
@@ -217,7 +217,7 @@ udlm/
 
 **Notes on the layout:**
 - Numeric prefixes dropped. Reading order is conveyed by README + section names.
-- `CONFORMANCE.md` at top-level: defines what any peer realization must provide
+- `CONFORMANCE.md` at top-level: defines what any peer implementation must provide
   to be wire-compatible. This is the conformance surface DAV will validate
   against.
 - `contracts/` is the wire-compatibility surface — every doc here is normative.
@@ -316,7 +316,7 @@ references the udlm doc.
 ### 1. `00-design-priorities.md`
 
 **udlm sections** → `udlm/70-design-principles/00-design-priorities.md`
-- *Design Principles as Interoperability Substrate* — Four invariant principles (consumer sovereignty, zero trust, federation, policy as code) form the contract foundation any realization must honor.
+- *Design Principles as Interoperability Substrate* — Four invariant principles (consumer sovereignty, zero trust, federation, policy as code) form the contract foundation any implementation must honor.
 - *Authority Tiers (model definition)* — Ordered decision authority vocabulary (auto, reviewed, verified, authorized) plus custom extensions.
 - *Profile Scaling Model (definition)* — Named profiles (homelab, dev, standard, prod, fsi, sovereign) with constraint matrices.
 
@@ -658,11 +658,11 @@ let dcm write its own orchestration-scenarios doc fresh.
 
 **udlm sections** → `udlm/contracts/provider-callback-auth.md` (mechanism-neutral two-layer contract)
 - *Two-Layer Authentication Contract* — abstract: any callback MUST be validated via two independent identity factors. Specific mechanisms (mTLS, JWT, signed assertions, etc.) are realization choices declared via schema-sharing.
-- *Provider Identity Attestation Contract* — peers MUST attest provider identity at registration via a verifiable mechanism (the verification approach is realization-declared).
+- *Provider Identity Attestation Contract* — peers MUST attest provider identity at registration via a verifiable mechanism (the verification approach is implementation-declared).
 - *Callback Credential Lifecycle* — issuance, active, rotation, revocation states (technology-neutral).
 - *Authentication-at-Callback-Time Contract* — every callback MUST present both factors; the receiving peer MUST validate both before accepting.
 - *Entity-Level Authorization Contract* — credentials are scoped; peer MUST verify the provider's authorization to update the target entity.
-- *Bootstrap Contract* — initial registration requires an authenticated single-use token; mechanism is realization-declared.
+- *Bootstrap Contract* — initial registration requires an authenticated single-use token; mechanism is implementation-declared.
 - *Credential Revocation Contract* — revocation is immediate; peers MUST recognize and reject revoked credentials.
 
 **dcm sections** → `dcm/architecture/credentials-and-auth/provider-callback.md` (DCM's specific mechanism: mTLS + interaction credential)
@@ -693,7 +693,7 @@ let dcm write its own orchestration-scenarios doc fresh.
 - *Custom/Extension Mechanism* — how new layer types are added
 
 **dcm sections** → split between:
-1. `dcm/architecture/topology/canonical-9-layer-hierarchy.md` — the specific Country → Region → Zone → Site → Data Center → Hall → Cage → Rack → Unit hierarchy (DCM's canonical default; a peer realization could pick differently)
+1. `dcm/architecture/topology/canonical-9-layer-hierarchy.md` — the specific Country → Region → Zone → Site → Data Center → Hall → Cage → Rack → Unit hierarchy (DCM's canonical default; a peer implementation could pick differently)
 2. `dcm/architecture/topology/placement-and-priority-bands.md`
    - *Location Topology Database and Query Interface*
    - *Priority Band Allocation* (premium/standard/budget)
@@ -717,7 +717,7 @@ let dcm write its own orchestration-scenarios doc fresh.
 - *Mandatory Persistence Requirement* — the contract that all four domains must be persistently queryable. **Note: persistence is required; the technology is not specified here.**
 
 **dcm sections** → split between:
-1. `dcm/architecture/persistence/postgres-mandate.md` — the decision that this dcm realization mandates PostgreSQL (a dcm-level architectural choice; a peer realization could pick differently while honoring the udlm persistence contract)
+1. `dcm/architecture/persistence/postgres-mandate.md` — the decision that this dcm implementation mandates PostgreSQL (a dcm-level architectural choice; a peer implementation could pick differently while honoring the udlm persistence contract)
 2. `dcm/architecture/persistence/postgres-implementation.md`
    - *Enforcement Mechanisms for Required Infrastructure*
    - *Data Domain Implementation Details* (table structures, schema)
@@ -794,7 +794,7 @@ split execution phase:
 | Doc | Target path | Purpose | Status |
 |---|---|---|---|
 | **Consumer perspective (driver's handbook)** | `udlm/docs/consumer-perspective.md` | How a consumer sees the system: onboarding, mental models, request lifecycle, common patterns, troubleshooting — written from the user's POV against the substrate | ✅ Done |
-| **Operator perspective (DMV operator's manual)** | `dcm/architecture/operator-perspective.md` | How an implementer/operator sees the system: how DCM operationalizes udlm, where the realization choices live, deployment perspective, ops playbook entry point | ✅ Done |
+| **Operator perspective (DMV operator's manual)** | `dcm/architecture/operator-perspective.md` | How an implementer/operator sees the system: how DCM operationalizes udlm, where the implementation choices live, deployment perspective, ops playbook entry point | ✅ Done |
 
 ### Sweep findings — what was checked and verdict
 

@@ -18,7 +18,7 @@ Maps to: udlm/governance/federated-contribution-model.md
 > consumer/provider/federation contribution enforcement.
 
 > **DCM-specific choice:** DCM uses GitOps PR workflow as its specific
-> contribution transport. A peer DCM realization could use a different
+> contribution transport. A peer DCM implementation could use a different
 > review channel (an internal review API, a custom UI, etc.) and still
 > conform to the UDLM contributor + artifact contract.
 
@@ -440,7 +440,7 @@ contribution_policy:
 
 ---
 
-## 9. Policy IDs (DCM realization)
+## 9. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

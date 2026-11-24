@@ -359,7 +359,7 @@ Every tier registry change produces:
 
 ---
 
-## 7. Policy IDs (DCM realization)
+## 7. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

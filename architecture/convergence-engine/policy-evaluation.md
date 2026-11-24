@@ -268,7 +268,7 @@ Every invocation produces an audit record (GMX-005), regardless of outcome.
 
 - **OPA as the evaluation engine.** DCM uses OPA (Open Policy Agent) to
   evaluate matrix rules; rules are translated to Rego at compile time. A peer
-  DCM realization could use a different engine while remaining UDLM-conformant.
+  DCM implementation could use a different engine while remaining UDLM-conformant.
 - **PostgreSQL as the rule store.** Active rules live in the `policies`
   table with status `active` and tier metadata. A peer could use a different
   store.

@@ -14,7 +14,7 @@ Maps to: udlm/topology/location-topology-layers.md
 > parent/child relationships, carry typed fields, follow lifecycle states).
 > DCM picks the specific Country → Region → Zone → Site → Data Center →
 > Hall → Cage → Rack → Unit hierarchy as its canonical default. A peer
-> DCM realization could pick a different hierarchy and remain
+> DCM implementation could pick a different hierarchy and remain
 > UDLM-conformant.
 
 ---
@@ -334,7 +334,7 @@ priority band allocation in detail, and lifecycle management.
 ## 7. Realization note
 
 The specific 9-layer hierarchy (Country, Region, Zone, Site, DC, Hall,
-Cage, Rack, Unit) is **DCM's canonical default**. A peer DCM realization
+Cage, Rack, Unit) is **DCM's canonical default**. A peer DCM implementation
 operating in a different domain (a Navy fleet, a hyperscale cloud, a
 mining operation, a satellite network) could pick a different hierarchy:
 - A satellite network might use Constellation → Orbital Plane → Satellite → Module

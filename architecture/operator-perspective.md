@@ -183,7 +183,7 @@ drive the defaults.** Override individual settings only when you have a
 specific reason.
 
 The profile is not a UDLM concept — it's a DCM ease-of-use scaling mechanism.
-A peer realization could choose a different scaling axis. UDLM only requires
+A peer implementation could choose a different scaling axis. UDLM only requires
 that the chosen mechanism produce wire-compatible behavior.
 
 See [`governance-enforcement/policy-profiles.md`](governance-enforcement/policy-profiles.md).
@@ -211,7 +211,7 @@ DCM can provision, reach for policies, the catalog, and provider capabilities.
 
 - **Don't author against UDLM contracts thinking they're DCM.** UDLM defines
   the abstract two-layer provider callback auth contract; DCM picks mTLS +
-  interaction credential. If your peer realization picks JWT + signed
+  interaction credential. If your peer implementation picks JWT + signed
   assertion instead, you're still UDLM-conformant — but you're not DCM.
 
 - **Don't assume PostgreSQL is the only valid persistence.** UDLM requires

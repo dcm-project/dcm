@@ -23,7 +23,7 @@ DCM exists to support this loop.
 ## 1. What the engine does
 
 UDLM defines the four states and the allowed transitions between them. UDLM
-does **not** prescribe how a realization drives those transitions. The DCM
+does **not** prescribe how an implementation drives those transitions. The DCM
 convergence engine is one specific answer:
 
 1. **Accepts intent** (via the API gateway from any ingress: API, GitOps,
@@ -208,7 +208,7 @@ These hold across all profiles and deployments:
 - Recovery Policies fire on every closed-vocabulary trigger; the action is
   evaluated through the same Policy Manager as any other policy
 
-These are realization invariants for **DCM specifically**. A peer realization
+These are realization invariants for **DCM specifically**. A peer implementation
 might choose a different routing mechanism (e.g., Kafka instead of
 `LISTEN/NOTIFY`), a different assembly algorithm, or a different audit
 storage — and remain UDLM-conformant as long as the wire contracts are honored.

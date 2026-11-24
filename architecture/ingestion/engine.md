@@ -363,7 +363,7 @@ computed on demand — never stored (freshness changes continuously).
 
 ---
 
-## 11. Policy IDs (DCM realization)
+## 11. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

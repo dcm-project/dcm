@@ -421,7 +421,7 @@ after 2× threshold is profile-configurable (`CPX-010`).
 
 ---
 
-## 11. Lifecycle state machine (DCM realization)
+## 11. Lifecycle state machine (DCM implementation)
 
 ```
                     ┌──────────────┐
@@ -446,7 +446,7 @@ type, and trigger metadata.
 
 ---
 
-## 12. Policy IDs (DCM realization)
+## 12. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

@@ -7,7 +7,7 @@ Document Type: Architecture Reference — Deployment and Redundancy
 
 > **DCM-native runtime feature; no single UDLM contract counterpart.**
 > Deployment topology and redundancy are realization-layer concerns. UDLM
-> does not mandate a deployment model — a peer DCM realization could choose a
+> does not mandate a deployment model — a peer DCM implementation could choose a
 > different redundancy strategy and still satisfy every UDLM contract. This
 > document specifies DCM's own deployment and redundancy approach.
 
@@ -112,7 +112,9 @@ component_redundancy:
 
 ### 3.2 Data Store Redundancy
 
-All DCM data stores run as containers. Each store type has a declared replication and quorum model.
+PostgreSQL is the only required data store ([ADR-015](../adr/015-minimal-infrastructure.md) decided this: every capability has an internal PostgreSQL path, and external services are optional delegations behind the same API). [PostgreSQL Mandate](../persistence/postgres-mandate.md) §3 lists the optional services and what each one replaces. So every store below is a set of PostgreSQL tables by default. Redundancy comes from PostgreSQL HA (replicas with synchronous, quorum-acknowledged writes). The `external` entries are optional backends that a deployment may delegate to by configuration. None of them is required.
+
+Each store declares a replication and quorum model. The model applies to whichever backend is active.
 
 #### Commit Log
 
@@ -123,38 +125,39 @@ commit_log:
   read_quorum: 1                # any replica can serve reads
   affinity:
     zone_spread: required       # replicas MUST span availability zones
-  implementation: etcd          # or equivalent consensus store
-  # etcd is purpose-built for this pattern: Raft consensus, quorum writes,
-  # sub-millisecond local writes, proven in Kubernetes itself
+  implementation: postgresql    # default (ADR-015): audit_records, synchronous quorum replication
+  external: null                # optional: a consensus store (Raft or equivalent)
 ```
 
-The Commit Log uses consensus protocol (Raft/equivalent). A write is confirmed when the quorum acknowledges — ensuring durability even if a minority of replicas fail simultaneously.
+The Commit Log uses quorum writes. A write is confirmed when the quorum acknowledges, so it stays durable even if a minority of replicas fail at the same time.
 
 #### DCM database (Intent, Requested, Layers, Policies)
 
 ```yaml
-gitops_store:
-  implementation: gitea          # or equivalent self-hosted Git
+dcm_database:
+  implementation: postgresql     # required (ADR-015): intent_records, requested_records
   replicas: 3
-  replication_mode: active_active  # any node can accept writes
   write_quorum: 2
   backup:
     enabled: true
     schedule: "0 */6 * * *"    # every 6 hours
     retention: 30d
+  git_ingress: optional          # Git is an optional ingress path, not the store (postgres-mandate §3)
 ```
 
 #### pipeline_events table (Realized, Discovered, Audit Events)
 
 ```yaml
 event_stream:
-  implementation: kafka          # or equivalent
+  implementation: postgresql     # default (ADR-015): pipeline_events + LISTEN/NOTIFY
+  external: kafka                # optional: for >1000 events/sec or independent replay (postgres-mandate §3)
+  # The settings below apply when the external backend is active:
   brokers: 3
   replication_factor: 3
   min_insync_replicas: 2        # minimum replicas that must acknowledge a write
   partitions: 12                # enables parallel consumption
   retention:
-    bytes: -1                   # unlimited — retention governed by policy
+    bytes: -1                   # unlimited; retention governed by policy
     ms: -1                      # unlimited
 ```
 
@@ -162,10 +165,8 @@ event_stream:
 
 ```yaml
 audit_store:
-  implementation: elasticsearch  # or equivalent — optimized for queryable retention
+  implementation: postgresql     # required (ADR-015): audit_records, append-only via REVOKE
   replicas: 3
-  primary_shards: 5
-  replica_shards: 1             # each shard has 1 replica = 2 copies total
   geo_replicated: true          # in prod/fsi/sovereign profiles
   append_only_enforced: true    # storage layer enforces immutability
 ```
@@ -174,9 +175,10 @@ audit_store:
 
 ```yaml
 search_index:
-  implementation: elasticsearch
-  replicas: 2                   # lower redundancy — can rebuild from Git
-  rebuild_from_git: true        # on data loss, rebuild from authoritative stores
+  implementation: postgresql     # default (ADR-015): full-text search + GIN indexes
+  external: opensearch           # optional (ADR-015)
+  replicas: 2                   # lower redundancy; can rebuild from authoritative stores
+  rebuild_from_authoritative: true  # on data loss, rebuild from the PostgreSQL tables
 ```
 
 ### 3.3 Container Specification
@@ -315,27 +317,24 @@ dcm_deployment:
       disruption_budget:
         min_available: 2
 
-    stores:
+    stores:                       # PostgreSQL by default (ADR-015); external backends optional
       commit_log:
         replicas: 3
         write_quorum: 2
-        implementation: etcd
-      gitops_store:
+        implementation: postgresql
+      dcm_database:
         replicas: 3
         write_quorum: 2
-        implementation: gitea
+        implementation: postgresql
       event_stream:
-        brokers: 3
-        replication_factor: 3
-        min_insync_replicas: 2
-        implementation: kafka
+        implementation: postgresql  # or external: kafka
       audit_store:
         replicas: 3
         geo_replicated: false     # standard profile default
-        implementation: elasticsearch
+        implementation: postgresql
       search_index:
         replicas: 2
-        implementation: elasticsearch
+        implementation: postgresql  # or external: opensearch
 
   # Provider health configuration
   providers:

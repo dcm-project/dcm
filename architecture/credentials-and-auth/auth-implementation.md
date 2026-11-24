@@ -276,7 +276,7 @@ grant different permissions than any other ingress surface.
 
 ---
 
-## 6. Authentication ladder (DCM realization)
+## 6. Authentication ladder (DCM implementation)
 
 Every rung is authenticated. The ladder is about setup effort — not whether
 authentication exists.
@@ -315,7 +315,7 @@ and API key holders. Enterprise users belong in external Auth Providers
 
 ---
 
-## 7. Policy IDs (DCM realization)
+## 7. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

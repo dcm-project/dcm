@@ -2,10 +2,10 @@
 Document Status: ✅ Stable — Architectural framing
 Document Type: Architecture Foundation
 Established: 2026-05-26
-Maps to: UDLM substrate / DCM realization boundary
+Maps to: UDLM substrate / DCM implementation boundary
 ---
 
-# Layering — UDLM substrate vs DCM realization
+# Layering — UDLM substrate vs DCM implementation
 
 > **Implements contracts defined in UDLM**: this document names the boundary
 > that the UDLM repo ([github.com/croadfeldt/udlm](https://github.com/croadfeldt/udlm))
@@ -25,7 +25,7 @@ split between UDLM (substrate) and DCM (realization).
 │  Higher-Order Universal Model           (deliberately deferred) │
 │  ─────────────────────────────────                              │
 │  A more abstract universal model that UDLM is a specialization  │
-│  of. Could be derived later if a real second realization        │
+│  of. Could be derived later if a real second implementation        │
 │  creates the pressure. NOT formalized today.                    │
 └─────────────────────────────────────────────────────────────────┘
                               ▲
@@ -43,7 +43,7 @@ split between UDLM (substrate) and DCM (realization).
 │    • reference taxonomies (authority tier model, registry       │
 │      governance model, layered-topology contract, ...)          │
 │                                                                 │
-│  UDLM owns wire-level compatibility. Any peer realization that  │
+│  UDLM owns wire-level compatibility. Any peer implementation that  │
 │  conforms produces data that any other conformant peer can      │
 │  read, interpret, and exchange.                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -65,7 +65,7 @@ split between UDLM (substrate) and DCM (realization).
 │    • mTLS + interaction credential as provider callback auth    │
 │    • deployment topology, runtime concerns                      │
 │                                                                 │
-│  A different DCM-peer realization could consume the same UDLM   │
+│  A different DCM-peer implementation could consume the same UDLM   │
 │  substrate and realize it differently while remaining wire-     │
 │  compatible at the UDLM contract boundary.                      │
 └─────────────────────────────────────────────────────────────────┘
@@ -83,7 +83,7 @@ split between UDLM (substrate) and DCM (realization).
 For each file or section, the test is:
 
 > *"Could a peer of DCM, built independently, choose to do this differently
-> and still be a valid realization of the same data?"*
+> and still be a valid implementation of the same data?"*
 
 - **Yes →** belongs in **DCM**. It's an operational/implementation choice.
 - **No, it would break interop or invalidate the data →** belongs in **UDLM**.
@@ -91,7 +91,7 @@ For each file or section, the test is:
 
 | Concern | Layer | Why |
 |---|---|---|
-| State names (intent, requested, realized, discovered) | UDLM | Vocabulary every realization shares |
+| State names (intent, requested, realized, discovered) | UDLM | Vocabulary every implementation shares |
 | Field shape at each state | UDLM | Same data, regardless of operationalization |
 | Allowed transitions between states | UDLM | Invariant of the data, not a runtime choice |
 | Provider response shape | UDLM | Wire contract |
@@ -118,7 +118,7 @@ it does not enforce implementation portability.**
   (versioning rules apply).
 - Federation between peers is **literal interop**, not "architecturally similar
   systems requiring adapters."
-- A peer realization's storage, internal APIs, control-plane components, and
+- A peer implementation's storage, internal APIs, control-plane components, and
   runtime mechanics are NOT constrained by UDLM — those are DCM-layer choices.
 
 This is the K8s precedent: K8s API + CRDs are wire-compatible across
@@ -135,7 +135,7 @@ not formalized today:
 - **Abstraction discipline.** UDLM is allowed to be specific enough to be
   realizable, even if that bakes in some assumptions a purer model wouldn't.
 - **No pressure yet.** The higher-order model becomes worth formalizing when
-  a real second realization (a non-DCM peer using UDLM) creates pressure to
+  a real second implementation (a non-DCM peer using UDLM) creates pressure to
   identify what is truly shared vs DCM-specific. Until then, drawing the line
   is guessing.
 - **Cost asymmetry.** Premature abstraction costs more than lifting concepts
@@ -149,7 +149,7 @@ where the genuinely-shared bits will be lifted from UDLM.
 
 ## Implications for verification/assessment consumers
 
-A verification consumer (an assessment realization or test harness — non-normative;
+A verification consumer (an assessment implementation or test harness — non-normative;
 nothing here depends on a specific tool) tests use cases against the architecture.
 Per this layering, that's two distinct questions:
 

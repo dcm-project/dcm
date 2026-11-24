@@ -376,7 +376,7 @@ authority's approval (or successor designated by formal transfer).
 
 ---
 
-## 9. Policy IDs (DCM realization)
+## 9. Policy IDs (DCM implementation)
 
 | Policy | Rule |
 |---|---|

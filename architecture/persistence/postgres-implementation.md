@@ -234,9 +234,24 @@ The API Gateway sets `dcm.current_tenant_uuid` at session startup per the
 authenticated request's tenant scope. RLS enforces that no query can return
 rows from other tenants — even with a buggy WHERE clause (STI-001, STI-002).
 
-Platform admin queries set `dcm.current_tenant_uuid = '*'` (resolved via a
-separate RLS policy that grants cross-tenant access only to platform_admin
-role).
+Platform admin queries do not use a wildcard tenant value. The predicates
+cast the setting to `uuid`, so a value such as `'*'` would fail the cast and
+the query would error. Cross-tenant access instead uses a separate database
+role, `dcm_admin`, that has `BYPASSRLS`, as `schemas/sql/001-initial.sql`
+already defines:
+
+```sql
+-- dcm_app: tenant-scoped, RLS applies. dcm_admin: platform admin, bypasses RLS.
+ALTER ROLE dcm_admin BYPASSRLS;
+```
+
+I chose a bypass role over a second permissive policy because it fits the
+audit model. STI-002 rules that bypassing RLS is a platform admin action that
+produces an audit record. A distinct role makes that action a distinct
+identity: only the platform admin path connects as `dcm_admin`, every such
+session is attributable and audited as cross-tenant, and the tenant path
+(`dcm_app`) has no setting it can change to widen its own scope. The schema
+already implements this role, so the document now matches it.
 
 ### 2.3 Merkle tree (audit integrity)
 
@@ -536,7 +551,7 @@ Queries that may take longer (< 5s acceptable):
 ## 10. Realization note
 
 The schemas, indexes, and operational patterns above are **DCM's specific
-realization choices**. A peer DCM realization using a different storage
+realization choices**. A peer DCM implementation using a different storage
 technology would have its own equivalent enforcement mechanisms — different
 SQL, different indexes, potentially different concurrency models — while
 satisfying the same UDLM persistence contract.

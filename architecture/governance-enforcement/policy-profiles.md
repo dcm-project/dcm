@@ -1084,7 +1084,7 @@ rehydration_tenancy_conflict_record:
 | `RHY-004` | A policy may declare automatic resolution behavior for rehydration tenancy conflicts |
 
 > `RHY-001` (and `RHY-005`, UUID preservation on restore-in-place) are UDLM data-model rules;
-> `RHY-002..004` are DCM realization rules in the same coordinated number space (udlm
+> `RHY-002..004` are DCM implementation rules in the same coordinated number space (udlm
 > four-states.md notes the split — "the rest is realization/policy" and lives here).
 
 ---

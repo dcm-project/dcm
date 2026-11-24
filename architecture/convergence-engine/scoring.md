@@ -7,7 +7,7 @@ Document Type: Architecture Reference — Scoring Model Specification
 
 > **DCM-native scoring engine; no single UDLM contract counterpart.**
 > The hybrid scoring model is a realization-layer extension of the Policy
-> abstraction — UDLM defines no scoring contract. A peer DCM realization could
+> abstraction — UDLM defines no scoring contract. A peer DCM implementation could
 > use a different signal-weighting scheme and still satisfy every UDLM Policy
 > and Governance Matrix contract. The Governance Matrix remains a pure boolean
 > gate; scoring never applies to cross-boundary data decisions.
