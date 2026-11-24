@@ -5,7 +5,7 @@ declarative control plane for managing the lifecycle of arbitrary infrastructure
 resources across an enterprise — from bare metal and VMs to containers,
 applications, and managed services.
 
-**DCM is one realization of [UDLM](https://github.com/croadfeldt/udlm)**, the
+**DCM is one implementation of [UDLM](https://github.com/croadfeldt/udlm)**, the
 Universal Data Lifecycle Model. UDLM is the wire-compatible substrate
 (entity types, four-state lifecycle, contracts, identifiers, events). DCM is
 the operational platform built on it — convergence engine, control-plane
@@ -77,21 +77,24 @@ events, schema sharing, conformance), see
 
 ## Key Facts
 
-| Metric | Value |
-|--------|-------|
-| Architecture documents | 58 data model + 15 specifications |
-| Capabilities | 322 across 39 domains |
-| Provider types | 6 (service, information, meta, auth, peer_dcm, process) |
-| Policy evaluation modes | 2 (Internal via OPA, External via provider) |
-| Control plane services | 9 |
+This table names where each fact lives. It carries no hand-kept counts, because copies of a count drift
+apart. For a number, read or count the source.
+
+| Fact | Source of truth |
+|------|-----------------|
+| Capabilities | [`architecture/DCM-Capabilities-Matrix.md`](architecture/DCM-Capabilities-Matrix.md), one row per capability ID |
+| Providers | One provider model: a provider declares capabilities, not a fixed type. Verbs listed in [the taxonomy](taxonomy/DCM-Taxonomy.md#provider-capabilities), owned by UDLM [provider-contract §8](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/provider-contract.md) |
+| Policy types | The `policy_type` enum in UDLM [`registry/policy.schema.json`](https://github.com/croadfeldt/udlm/blob/main/registry/policy.schema.json); output schemas in UDLM policy-contract §10-17 |
+| Policy evaluation modes | Internal and External: [policy-profiles §4](architecture/governance-enforcement/policy-profiles.md#4-policy-evaluation-modes) (DCM evaluates, or an external engine does) |
+| Control plane services | 9, named in [ADR-009](architecture/adr/009-api-gateway-control-plane.md) (the API Gateway fronts the control plane services) |
 | Required infrastructure | 1 (PostgreSQL-compatible DB) — auth, secrets, events handled internally |
-| Consumer API | 74 paths |
-| Admin API | 61 paths |
-| Event catalog | 101 payloads across 22 domains |
+| API paths | The `paths` of each spec in [`schemas/openapi/`](schemas/openapi/) (consumer, admin, operator, provider callback) |
+| Events | UDLM [event-catalog.md](https://github.com/croadfeldt/udlm/blob/main/docs/spec/contracts/event-catalog.md) |
+| SQL tables | [`schemas/sql/001-initial.sql`](schemas/sql/001-initial.sql) |
 
 ## Getting Started
 
-1. **Understand the substrate first** — read [UDLM's README and CONFORMANCE.md](https://github.com/croadfeldt/udlm). DCM only makes sense if you know what it's a realization of.
+1. **Understand the substrate first** — read [UDLM's README and CONFORMANCE.md](https://github.com/croadfeldt/udlm). DCM only makes sense if you know what it's an implementation of.
 2. **Read DCM's architecture overview** — [`architecture/overview.md`](architecture/overview.md), then [`architecture/layering.md`](architecture/layering.md) for the UDLM/DCM boundary.
 3. **Read the operator perspective** — [`architecture/operator-perspective.md`](architecture/operator-perspective.md) — narrative handbook for running DCM.
 4. **Dive into the convergence engine** — [`architecture/convergence-engine/overview.md`](architecture/convergence-engine/overview.md) — the heart of DCM.

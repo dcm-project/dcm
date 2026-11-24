@@ -1,4 +1,8 @@
 docs/internal/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # macOS noise
 .DS_Store
